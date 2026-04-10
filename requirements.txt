@@ -1,4 +1,9 @@
 pyttsx3
 SpeechRecognition
 PyAudio
-# For browser interaction, webbrowser is built-in.
+requests
+numpy
+coqui-tts
+torch
+torchaudio
+torchcodec
