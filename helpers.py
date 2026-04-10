@@ -4,6 +4,7 @@ import datetime
 import logging
 import sqlite3
 import speech_recognition as sr
+import numpy as np
 from ctypes import *
 
 # Silence ALSA/JACK errors
@@ -36,9 +37,10 @@ logging.basicConfig(
 # Global models and state
 _tts = None
 _tts_type = None 
+_whisper_model = None
 _recognizer = sr.Recognizer()
 
-# SPEED CONFIG (Adjust here)
+# SPEED CONFIG
 SPEECH_SPEED = 1.3 
 
 def get_tts():
@@ -46,16 +48,28 @@ def get_tts():
     if _tts is None:
         try:
             from TTS.api import TTS
-            print("Loading Coqui TTS male voice model (vctk)...")
-            # Switching to a multi-speaker model for a male voice
+            print("Loading Coqui TTS male voice model...")
             _tts = TTS(model_name="tts_models/en/vctk/vits", progress_bar=False, gpu=False)
             _tts_type = 'coqui'
-        except Exception as e:
-            print(f"Coqui TTS failed to load: {e}. Falling back to pyttsx3.")
+        except Exception:
             import pyttsx3
             _tts = pyttsx3.init()
             _tts_type = 'pyttsx3'
     return _tts
+
+def get_whisper():
+    global _whisper_model
+    if _whisper_model is None:
+        from faster_whisper import WhisperModel
+        # Switching to 'base' - very lightweight (~150MB), fast, and 100% local/free.
+        print("Loading lightweight local STT (base)...")
+        _whisper_model = WhisperModel(
+            "base", 
+            device="cpu", 
+            compute_type="int8", 
+            cpu_threads=4
+        )
+    return _whisper_model
 
 def init_db():
     conn = sqlite3.connect('chat_history.db')
@@ -95,11 +109,9 @@ def speak(audio) -> None:
     if _tts_type == 'coqui':
         try:
             output_path = "output.wav"
-            # Using speaker 'p232' for a soft male voice in VCTK
             try:
                 engine.tts_to_file(text=audio, speaker="p232", file_path=output_path, speed=SPEECH_SPEED)
-            except (TypeError, Exception):
-                # Fallback if specific speaker or speed is not accepted
+            except Exception:
                 engine.tts_to_file(text=audio, speaker="p232", file_path=output_path)
                 fast_path = "output_fast.wav"
                 os.system(f"ffmpeg -i {output_path} -filter:a 'atempo={SPEECH_SPEED}' {fast_path} -y > /dev/null 2>&1")
@@ -116,27 +128,38 @@ def speak(audio) -> None:
 
 def takeCommand(timeout=None, phrase_limit=None) -> str:
     global _recognizer
-    _recognizer.energy_threshold = 400 
+    _recognizer.energy_threshold = 300 
     _recognizer.dynamic_energy_threshold = True
     
-    with sr.Microphone() as source:
+    with sr.Microphone(sample_rate=16000) as source:
         if timeout is None:
             print('\n--- Listening ---')
-        _recognizer.pause_threshold = 1.0
+        _recognizer.pause_threshold = 0.8
         
         if timeout is None:
             _recognizer.adjust_for_ambient_noise(source, duration=0.8)
         
         try:
-            audio = _recognizer.listen(source, timeout=timeout, phrase_time_limit=phrase_limit)
-            print("Recognizing...")
-            query = _recognizer.recognize_google(audio, language='en-in')
-            query = query.strip().lower()
-            
-            if query:
-                if timeout is None:
-                    print(f'User: {query}')
-                return query
+            audio_sr = _recognizer.listen(source, timeout=timeout, phrase_time_limit=phrase_limit)
         except Exception:
             return 'none'
+
+    try:
+        audio_data = np.frombuffer(audio_sr.get_raw_data(), np.int16).flatten().astype(np.float32) / 32768.0
+        
+        model = get_whisper()
+        segments, _ = model.transcribe(
+            audio_data, 
+            language="en", 
+            vad_filter=True
+        )
+        
+        query = "".join([segment.text for segment in segments]).strip().lower()
+        
+        if query:
+            if timeout is None:
+                print(f'User: {query}')
+            return query
+    except Exception:
+        return 'none'
     return 'none'

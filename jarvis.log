@@ -899,3 +899,702 @@ Remember that actual accessibility will depend on whether a real service exists 
 2026-04-10 11:59:57,943 - INFO - Processing time: 1.615
 2026-04-10 11:59:57,943 - INFO - Real-time factor: 1.061
 2026-04-10 11:59:59,713 - INFO - AI generation interrupted by user
+2026-04-10 12:02:18,821 - INFO - JARVIS initialized
+2026-04-10 12:02:18,821 - INFO - Speak: How's your afternoon going?
+2026-04-10 12:02:24,602 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:02:24,625 - INFO - Using model: vits
+2026-04-10 12:02:24,626 - INFO - Setting up Audio Processor...
+2026-04-10 12:02:24,626 - INFO -  | sample_rate: 22050
+2026-04-10 12:02:24,626 - INFO -  | resample: False
+2026-04-10 12:02:24,626 - INFO -  | num_mels: 80
+2026-04-10 12:02:24,626 - INFO -  | log_func: np.log10
+2026-04-10 12:02:24,626 - INFO -  | min_level_db: 0
+2026-04-10 12:02:24,626 - INFO -  | frame_shift_ms: None
+2026-04-10 12:02:24,626 - INFO -  | frame_length_ms: None
+2026-04-10 12:02:24,626 - INFO -  | ref_level_db: None
+2026-04-10 12:02:24,626 - INFO -  | fft_size: 1024
+2026-04-10 12:02:24,626 - INFO -  | power: None
+2026-04-10 12:02:24,626 - INFO -  | preemphasis: 0.0
+2026-04-10 12:02:24,626 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:02:24,626 - INFO -  | signal_norm: None
+2026-04-10 12:02:24,626 - INFO -  | symmetric_norm: None
+2026-04-10 12:02:24,626 - INFO -  | mel_fmin: 0
+2026-04-10 12:02:24,626 - INFO -  | mel_fmax: None
+2026-04-10 12:02:24,626 - INFO -  | pitch_fmin: None
+2026-04-10 12:02:24,626 - INFO -  | pitch_fmax: None
+2026-04-10 12:02:24,626 - INFO -  | spec_gain: 20.0
+2026-04-10 12:02:24,626 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:02:24,626 - INFO -  | max_norm: 1.0
+2026-04-10 12:02:24,626 - INFO -  | clip_norm: True
+2026-04-10 12:02:24,626 - INFO -  | do_trim_silence: False
+2026-04-10 12:02:24,626 - INFO -  | trim_db: 60
+2026-04-10 12:02:24,626 - INFO -  | do_sound_norm: False
+2026-04-10 12:02:24,626 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:02:24,626 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:02:24,626 - INFO -  | do_rms_norm: False
+2026-04-10 12:02:24,626 - INFO -  | db_level: None
+2026-04-10 12:02:24,626 - INFO -  | stats_path: None
+2026-04-10 12:02:24,626 - INFO -  | base: 10
+2026-04-10 12:02:24,626 - INFO -  | hop_length: 256
+2026-04-10 12:02:24,626 - INFO -  | win_length: 1024
+2026-04-10 12:02:24,641 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:02:25,127 - INFO - Text split into sentences.
+2026-04-10 12:02:25,127 - INFO - Input: ["How's your afternoon going?"]
+2026-04-10 12:02:26,152 - INFO - Processing time: 1.032
+2026-04-10 12:02:26,152 - INFO - Real-time factor: 0.417
+2026-04-10 12:02:35,091 - INFO - Speak: Thinking...
+2026-04-10 12:02:35,092 - INFO - Text split into sentences.
+2026-04-10 12:02:35,092 - INFO - Input: ['Thinking...']
+2026-04-10 12:02:35,454 - INFO - Processing time: 0.363
+2026-04-10 12:02:35,455 - INFO - Real-time factor: 0.372
+2026-04-10 12:03:09,612 - INFO - JARVIS initialized
+2026-04-10 12:03:09,613 - INFO - Speak: How's your afternoon going?
+2026-04-10 12:03:16,085 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:03:16,101 - INFO - Using model: vits
+2026-04-10 12:03:16,102 - INFO - Setting up Audio Processor...
+2026-04-10 12:03:16,102 - INFO -  | sample_rate: 22050
+2026-04-10 12:03:16,102 - INFO -  | resample: False
+2026-04-10 12:03:16,102 - INFO -  | num_mels: 80
+2026-04-10 12:03:16,102 - INFO -  | log_func: np.log10
+2026-04-10 12:03:16,102 - INFO -  | min_level_db: 0
+2026-04-10 12:03:16,102 - INFO -  | frame_shift_ms: None
+2026-04-10 12:03:16,102 - INFO -  | frame_length_ms: None
+2026-04-10 12:03:16,102 - INFO -  | ref_level_db: None
+2026-04-10 12:03:16,102 - INFO -  | fft_size: 1024
+2026-04-10 12:03:16,102 - INFO -  | power: None
+2026-04-10 12:03:16,102 - INFO -  | preemphasis: 0.0
+2026-04-10 12:03:16,102 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:03:16,102 - INFO -  | signal_norm: None
+2026-04-10 12:03:16,102 - INFO -  | symmetric_norm: None
+2026-04-10 12:03:16,102 - INFO -  | mel_fmin: 0
+2026-04-10 12:03:16,102 - INFO -  | mel_fmax: None
+2026-04-10 12:03:16,102 - INFO -  | pitch_fmin: None
+2026-04-10 12:03:16,102 - INFO -  | pitch_fmax: None
+2026-04-10 12:03:16,102 - INFO -  | spec_gain: 20.0
+2026-04-10 12:03:16,102 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:03:16,102 - INFO -  | max_norm: 1.0
+2026-04-10 12:03:16,102 - INFO -  | clip_norm: True
+2026-04-10 12:03:16,102 - INFO -  | do_trim_silence: False
+2026-04-10 12:03:16,102 - INFO -  | trim_db: 60
+2026-04-10 12:03:16,103 - INFO -  | do_sound_norm: False
+2026-04-10 12:03:16,103 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:03:16,103 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:03:16,103 - INFO -  | do_rms_norm: False
+2026-04-10 12:03:16,103 - INFO -  | db_level: None
+2026-04-10 12:03:16,103 - INFO -  | stats_path: None
+2026-04-10 12:03:16,103 - INFO -  | base: 10
+2026-04-10 12:03:16,103 - INFO -  | hop_length: 256
+2026-04-10 12:03:16,103 - INFO -  | win_length: 1024
+2026-04-10 12:03:16,116 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:03:16,654 - INFO - Text split into sentences.
+2026-04-10 12:03:16,654 - INFO - Input: ["How's your afternoon going?"]
+2026-04-10 12:03:17,435 - INFO - Processing time: 0.788
+2026-04-10 12:03:17,435 - INFO - Real-time factor: 0.424
+2026-04-10 12:05:25,765 - INFO - JARVIS initialized
+2026-04-10 12:05:25,765 - INFO - Speak: How's your afternoon going?
+2026-04-10 12:05:32,345 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:05:32,361 - INFO - Using model: vits
+2026-04-10 12:05:32,363 - INFO - Setting up Audio Processor...
+2026-04-10 12:05:32,363 - INFO -  | sample_rate: 22050
+2026-04-10 12:05:32,363 - INFO -  | resample: False
+2026-04-10 12:05:32,363 - INFO -  | num_mels: 80
+2026-04-10 12:05:32,363 - INFO -  | log_func: np.log10
+2026-04-10 12:05:32,363 - INFO -  | min_level_db: 0
+2026-04-10 12:05:32,363 - INFO -  | frame_shift_ms: None
+2026-04-10 12:05:32,363 - INFO -  | frame_length_ms: None
+2026-04-10 12:05:32,363 - INFO -  | ref_level_db: None
+2026-04-10 12:05:32,363 - INFO -  | fft_size: 1024
+2026-04-10 12:05:32,363 - INFO -  | power: None
+2026-04-10 12:05:32,363 - INFO -  | preemphasis: 0.0
+2026-04-10 12:05:32,363 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:05:32,363 - INFO -  | signal_norm: None
+2026-04-10 12:05:32,363 - INFO -  | symmetric_norm: None
+2026-04-10 12:05:32,363 - INFO -  | mel_fmin: 0
+2026-04-10 12:05:32,363 - INFO -  | mel_fmax: None
+2026-04-10 12:05:32,363 - INFO -  | pitch_fmin: None
+2026-04-10 12:05:32,363 - INFO -  | pitch_fmax: None
+2026-04-10 12:05:32,363 - INFO -  | spec_gain: 20.0
+2026-04-10 12:05:32,363 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:05:32,363 - INFO -  | max_norm: 1.0
+2026-04-10 12:05:32,363 - INFO -  | clip_norm: True
+2026-04-10 12:05:32,363 - INFO -  | do_trim_silence: False
+2026-04-10 12:05:32,363 - INFO -  | trim_db: 60
+2026-04-10 12:05:32,363 - INFO -  | do_sound_norm: False
+2026-04-10 12:05:32,363 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:05:32,363 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:05:32,363 - INFO -  | do_rms_norm: False
+2026-04-10 12:05:32,363 - INFO -  | db_level: None
+2026-04-10 12:05:32,363 - INFO -  | stats_path: None
+2026-04-10 12:05:32,363 - INFO -  | base: 10
+2026-04-10 12:05:32,363 - INFO -  | hop_length: 256
+2026-04-10 12:05:32,363 - INFO -  | win_length: 1024
+2026-04-10 12:05:32,377 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:05:33,005 - INFO - Text split into sentences.
+2026-04-10 12:05:33,005 - INFO - Input: ["How's your afternoon going?"]
+2026-04-10 12:05:33,781 - INFO - Processing time: 0.787
+2026-04-10 12:05:33,781 - INFO - Real-time factor: 0.437
+2026-04-10 12:06:05,381 - INFO - Speak: Opening your brain training application.
+2026-04-10 12:06:05,383 - INFO - Text split into sentences.
+2026-04-10 12:06:05,383 - INFO - Input: ['Opening your brain training application.']
+2026-04-10 12:06:08,212 - INFO - Processing time: 2.830
+2026-04-10 12:06:08,213 - INFO - Real-time factor: 1.064
+2026-04-10 12:06:25,750 - INFO - Speak: Writing in 2 seconds. Focus your field.
+2026-04-10 12:06:25,751 - INFO - Text split into sentences.
+2026-04-10 12:06:25,751 - INFO - Input: ['Writing in 2 seconds.', 'Focus your field.']
+2026-04-10 12:06:27,261 - INFO - Processing time: 1.511
+2026-04-10 12:06:27,262 - INFO - Real-time factor: 0.405
+2026-04-10 12:06:33,712 - INFO - Speak: Done.
+2026-04-10 12:06:33,713 - INFO - Text split into sentences.
+2026-04-10 12:06:33,713 - INFO - Input: ['Done.']
+2026-04-10 12:06:34,065 - INFO - Processing time: 0.352
+2026-04-10 12:06:34,065 - INFO - Real-time factor: 0.370
+2026-04-10 12:07:07,954 - INFO - Speak: Thinking...
+2026-04-10 12:07:07,955 - INFO - Text split into sentences.
+2026-04-10 12:07:07,955 - INFO - Input: ['Thinking...']
+2026-04-10 12:07:08,344 - INFO - Processing time: 0.389
+2026-04-10 12:07:08,344 - INFO - Real-time factor: 0.399
+2026-04-10 12:07:22,056 - INFO - Speak: You're very welcome! If there's anything else I can assist you with, please don't hesitate to ask. Feel free to open up any more "jars" of queries or comments whenever needed. Have a great day ahead!
+2026-04-10 12:07:22,060 - INFO - Text split into sentences.
+2026-04-10 12:07:22,060 - INFO - Input: ["You're very welcome!", "If there's anything else I can assist you with, please don't hesitate to ask.", 'Feel free to open up any more "jars" of queries or comments whenever needed.', 'Have a great day ahead!']
+2026-04-10 12:07:28,470 - INFO - Processing time: 6.413
+2026-04-10 12:07:28,470 - INFO - Real-time factor: 0.512
+2026-04-10 12:09:23,894 - INFO - JARVIS initialized
+2026-04-10 12:09:23,896 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:09:36,357 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:09:36,369 - INFO - Using model: vits
+2026-04-10 12:09:36,374 - INFO - Setting up Audio Processor...
+2026-04-10 12:09:36,374 - INFO -  | sample_rate: 22050
+2026-04-10 12:09:36,374 - INFO -  | resample: False
+2026-04-10 12:09:36,374 - INFO -  | num_mels: 80
+2026-04-10 12:09:36,374 - INFO -  | log_func: np.log10
+2026-04-10 12:09:36,374 - INFO -  | min_level_db: 0
+2026-04-10 12:09:36,374 - INFO -  | frame_shift_ms: None
+2026-04-10 12:09:36,374 - INFO -  | frame_length_ms: None
+2026-04-10 12:09:36,375 - INFO -  | ref_level_db: None
+2026-04-10 12:09:36,375 - INFO -  | fft_size: 1024
+2026-04-10 12:09:36,375 - INFO -  | power: None
+2026-04-10 12:09:36,375 - INFO -  | preemphasis: 0.0
+2026-04-10 12:09:36,375 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:09:36,375 - INFO -  | signal_norm: None
+2026-04-10 12:09:36,375 - INFO -  | symmetric_norm: None
+2026-04-10 12:09:36,375 - INFO -  | mel_fmin: 0
+2026-04-10 12:09:36,375 - INFO -  | mel_fmax: None
+2026-04-10 12:09:36,375 - INFO -  | pitch_fmin: None
+2026-04-10 12:09:36,375 - INFO -  | pitch_fmax: None
+2026-04-10 12:09:36,375 - INFO -  | spec_gain: 20.0
+2026-04-10 12:09:36,375 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:09:36,375 - INFO -  | max_norm: 1.0
+2026-04-10 12:09:36,375 - INFO -  | clip_norm: True
+2026-04-10 12:09:36,375 - INFO -  | do_trim_silence: False
+2026-04-10 12:09:36,375 - INFO -  | trim_db: 60
+2026-04-10 12:09:36,375 - INFO -  | do_sound_norm: False
+2026-04-10 12:09:36,375 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:09:36,375 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:09:36,375 - INFO -  | do_rms_norm: False
+2026-04-10 12:09:36,375 - INFO -  | db_level: None
+2026-04-10 12:09:36,375 - INFO -  | stats_path: None
+2026-04-10 12:09:36,375 - INFO -  | base: 10
+2026-04-10 12:09:36,375 - INFO -  | hop_length: 256
+2026-04-10 12:09:36,375 - INFO -  | win_length: 1024
+2026-04-10 12:09:36,394 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:09:37,064 - INFO - Text split into sentences.
+2026-04-10 12:09:37,065 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:09:38,376 - INFO - Processing time: 1.320
+2026-04-10 12:09:38,377 - INFO - Real-time factor: 0.574
+2026-04-10 12:09:45,222 - INFO - Speak: Opening Ghostty.
+2026-04-10 12:09:45,223 - INFO - Text split into sentences.
+2026-04-10 12:09:45,224 - INFO - Input: ['Opening Ghostty.']
+2026-04-10 12:09:46,198 - INFO - Processing time: 0.976
+2026-04-10 12:09:46,198 - INFO - Real-time factor: 0.632
+2026-04-10 12:10:31,018 - INFO - Speak: Writing in 2 seconds. Focus your field.
+2026-04-10 12:10:31,019 - INFO - Text split into sentences.
+2026-04-10 12:10:31,019 - INFO - Input: ['Writing in 2 seconds.', 'Focus your field.']
+2026-04-10 12:10:32,761 - INFO - Processing time: 1.742
+2026-04-10 12:10:32,761 - INFO - Real-time factor: 0.482
+2026-04-10 12:10:39,140 - INFO - Speak: Done.
+2026-04-10 12:10:39,141 - INFO - Text split into sentences.
+2026-04-10 12:10:39,141 - INFO - Input: ['Done.']
+2026-04-10 12:10:39,538 - INFO - Processing time: 0.397
+2026-04-10 12:10:39,538 - INFO - Real-time factor: 0.450
+2026-04-10 12:10:48,799 - INFO - Speak: Writing in 2 seconds. Focus your field.
+2026-04-10 12:10:48,800 - INFO - Text split into sentences.
+2026-04-10 12:10:48,800 - INFO - Input: ['Writing in 2 seconds.', 'Focus your field.']
+2026-04-10 12:10:50,959 - INFO - Processing time: 2.160
+2026-04-10 12:10:50,960 - INFO - Real-time factor: 0.570
+2026-04-10 12:10:57,486 - INFO - Speak: Done.
+2026-04-10 12:10:57,487 - INFO - Text split into sentences.
+2026-04-10 12:10:57,487 - INFO - Input: ['Done.']
+2026-04-10 12:10:57,871 - INFO - Processing time: 0.384
+2026-04-10 12:10:57,871 - INFO - Real-time factor: 0.435
+2026-04-10 12:11:09,432 - INFO - Speak: Thinking...
+2026-04-10 12:11:09,433 - INFO - Text split into sentences.
+2026-04-10 12:11:09,433 - INFO - Input: ['Thinking...']
+2026-04-10 12:11:09,829 - INFO - Processing time: 0.396
+2026-04-10 12:11:09,829 - INFO - Real-time factor: 0.401
+2026-04-10 12:11:21,640 - INFO - Speak: end of session. Please do not hesitate to reach out if you have any more questions or need further assistance in the future. Have a great day!
+2026-04-10 12:11:21,643 - INFO - Text split into sentences.
+2026-04-10 12:11:21,644 - INFO - Input: ['end of session.', 'Please do not hesitate to reach out if you have any more questions or need further assistance in the future.', 'Have a great day!']
+2026-04-10 12:11:26,537 - INFO - Processing time: 4.896
+2026-04-10 12:11:26,537 - INFO - Real-time factor: 0.555
+2026-04-10 12:12:31,916 - INFO - JARVIS initialized
+2026-04-10 12:12:31,916 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:12:38,421 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:12:38,433 - INFO - Using model: vits
+2026-04-10 12:12:38,434 - INFO - Setting up Audio Processor...
+2026-04-10 12:12:38,434 - INFO -  | sample_rate: 22050
+2026-04-10 12:12:38,434 - INFO -  | resample: False
+2026-04-10 12:12:38,434 - INFO -  | num_mels: 80
+2026-04-10 12:12:38,434 - INFO -  | log_func: np.log10
+2026-04-10 12:12:38,434 - INFO -  | min_level_db: 0
+2026-04-10 12:12:38,434 - INFO -  | frame_shift_ms: None
+2026-04-10 12:12:38,434 - INFO -  | frame_length_ms: None
+2026-04-10 12:12:38,434 - INFO -  | ref_level_db: None
+2026-04-10 12:12:38,434 - INFO -  | fft_size: 1024
+2026-04-10 12:12:38,434 - INFO -  | power: None
+2026-04-10 12:12:38,434 - INFO -  | preemphasis: 0.0
+2026-04-10 12:12:38,434 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:12:38,434 - INFO -  | signal_norm: None
+2026-04-10 12:12:38,434 - INFO -  | symmetric_norm: None
+2026-04-10 12:12:38,434 - INFO -  | mel_fmin: 0
+2026-04-10 12:12:38,434 - INFO -  | mel_fmax: None
+2026-04-10 12:12:38,434 - INFO -  | pitch_fmin: None
+2026-04-10 12:12:38,435 - INFO -  | pitch_fmax: None
+2026-04-10 12:12:38,435 - INFO -  | spec_gain: 20.0
+2026-04-10 12:12:38,435 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:12:38,435 - INFO -  | max_norm: 1.0
+2026-04-10 12:12:38,435 - INFO -  | clip_norm: True
+2026-04-10 12:12:38,435 - INFO -  | do_trim_silence: False
+2026-04-10 12:12:38,435 - INFO -  | trim_db: 60
+2026-04-10 12:12:38,435 - INFO -  | do_sound_norm: False
+2026-04-10 12:12:38,435 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:12:38,435 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:12:38,435 - INFO -  | do_rms_norm: False
+2026-04-10 12:12:38,435 - INFO -  | db_level: None
+2026-04-10 12:12:38,435 - INFO -  | stats_path: None
+2026-04-10 12:12:38,435 - INFO -  | base: 10
+2026-04-10 12:12:38,435 - INFO -  | hop_length: 256
+2026-04-10 12:12:38,435 - INFO -  | win_length: 1024
+2026-04-10 12:12:38,449 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:12:39,065 - INFO - Text split into sentences.
+2026-04-10 12:12:39,065 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:12:40,141 - INFO - Processing time: 1.085
+2026-04-10 12:12:40,141 - INFO - Real-time factor: 0.460
+2026-04-10 12:12:48,228 - INFO - Speak: Opening Ghostty.
+2026-04-10 12:12:48,231 - INFO - Text split into sentences.
+2026-04-10 12:12:48,231 - INFO - Input: ['Opening Ghostty.']
+2026-04-10 12:12:49,247 - INFO - Processing time: 1.017
+2026-04-10 12:12:49,247 - INFO - Real-time factor: 0.654
+2026-04-10 12:13:13,946 - INFO - Speak: Thinking...
+2026-04-10 12:13:13,949 - INFO - Text split into sentences.
+2026-04-10 12:13:13,949 - INFO - Input: ['Thinking...']
+2026-04-10 12:13:14,420 - INFO - Processing time: 0.473
+2026-04-10 12:13:14,420 - INFO - Real-time factor: 0.453
+2026-04-10 12:13:30,131 - INFO - Speak: It appears you want to terminate an interaction or close a dialogue. As your instruction, I have acknowledged the request and ended our communication accordingly: `Thank you for reaching out. If there is nothing else we can assist you with at this time, please feel free to contact us again in the future.`
+2026-04-10 12:13:30,137 - INFO - Text split into sentences.
+2026-04-10 12:13:30,138 - INFO - Input: ['It appears you want to terminate an interaction or close a dialogue.', "As your instruction, I have acknowledged the request and ended our communication accordingly: 'Thank you for reaching out.", 'If there is nothing else we can assist you with at this time, please feel free to contact us again in the future.', "'"]
+2026-04-10 12:13:39,476 - INFO - Processing time: 9.345
+2026-04-10 12:13:39,476 - INFO - Real-time factor: 0.541
+2026-04-10 12:14:01,482 - INFO - Speak: Thinking...
+2026-04-10 12:14:01,483 - INFO - Text split into sentences.
+2026-04-10 12:14:01,483 - INFO - Input: ['Thinking...']
+2026-04-10 12:14:01,838 - INFO - Processing time: 0.355
+2026-04-10 12:14:01,838 - INFO - Real-time factor: 0.368
+2026-04-10 12:15:09,407 - INFO - JARVIS initialized
+2026-04-10 12:15:09,407 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:15:16,212 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:15:16,233 - INFO - Using model: vits
+2026-04-10 12:15:16,234 - INFO - Setting up Audio Processor...
+2026-04-10 12:15:16,234 - INFO -  | sample_rate: 22050
+2026-04-10 12:15:16,234 - INFO -  | resample: False
+2026-04-10 12:15:16,234 - INFO -  | num_mels: 80
+2026-04-10 12:15:16,234 - INFO -  | log_func: np.log10
+2026-04-10 12:15:16,235 - INFO -  | min_level_db: 0
+2026-04-10 12:15:16,235 - INFO -  | frame_shift_ms: None
+2026-04-10 12:15:16,235 - INFO -  | frame_length_ms: None
+2026-04-10 12:15:16,235 - INFO -  | ref_level_db: None
+2026-04-10 12:15:16,235 - INFO -  | fft_size: 1024
+2026-04-10 12:15:16,235 - INFO -  | power: None
+2026-04-10 12:15:16,235 - INFO -  | preemphasis: 0.0
+2026-04-10 12:15:16,235 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:15:16,235 - INFO -  | signal_norm: None
+2026-04-10 12:15:16,235 - INFO -  | symmetric_norm: None
+2026-04-10 12:15:16,235 - INFO -  | mel_fmin: 0
+2026-04-10 12:15:16,235 - INFO -  | mel_fmax: None
+2026-04-10 12:15:16,235 - INFO -  | pitch_fmin: None
+2026-04-10 12:15:16,235 - INFO -  | pitch_fmax: None
+2026-04-10 12:15:16,235 - INFO -  | spec_gain: 20.0
+2026-04-10 12:15:16,235 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:15:16,235 - INFO -  | max_norm: 1.0
+2026-04-10 12:15:16,235 - INFO -  | clip_norm: True
+2026-04-10 12:15:16,235 - INFO -  | do_trim_silence: False
+2026-04-10 12:15:16,235 - INFO -  | trim_db: 60
+2026-04-10 12:15:16,235 - INFO -  | do_sound_norm: False
+2026-04-10 12:15:16,235 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:15:16,235 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:15:16,235 - INFO -  | do_rms_norm: False
+2026-04-10 12:15:16,235 - INFO -  | db_level: None
+2026-04-10 12:15:16,235 - INFO -  | stats_path: None
+2026-04-10 12:15:16,235 - INFO -  | base: 10
+2026-04-10 12:15:16,235 - INFO -  | hop_length: 256
+2026-04-10 12:15:16,235 - INFO -  | win_length: 1024
+2026-04-10 12:15:16,250 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:15:16,875 - INFO - Text split into sentences.
+2026-04-10 12:15:16,875 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:15:17,811 - INFO - Processing time: 0.945
+2026-04-10 12:15:17,812 - INFO - Real-time factor: 0.450
+2026-04-10 12:15:51,075 - INFO - Speak: Opening Google.
+2026-04-10 12:15:51,078 - INFO - Text split into sentences.
+2026-04-10 12:15:51,078 - INFO - Input: ['Opening Google.']
+2026-04-10 12:15:53,395 - INFO - Processing time: 2.319
+2026-04-10 12:15:53,395 - INFO - Real-time factor: 1.501
+2026-04-10 12:16:48,425 - INFO - Speak: Thinking...
+2026-04-10 12:16:48,426 - INFO - Text split into sentences.
+2026-04-10 12:16:48,426 - INFO - Input: ['Thinking...']
+2026-04-10 12:16:48,813 - INFO - Processing time: 0.388
+2026-04-10 12:16:48,813 - INFO - Real-time factor: 0.367
+2026-04-10 12:16:54,935 - INFO - Speak: Alright, stopping.
+2026-04-10 12:16:54,937 - INFO - Text split into sentences.
+2026-04-10 12:16:54,937 - INFO - Input: ['Alright, stopping.']
+2026-04-10 12:16:56,091 - INFO - Processing time: 1.155
+2026-04-10 12:16:56,095 - INFO - Real-time factor: 0.822
+2026-04-10 12:16:57,784 - INFO - AI generation interrupted by user
+2026-04-10 12:17:14,029 - INFO - Speak: Thinking...
+2026-04-10 12:17:14,031 - INFO - Text split into sentences.
+2026-04-10 12:17:14,031 - INFO - Input: ['Thinking...']
+2026-04-10 12:17:15,000 - INFO - Processing time: 0.970
+2026-04-10 12:17:15,000 - INFO - Real-time factor: 0.811
+2026-04-10 12:17:20,063 - ERROR - AI Worker Error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout=30)
+2026-04-10 12:17:21,717 - INFO - Speak: Alright, stopping.
+2026-04-10 12:17:21,719 - INFO - Text split into sentences.
+2026-04-10 12:17:21,719 - INFO - Input: ['Alright, stopping.']
+2026-04-10 12:17:23,159 - INFO - Processing time: 1.441
+2026-04-10 12:17:23,159 - INFO - Real-time factor: 0.992
+2026-04-10 12:17:24,769 - INFO - AI generation interrupted by user
+2026-04-10 12:17:39,759 - INFO - Speak: Thinking...
+2026-04-10 12:17:39,760 - INFO - Text split into sentences.
+2026-04-10 12:17:39,760 - INFO - Input: ['Thinking...']
+2026-04-10 12:17:40,897 - INFO - Processing time: 1.138
+2026-04-10 12:17:40,899 - INFO - Real-time factor: 1.139
+2026-04-10 12:17:46,487 - ERROR - AI Worker Error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout=30)
+2026-04-10 12:17:46,739 - INFO - Speak: Alright, stopping.
+2026-04-10 12:17:46,740 - INFO - Text split into sentences.
+2026-04-10 12:17:46,740 - INFO - Input: ['Alright, stopping.']
+2026-04-10 12:17:47,726 - INFO - Processing time: 0.987
+2026-04-10 12:17:47,727 - INFO - Real-time factor: 0.739
+2026-04-10 12:17:49,216 - INFO - AI generation interrupted by user
+2026-04-10 12:17:54,480 - INFO - Speak: Thinking...
+2026-04-10 12:17:54,482 - INFO - Text split into sentences.
+2026-04-10 12:17:54,484 - INFO - Input: ['Thinking...']
+2026-04-10 12:17:55,148 - INFO - Processing time: 0.667
+2026-04-10 12:17:55,149 - INFO - Real-time factor: 0.645
+2026-04-10 12:18:01,409 - INFO - Speak: Certainly! Please feel free to ask me anything that's within my capabilities or knowledge domain. I am here to assist you with a wide array of questions and topics, so don’t hesitate in your request for information or guidance on matters big or small. What would you like to know today?
+2026-04-10 12:18:01,414 - INFO - Text split into sentences.
+2026-04-10 12:18:01,414 - INFO - Input: ['Certainly!', "Please feel free to ask me anything that's within my capabilities or knowledge domain.", 'I am here to assist you with a wide array of questions and topics, so don’t hesitate in your request for information or guidance on matters big or small.', 'What would you like to know today?']
+2026-04-10 12:18:20,878 - INFO - Processing time: 19.468
+2026-04-10 12:18:20,880 - INFO - Real-time factor: 1.131
+2026-04-10 12:18:26,408 - ERROR - AI Worker Error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout=30)
+2026-04-10 12:18:56,433 - INFO - Speak: Closing.
+2026-04-10 12:18:56,444 - INFO - Text split into sentences.
+2026-04-10 12:18:56,444 - INFO - Input: ['Closing.']
+2026-04-10 12:18:57,102 - INFO - Processing time: 0.668
+2026-04-10 12:18:57,103 - INFO - Real-time factor: 0.563
+2026-04-10 12:22:36,467 - INFO - JARVIS initialized
+2026-04-10 12:22:36,467 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:22:43,691 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:22:43,703 - INFO - Using model: vits
+2026-04-10 12:22:43,705 - INFO - Setting up Audio Processor...
+2026-04-10 12:22:43,705 - INFO -  | sample_rate: 22050
+2026-04-10 12:22:43,705 - INFO -  | resample: False
+2026-04-10 12:22:43,705 - INFO -  | num_mels: 80
+2026-04-10 12:22:43,705 - INFO -  | log_func: np.log10
+2026-04-10 12:22:43,705 - INFO -  | min_level_db: 0
+2026-04-10 12:22:43,705 - INFO -  | frame_shift_ms: None
+2026-04-10 12:22:43,705 - INFO -  | frame_length_ms: None
+2026-04-10 12:22:43,706 - INFO -  | ref_level_db: None
+2026-04-10 12:22:43,706 - INFO -  | fft_size: 1024
+2026-04-10 12:22:43,706 - INFO -  | power: None
+2026-04-10 12:22:43,706 - INFO -  | preemphasis: 0.0
+2026-04-10 12:22:43,706 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:22:43,706 - INFO -  | signal_norm: None
+2026-04-10 12:22:43,706 - INFO -  | symmetric_norm: None
+2026-04-10 12:22:43,706 - INFO -  | mel_fmin: 0
+2026-04-10 12:22:43,706 - INFO -  | mel_fmax: None
+2026-04-10 12:22:43,706 - INFO -  | pitch_fmin: None
+2026-04-10 12:22:43,706 - INFO -  | pitch_fmax: None
+2026-04-10 12:22:43,706 - INFO -  | spec_gain: 20.0
+2026-04-10 12:22:43,706 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:22:43,706 - INFO -  | max_norm: 1.0
+2026-04-10 12:22:43,706 - INFO -  | clip_norm: True
+2026-04-10 12:22:43,706 - INFO -  | do_trim_silence: False
+2026-04-10 12:22:43,706 - INFO -  | trim_db: 60
+2026-04-10 12:22:43,706 - INFO -  | do_sound_norm: False
+2026-04-10 12:22:43,706 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:22:43,706 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:22:43,706 - INFO -  | do_rms_norm: False
+2026-04-10 12:22:43,706 - INFO -  | db_level: None
+2026-04-10 12:22:43,706 - INFO -  | stats_path: None
+2026-04-10 12:22:43,706 - INFO -  | base: 10
+2026-04-10 12:22:43,706 - INFO -  | hop_length: 256
+2026-04-10 12:22:43,706 - INFO -  | win_length: 1024
+2026-04-10 12:22:43,722 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:22:44,417 - INFO - Text split into sentences.
+2026-04-10 12:22:44,418 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:22:45,696 - INFO - Processing time: 1.288
+2026-04-10 12:22:45,697 - INFO - Real-time factor: 0.552
+2026-04-10 12:22:58,147 - INFO - HTTP Request: GET https://huggingface.co/api/models/mobiuslabsgmbh/faster-whisper-large-v3-turbo/revision/main "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:58,664 - INFO - HTTP Request: GET https://huggingface.co/api/models/dropbox-dash/faster-whisper-large-v3-turbo/revision/main "HTTP/1.1 200 OK"
+2026-04-10 12:22:58,969 - INFO - HTTP Request: HEAD https://huggingface.co/mobiuslabsgmbh/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:59,095 - INFO - HTTP Request: HEAD https://huggingface.co/mobiuslabsgmbh/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/vocabulary.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:59,098 - INFO - HTTP Request: HEAD https://huggingface.co/mobiuslabsgmbh/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:59,133 - INFO - HTTP Request: HEAD https://huggingface.co/mobiuslabsgmbh/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/model.bin "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:59,143 - INFO - HTTP Request: HEAD https://huggingface.co/mobiuslabsgmbh/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:59,252 - INFO - HTTP Request: HEAD https://huggingface.co/dropbox-dash/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/preprocessor_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:59,253 - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-04-10 12:22:59,309 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/dropbox-dash/faster-whisper-large-v3-turbo/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-04-10 12:22:59,399 - INFO - HTTP Request: HEAD https://huggingface.co/dropbox-dash/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:59,400 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/dropbox-dash/faster-whisper-large-v3-turbo/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/preprocessor_config.json "HTTP/1.1 200 OK"
+2026-04-10 12:22:59,424 - INFO - HTTP Request: HEAD https://huggingface.co/dropbox-dash/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:59,427 - INFO - HTTP Request: HEAD https://huggingface.co/dropbox-dash/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/model.bin "HTTP/1.1 302 Found"
+2026-04-10 12:22:59,447 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/dropbox-dash/faster-whisper-large-v3-turbo/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/tokenizer.json "HTTP/1.1 200 OK"
+2026-04-10 12:22:59,464 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/dropbox-dash/faster-whisper-large-v3-turbo/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/config.json "HTTP/1.1 200 OK"
+2026-04-10 12:22:59,486 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/dropbox-dash/faster-whisper-large-v3-turbo/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/tokenizer.json "HTTP/1.1 200 OK"
+2026-04-10 12:22:59,491 - INFO - HTTP Request: HEAD https://huggingface.co/dropbox-dash/faster-whisper-large-v3-turbo/resolve/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/vocabulary.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:22:59,519 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/dropbox-dash/faster-whisper-large-v3-turbo/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/config.json "HTTP/1.1 200 OK"
+2026-04-10 12:22:59,544 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/dropbox-dash/faster-whisper-large-v3-turbo/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/vocabulary.json "HTTP/1.1 200 OK"
+2026-04-10 12:22:59,587 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/dropbox-dash/faster-whisper-large-v3-turbo/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/vocabulary.json "HTTP/1.1 200 OK"
+2026-04-10 12:22:59,729 - INFO - HTTP Request: GET https://huggingface.co/api/models/dropbox-dash/faster-whisper-large-v3-turbo/xet-read-token/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf "HTTP/1.1 200 OK"
+2026-04-10 12:24:55,312 - INFO - JARVIS initialized
+2026-04-10 12:24:55,312 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:25:01,743 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:25:01,781 - INFO - Using model: vits
+2026-04-10 12:25:01,782 - INFO - Setting up Audio Processor...
+2026-04-10 12:25:01,782 - INFO -  | sample_rate: 22050
+2026-04-10 12:25:01,782 - INFO -  | resample: False
+2026-04-10 12:25:01,782 - INFO -  | num_mels: 80
+2026-04-10 12:25:01,782 - INFO -  | log_func: np.log10
+2026-04-10 12:25:01,782 - INFO -  | min_level_db: 0
+2026-04-10 12:25:01,782 - INFO -  | frame_shift_ms: None
+2026-04-10 12:25:01,782 - INFO -  | frame_length_ms: None
+2026-04-10 12:25:01,782 - INFO -  | ref_level_db: None
+2026-04-10 12:25:01,783 - INFO -  | fft_size: 1024
+2026-04-10 12:25:01,783 - INFO -  | power: None
+2026-04-10 12:25:01,783 - INFO -  | preemphasis: 0.0
+2026-04-10 12:25:01,783 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:25:01,783 - INFO -  | signal_norm: None
+2026-04-10 12:25:01,783 - INFO -  | symmetric_norm: None
+2026-04-10 12:25:01,783 - INFO -  | mel_fmin: 0
+2026-04-10 12:25:01,783 - INFO -  | mel_fmax: None
+2026-04-10 12:25:01,783 - INFO -  | pitch_fmin: None
+2026-04-10 12:25:01,783 - INFO -  | pitch_fmax: None
+2026-04-10 12:25:01,783 - INFO -  | spec_gain: 20.0
+2026-04-10 12:25:01,783 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:25:01,783 - INFO -  | max_norm: 1.0
+2026-04-10 12:25:01,783 - INFO -  | clip_norm: True
+2026-04-10 12:25:01,783 - INFO -  | do_trim_silence: False
+2026-04-10 12:25:01,783 - INFO -  | trim_db: 60
+2026-04-10 12:25:01,783 - INFO -  | do_sound_norm: False
+2026-04-10 12:25:01,783 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:25:01,783 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:25:01,783 - INFO -  | do_rms_norm: False
+2026-04-10 12:25:01,783 - INFO -  | db_level: None
+2026-04-10 12:25:01,783 - INFO -  | stats_path: None
+2026-04-10 12:25:01,783 - INFO -  | base: 10
+2026-04-10 12:25:01,783 - INFO -  | hop_length: 256
+2026-04-10 12:25:01,783 - INFO -  | win_length: 1024
+2026-04-10 12:25:01,796 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:25:02,330 - INFO - Text split into sentences.
+2026-04-10 12:25:02,330 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:25:03,364 - INFO - Processing time: 1.045
+2026-04-10 12:25:03,365 - INFO - Real-time factor: 0.454
+2026-04-10 12:25:16,399 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-04-10 12:25:16,870 - INFO - Processing audio with duration 00:01.408
+2026-04-10 12:25:16,925 - INFO - VAD filter removed 00:00.080 of audio
+2026-04-10 12:25:19,440 - INFO - Speak: Thinking...
+2026-04-10 12:25:19,441 - INFO - Text split into sentences.
+2026-04-10 12:25:19,441 - INFO - Input: ['Thinking...']
+2026-04-10 12:25:19,883 - INFO - Processing time: 0.443
+2026-04-10 12:25:19,883 - INFO - Real-time factor: 0.428
+2026-04-10 12:25:22,922 - INFO - Processing audio with duration 00:01.536
+2026-04-10 12:25:22,930 - INFO - VAD filter removed 00:00.304 of audio
+2026-04-10 12:25:31,604 - INFO - Processing audio with duration 00:01.536
+2026-04-10 12:25:31,611 - INFO - VAD filter removed 00:00.688 of audio
+2026-04-10 12:25:41,158 - INFO - Processing audio with duration 00:01.280
+2026-04-10 12:25:41,164 - INFO - VAD filter removed 00:00.000 of audio
+2026-04-10 12:25:46,217 - INFO - Processing audio with duration 00:01.408
+2026-04-10 12:25:46,221 - INFO - VAD filter removed 00:01.408 of audio
+2026-04-10 12:25:46,259 - INFO - Speak: I understand your frustration, but it seems like you might be approaching this from the wrong angle. Instead of fixating on something that happened in the past and what someone did or didn't do for you emotionally, perhaps we can work together on building a healthier approach to relationships moving forward?
+2026-04-10 12:25:46,274 - INFO - Text split into sentences.
+2026-04-10 12:25:46,274 - INFO - Input: ['I understand your frustration, but it seems like you might be approaching this from the wrong angle.', "Instead of fixating on something that happened in the past and what someone did or didn't do for you emotionally, perhaps we can work together on building a healthier approach to relationships moving forward?"]
+2026-04-10 12:25:55,952 - INFO - Processing time: 9.690
+2026-04-10 12:25:55,953 - INFO - Real-time factor: 0.609
+2026-04-10 12:26:09,702 - INFO - Processing audio with duration 00:01.472
+2026-04-10 12:26:09,706 - INFO - VAD filter removed 00:00.000 of audio
+2026-04-10 12:26:10,541 - INFO - Speak: Writing in 2 seconds. Focus your field.
+2026-04-10 12:26:10,543 - INFO - Text split into sentences.
+2026-04-10 12:26:10,543 - INFO - Input: ['Writing in 2 seconds.', 'Focus your field.']
+2026-04-10 12:26:12,333 - INFO - Processing time: 1.792
+2026-04-10 12:26:12,333 - INFO - Real-time factor: 0.490
+2026-04-10 12:26:18,753 - INFO - Speak: Done.
+2026-04-10 12:26:18,754 - INFO - Text split into sentences.
+2026-04-10 12:26:18,754 - INFO - Input: ['Done.']
+2026-04-10 12:26:19,177 - INFO - Processing time: 0.423
+2026-04-10 12:26:19,177 - INFO - Real-time factor: 0.433
+2026-04-10 12:26:23,688 - INFO - Processing audio with duration 00:01.536
+2026-04-10 12:26:23,693 - INFO - VAD filter removed 00:00.048 of audio
+2026-04-10 12:26:24,749 - INFO - Speak: Thinking...
+2026-04-10 12:26:24,750 - INFO - Text split into sentences.
+2026-04-10 12:26:24,750 - INFO - Input: ['Thinking...']
+2026-04-10 12:26:25,102 - INFO - Processing time: 0.353
+2026-04-10 12:26:25,102 - INFO - Real-time factor: 0.399
+2026-04-10 12:26:28,086 - INFO - Processing audio with duration 00:01.536
+2026-04-10 12:26:28,093 - INFO - VAD filter removed 00:00.000 of audio
+2026-04-10 12:26:36,118 - INFO - Processing audio with duration 00:01.408
+2026-04-10 12:26:36,124 - INFO - VAD filter removed 00:00.304 of audio
+2026-04-10 12:26:40,036 - INFO - Processing audio with duration 00:01.280
+2026-04-10 12:26:40,059 - INFO - VAD filter removed 00:01.280 of audio
+2026-04-10 12:26:42,182 - INFO - Processing audio with duration 00:01.472
+2026-04-10 12:26:42,188 - INFO - VAD filter removed 00:01.472 of audio
+2026-04-10 12:26:44,055 - INFO - Processing audio with duration 00:01.152
+2026-04-10 12:26:44,063 - INFO - VAD filter removed 00:01.152 of audio
+2026-04-10 12:26:45,928 - INFO - Processing audio with duration 00:01.536
+2026-04-10 12:26:45,934 - INFO - VAD filter removed 00:00.784 of audio
+2026-04-10 12:26:46,780 - INFO - Speak: I'm sorry if my previous response made you feel uncomfortable or misunderstood. I always aim to provide helpful and respectful service. If there is something specific I can assist you with, please let me know how I might help address your needs or concerns! Remember that maintaining a polite tone in our communication fosters positive interactions and understanding between us all.
+2026-04-10 12:26:46,785 - INFO - Text split into sentences.
+2026-04-10 12:26:46,785 - INFO - Input: ["I'm sorry if my previous response made you feel uncomfortable or misunderstood.", 'I always aim to provide helpful and respectful service.', 'If there is something specific I can assist you with, please let me know how I might help address your needs or concerns!', 'Remember that maintaining a polite tone in our communication fosters positive interactions and understanding between us all.']
+2026-04-10 12:26:57,866 - INFO - Processing time: 11.085
+2026-04-10 12:26:57,866 - INFO - Real-time factor: 0.502
+2026-04-10 12:28:51,377 - INFO - Processing audio with duration 00:01.792
+2026-04-10 12:28:51,383 - INFO - VAD filter removed 00:01.792 of audio
+2026-04-10 12:28:54,633 - INFO - Processing audio with duration 00:01.856
+2026-04-10 12:28:54,638 - INFO - VAD filter removed 00:01.856 of audio
+2026-04-10 12:30:20,909 - INFO - JARVIS initialized
+2026-04-10 12:30:20,909 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:30:27,937 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:30:27,948 - INFO - Using model: vits
+2026-04-10 12:30:27,949 - INFO - Setting up Audio Processor...
+2026-04-10 12:30:27,950 - INFO -  | sample_rate: 22050
+2026-04-10 12:30:27,950 - INFO -  | resample: False
+2026-04-10 12:30:27,950 - INFO -  | num_mels: 80
+2026-04-10 12:30:27,950 - INFO -  | log_func: np.log10
+2026-04-10 12:30:27,950 - INFO -  | min_level_db: 0
+2026-04-10 12:30:27,950 - INFO -  | frame_shift_ms: None
+2026-04-10 12:30:27,950 - INFO -  | frame_length_ms: None
+2026-04-10 12:30:27,950 - INFO -  | ref_level_db: None
+2026-04-10 12:30:27,950 - INFO -  | fft_size: 1024
+2026-04-10 12:30:27,950 - INFO -  | power: None
+2026-04-10 12:30:27,950 - INFO -  | preemphasis: 0.0
+2026-04-10 12:30:27,950 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:30:27,950 - INFO -  | signal_norm: None
+2026-04-10 12:30:27,950 - INFO -  | symmetric_norm: None
+2026-04-10 12:30:27,950 - INFO -  | mel_fmin: 0
+2026-04-10 12:30:27,950 - INFO -  | mel_fmax: None
+2026-04-10 12:30:27,950 - INFO -  | pitch_fmin: None
+2026-04-10 12:30:27,950 - INFO -  | pitch_fmax: None
+2026-04-10 12:30:27,950 - INFO -  | spec_gain: 20.0
+2026-04-10 12:30:27,950 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:30:27,950 - INFO -  | max_norm: 1.0
+2026-04-10 12:30:27,950 - INFO -  | clip_norm: True
+2026-04-10 12:30:27,950 - INFO -  | do_trim_silence: False
+2026-04-10 12:30:27,950 - INFO -  | trim_db: 60
+2026-04-10 12:30:27,950 - INFO -  | do_sound_norm: False
+2026-04-10 12:30:27,950 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:30:27,950 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:30:27,950 - INFO -  | do_rms_norm: False
+2026-04-10 12:30:27,950 - INFO -  | db_level: None
+2026-04-10 12:30:27,950 - INFO -  | stats_path: None
+2026-04-10 12:30:27,951 - INFO -  | base: 10
+2026-04-10 12:30:27,951 - INFO -  | hop_length: 256
+2026-04-10 12:30:27,951 - INFO -  | win_length: 1024
+2026-04-10 12:30:27,964 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:30:28,691 - INFO - Text split into sentences.
+2026-04-10 12:30:28,691 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:30:30,206 - INFO - Processing time: 1.523
+2026-04-10 12:30:30,207 - INFO - Real-time factor: 0.676
+2026-04-10 12:30:39,652 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-04-10 12:30:40,144 - INFO - Processing audio with duration 00:01.408
+2026-04-10 12:30:40,203 - INFO - VAD filter removed 00:00.112 of audio
+2026-04-10 12:30:47,016 - INFO - Speak: Thinking...
+2026-04-10 12:30:47,018 - INFO - Text split into sentences.
+2026-04-10 12:30:47,018 - INFO - Input: ['Thinking...']
+2026-04-10 12:30:47,444 - INFO - Processing time: 0.428
+2026-04-10 12:30:47,445 - INFO - Real-time factor: 0.449
+2026-04-10 12:30:49,985 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:30:49,989 - INFO - VAD filter removed 00:01.024 of audio
+2026-04-10 12:30:51,303 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:30:51,308 - INFO - VAD filter removed 00:01.024 of audio
+2026-04-10 12:30:52,636 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:30:52,640 - INFO - VAD filter removed 00:01.024 of audio
+2026-04-10 12:30:53,954 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:30:53,963 - INFO - VAD filter removed 00:00.000 of audio
+2026-04-10 12:30:55,272 - INFO - Speak: "Consider your safety first."
+2026-04-10 12:30:55,273 - INFO - Text split into sentences.
+2026-04-10 12:30:55,273 - INFO - Input: ['"Consider your safety first."']
+2026-04-10 12:30:56,253 - INFO - Processing time: 0.980
+2026-04-10 12:30:56,253 - INFO - Real-time factor: 0.488
+2026-04-10 12:31:03,508 - INFO - Processing audio with duration 00:01.472
+2026-04-10 12:31:03,516 - INFO - VAD filter removed 00:00.240 of audio
+2026-04-10 12:31:04,468 - INFO - Speak: Goodbye SIR
+2026-04-10 12:31:04,469 - INFO - Text split into sentences.
+2026-04-10 12:31:04,469 - INFO - Input: ['Goodbye SIR']
+2026-04-10 12:31:05,260 - INFO - Processing time: 0.792
+2026-04-10 12:31:05,260 - INFO - Real-time factor: 0.559
+2026-04-10 12:31:17,551 - INFO - JARVIS initialized
+2026-04-10 12:31:17,551 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:31:24,027 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:31:24,067 - INFO - Using model: vits
+2026-04-10 12:31:24,068 - INFO - Setting up Audio Processor...
+2026-04-10 12:31:24,068 - INFO -  | sample_rate: 22050
+2026-04-10 12:31:24,069 - INFO -  | resample: False
+2026-04-10 12:31:24,069 - INFO -  | num_mels: 80
+2026-04-10 12:31:24,069 - INFO -  | log_func: np.log10
+2026-04-10 12:31:24,069 - INFO -  | min_level_db: 0
+2026-04-10 12:31:24,069 - INFO -  | frame_shift_ms: None
+2026-04-10 12:31:24,069 - INFO -  | frame_length_ms: None
+2026-04-10 12:31:24,069 - INFO -  | ref_level_db: None
+2026-04-10 12:31:24,069 - INFO -  | fft_size: 1024
+2026-04-10 12:31:24,069 - INFO -  | power: None
+2026-04-10 12:31:24,069 - INFO -  | preemphasis: 0.0
+2026-04-10 12:31:24,069 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:31:24,069 - INFO -  | signal_norm: None
+2026-04-10 12:31:24,069 - INFO -  | symmetric_norm: None
+2026-04-10 12:31:24,069 - INFO -  | mel_fmin: 0
+2026-04-10 12:31:24,069 - INFO -  | mel_fmax: None
+2026-04-10 12:31:24,069 - INFO -  | pitch_fmin: None
+2026-04-10 12:31:24,069 - INFO -  | pitch_fmax: None
+2026-04-10 12:31:24,069 - INFO -  | spec_gain: 20.0
+2026-04-10 12:31:24,069 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:31:24,069 - INFO -  | max_norm: 1.0
+2026-04-10 12:31:24,069 - INFO -  | clip_norm: True
+2026-04-10 12:31:24,069 - INFO -  | do_trim_silence: False
+2026-04-10 12:31:24,069 - INFO -  | trim_db: 60
+2026-04-10 12:31:24,069 - INFO -  | do_sound_norm: False
+2026-04-10 12:31:24,069 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:31:24,069 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:31:24,069 - INFO -  | do_rms_norm: False
+2026-04-10 12:31:24,069 - INFO -  | db_level: None
+2026-04-10 12:31:24,069 - INFO -  | stats_path: None
+2026-04-10 12:31:24,069 - INFO -  | base: 10
+2026-04-10 12:31:24,070 - INFO -  | hop_length: 256
+2026-04-10 12:31:24,070 - INFO -  | win_length: 1024
+2026-04-10 12:31:24,084 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:31:24,595 - INFO - Text split into sentences.
+2026-04-10 12:31:24,595 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:31:25,682 - INFO - Processing time: 1.096
+2026-04-10 12:31:25,683 - INFO - Real-time factor: 0.497
+2026-04-10 12:31:34,914 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-04-10 12:31:35,318 - INFO - Processing audio with duration 00:01.472
+2026-04-10 12:31:35,353 - INFO - VAD filter removed 00:00.080 of audio
+2026-04-10 12:31:37,781 - INFO - Speak: Thinking...
+2026-04-10 12:31:37,782 - INFO - Text split into sentences.
+2026-04-10 12:31:37,782 - INFO - Input: ['Thinking...']
+2026-04-10 12:31:38,241 - INFO - Processing time: 0.459
+2026-04-10 12:31:38,241 - INFO - Real-time factor: 0.449
+2026-04-10 12:31:40,775 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:31:40,781 - INFO - VAD filter removed 00:00.000 of audio
+2026-04-10 12:31:43,964 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:31:43,967 - INFO - VAD filter removed 00:01.024 of audio
+2026-04-10 12:31:43,991 - INFO - Speak: That conforms to maritime tradition and style.
+2026-04-10 12:31:43,994 - INFO - Text split into sentences.
+2026-04-10 12:31:43,995 - INFO - Input: ['That conforms to maritime tradition and style.']
+2026-04-10 12:31:45,795 - INFO - Processing time: 1.803
+2026-04-10 12:31:45,795 - INFO - Real-time factor: 0.553

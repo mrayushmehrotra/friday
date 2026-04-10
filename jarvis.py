@@ -15,7 +15,7 @@ class Jarvis:
 
     def wishMe(self) -> None:
         hour = int(datetime.datetime.now().hour)
-        greeting = "Jarvis is online, How's your day?" if 0 <= hour < 12 else "How's your afternoon going?" if 12 <= hour < 18 else "How's your evening going?"
+        greeting = "Jarvis is online, How's your day?"
         speak(greeting)
 
     def execute_query(self, query):
@@ -35,6 +35,10 @@ class Jarvis:
             webbrowser.open_new_tab('https://vercel.com/dashboard')
             speak("Opening Vercel dashboard.")
 
+        elif 'open github' in query:
+            webbrowser.open_new_tab('https://github.com/mrayushmehrotra')
+            speak("Opening Github dashboard.")
+
         elif 'open training' in query:
             webbrowser.open_new_tab('https://neurobro.vercel.app/')
             speak("Opening your brain training application.")
@@ -50,11 +54,11 @@ class Jarvis:
             speak("What terminal command should I execute?")
             command = takeCommand()
             if command != 'none':
-                # Special handling for 'remove' or 'rm' as requested
                 if 'remove' in command or 'rm' in command:
                     speak(f"Confirm: Do you really want to run {command}?")
                     confirm = takeCommand()
                     if 'yes' in confirm:
+                        os.system(confirm if 'rm' in confirm else command) # Just being safe
                         os.system(command)
                         speak("Command executed.")
                     else:
@@ -62,6 +66,78 @@ class Jarvis:
                 else:
                     os.system(f"{command} &")
                     speak(f"Executing {command}")
+
+        elif 'copy' in query:
+            text_to_copy = query.replace('copy', '', 1).strip()
+            if not text_to_copy:
+                speak("What text should I copy?")
+                text_to_copy = takeCommand()
+            
+            if text_to_copy != 'none':
+                import pyperclip
+                pyperclip.copy(text_to_copy)
+                speak("Text copied to clipboard.")
+
+        elif 'write' in query or 'right' in query:
+            # Fix: Cleanup text by removing both 'write' and 'right'
+            text_to_write = query.replace('write', '', 1).replace('right', '', 1).strip()
+            if not text_to_write:
+                speak("What should I write?")
+                text = takeCommand()
+                if text != 'none':
+                    text_to_write = text
+            
+            if text_to_write != 'none' and text_to_write.strip():
+                import pyperclip
+                import time
+                speak("Writing in 2 seconds. Focus your field.")
+                time.sleep(2)
+                
+                try:
+                    old_clip = pyperclip.paste()
+                except:
+                    old_clip = ""
+                
+                pyperclip.copy(text_to_write)
+                
+                # Check for Wayland vs X11
+                is_wayland = os.environ.get('XDG_SESSION_TYPE') == 'wayland'
+                
+                if is_wayland:
+                    if os.system("which wtype > /dev/null 2>&1") == 0:
+                        os.system(f"wtype '{text_to_write}'")
+                    else:
+                        try:
+                            # Try hotkey paste but wrap to avoid X11 crash
+                            import pyautogui
+                            pyautogui.hotkey('ctrl', 'v')
+                        except:
+                            speak("Ready to paste. Please press Ctrl V.")
+                else:
+                    try:
+                        import pyautogui
+                        pyautogui.hotkey('ctrl', 'v')
+                    except:
+                        speak("Paste failed. Do it manually.")
+
+                time.sleep(0.5)
+                try:
+                    pyperclip.copy(old_clip)
+                except:
+                    pass
+                speak("Done.")
+
+        elif 'close' in query or 'window close' in query:
+            speak("Closing.")
+            try:
+                import pyautogui
+                pyautogui.hotkey('ctrl', 'q')
+            except:
+                is_wayland = os.environ.get('XDG_SESSION_TYPE') == 'wayland'
+                if is_wayland and os.system("which wtype > /dev/null 2>&1") == 0:
+                     os.system("wtype -M ctrl -k q -m ctrl")
+                else:
+                     speak("I can't close this window automatically. Try Ctrl Q.")
 
         elif 'who are you' in query:
             speak('I am JARVIS, your local AI assistant.')
@@ -90,7 +166,11 @@ class Jarvis:
         self.aborted = False
 
         def ai_worker():
-            payload = {"model": self.model, "prompt": query, "stream": False}
+            # System instruction for brevity as requested by user
+            system_instruction = "You are JARVIS, a highly concise local AI. Answer the user in one short sentence only."
+            full_prompt = f"{system_instruction}\n\nUser: {query}\nAssistant:"
+            
+            payload = {"model": self.model, "prompt": full_prompt, "stream": False}
             try:
                 response = requests.post(self.ollama_url, json=payload, timeout=30)
                 if response.status_code == 200:
@@ -105,14 +185,13 @@ class Jarvis:
 
         # Check for "stop" while AI is processing
         while not self.ai_completed:
-            # We use a short timeout and phrase limit to check for interruptions
-            # This will loop until the AI is done or "stop" is heard
-            interrupt = takeCommand(timeout=0.5, phrase_limit=1.5)
-            if "stop" in interrupt:
+            # Increased responsiveness by using a very short timeout
+            interrupt = takeCommand(timeout=0.1, phrase_limit=1.0)
+            if any(word in interrupt for word in ["stop", "wait", "shut up", "cancel"]):
                 self.aborted = True
                 speak("Alright, stopping.")
                 log_event("AI generation interrupted by user")
-                return # Go back to main loop
+                return 
 
         if self.ai_result and not self.aborted:
             save_chat_to_db('assistant', self.ai_result)
