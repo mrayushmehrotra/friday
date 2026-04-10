@@ -4,7 +4,6 @@ import datetime
 import logging
 import sqlite3
 import speech_recognition as sr
-import numpy as np
 from ctypes import *
 
 # Silence ALSA/JACK errors
@@ -37,7 +36,6 @@ logging.basicConfig(
 # Global models and state
 _tts = None
 _tts_type = None 
-_whisper_model = None
 _recognizer = sr.Recognizer()
 
 # SPEED CONFIG
@@ -49,6 +47,7 @@ def get_tts():
         try:
             from TTS.api import TTS
             print("Loading Coqui TTS male voice model...")
+            # We already have this model, so it shouldn't download much
             _tts = TTS(model_name="tts_models/en/vctk/vits", progress_bar=False, gpu=False)
             _tts_type = 'coqui'
         except Exception:
@@ -56,20 +55,6 @@ def get_tts():
             _tts = pyttsx3.init()
             _tts_type = 'pyttsx3'
     return _tts
-
-def get_whisper():
-    global _whisper_model
-    if _whisper_model is None:
-        from faster_whisper import WhisperModel
-        # Switching to 'base' - very lightweight (~150MB), fast, and 100% local/free.
-        print("Loading lightweight local STT (base)...")
-        _whisper_model = WhisperModel(
-            "base", 
-            device="cpu", 
-            compute_type="int8", 
-            cpu_threads=4
-        )
-    return _whisper_model
 
 def init_db():
     conn = sqlite3.connect('chat_history.db')
@@ -120,7 +105,6 @@ def speak(audio) -> None:
         except Exception as e:
             log_event(f"Coqui speech error: {e}", 'error')
     else:
-        # pyttsx3 fallback
         rate = int(200 * SPEECH_SPEED)
         engine.setProperty('rate', rate)
         engine.say(audio)
@@ -128,13 +112,15 @@ def speak(audio) -> None:
 
 def takeCommand(timeout=None, phrase_limit=None) -> str:
     global _recognizer
-    _recognizer.energy_threshold = 300 
-    _recognizer.dynamic_energy_threshold = True
     
-    with sr.Microphone(sample_rate=16000) as source:
+    with sr.Microphone() as source:
         if timeout is None:
             print('\n--- Listening ---')
-        _recognizer.pause_threshold = 0.8
+        
+        # Increased to allow more natural pauses without cutting the user off
+        _recognizer.pause_threshold = 1.2  # Seconds of silence to conclude a sentence
+        _recognizer.non_speaking_duration = 1.0 # Buffer from silence to non-silence
+        _recognizer.phrase_threshold = 0.3 # Minimum length of speech to be considered a phrase
         
         if timeout is None:
             _recognizer.adjust_for_ambient_noise(source, duration=0.8)
@@ -145,16 +131,11 @@ def takeCommand(timeout=None, phrase_limit=None) -> str:
             return 'none'
 
     try:
-        audio_data = np.frombuffer(audio_sr.get_raw_data(), np.int16).flatten().astype(np.float32) / 32768.0
-        
-        model = get_whisper()
-        segments, _ = model.transcribe(
-            audio_data, 
-            language="en", 
-            vad_filter=True
-        )
-        
-        query = "".join([segment.text for segment in segments]).strip().lower()
+        if timeout is None:
+            print("Recognizing...")
+        # Switching back to Google STT as requested
+        query = _recognizer.recognize_google(audio_sr, language='en-in')
+        query = query.lower()
         
         if query:
             if timeout is None:

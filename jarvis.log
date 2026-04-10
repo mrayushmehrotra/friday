@@ -1598,3 +1598,307 @@ Remember that actual accessibility will depend on whether a real service exists 
 2026-04-10 12:31:43,995 - INFO - Input: ['That conforms to maritime tradition and style.']
 2026-04-10 12:31:45,795 - INFO - Processing time: 1.803
 2026-04-10 12:31:45,795 - INFO - Real-time factor: 0.553
+2026-04-10 12:36:17,295 - INFO - JARVIS initialized with MCP support
+2026-04-10 12:36:17,295 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:36:23,791 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:36:23,820 - INFO - Using model: vits
+2026-04-10 12:36:23,821 - INFO - Setting up Audio Processor...
+2026-04-10 12:36:23,822 - INFO -  | sample_rate: 22050
+2026-04-10 12:36:23,822 - INFO -  | resample: False
+2026-04-10 12:36:23,822 - INFO -  | num_mels: 80
+2026-04-10 12:36:23,822 - INFO -  | log_func: np.log10
+2026-04-10 12:36:23,822 - INFO -  | min_level_db: 0
+2026-04-10 12:36:23,822 - INFO -  | frame_shift_ms: None
+2026-04-10 12:36:23,822 - INFO -  | frame_length_ms: None
+2026-04-10 12:36:23,822 - INFO -  | ref_level_db: None
+2026-04-10 12:36:23,822 - INFO -  | fft_size: 1024
+2026-04-10 12:36:23,822 - INFO -  | power: None
+2026-04-10 12:36:23,822 - INFO -  | preemphasis: 0.0
+2026-04-10 12:36:23,822 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:36:23,822 - INFO -  | signal_norm: None
+2026-04-10 12:36:23,822 - INFO -  | symmetric_norm: None
+2026-04-10 12:36:23,823 - INFO -  | mel_fmin: 0
+2026-04-10 12:36:23,823 - INFO -  | mel_fmax: None
+2026-04-10 12:36:23,823 - INFO -  | pitch_fmin: None
+2026-04-10 12:36:23,823 - INFO -  | pitch_fmax: None
+2026-04-10 12:36:23,823 - INFO -  | spec_gain: 20.0
+2026-04-10 12:36:23,823 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:36:23,823 - INFO -  | max_norm: 1.0
+2026-04-10 12:36:23,823 - INFO -  | clip_norm: True
+2026-04-10 12:36:23,823 - INFO -  | do_trim_silence: False
+2026-04-10 12:36:23,823 - INFO -  | trim_db: 60
+2026-04-10 12:36:23,823 - INFO -  | do_sound_norm: False
+2026-04-10 12:36:23,823 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:36:23,823 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:36:23,823 - INFO -  | do_rms_norm: False
+2026-04-10 12:36:23,823 - INFO -  | db_level: None
+2026-04-10 12:36:23,823 - INFO -  | stats_path: None
+2026-04-10 12:36:23,823 - INFO -  | base: 10
+2026-04-10 12:36:23,823 - INFO -  | hop_length: 256
+2026-04-10 12:36:23,823 - INFO -  | win_length: 1024
+2026-04-10 12:36:23,841 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:36:24,464 - INFO - Text split into sentences.
+2026-04-10 12:36:24,465 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:36:25,535 - INFO - Processing time: 1.080
+2026-04-10 12:36:25,536 - INFO - Real-time factor: 0.477
+2026-04-10 12:36:31,247 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-04-10 12:36:31,498 - INFO - Processing audio with duration 00:01.216
+2026-04-10 12:36:31,525 - INFO - VAD filter removed 00:00.000 of audio
+2026-04-10 12:36:32,279 - INFO - Speak: Sir, the time is 12:36:32
+2026-04-10 12:36:32,280 - INFO - Text split into sentences.
+2026-04-10 12:36:32,280 - INFO - Input: ['Sir, the time is 12:36:32']
+2026-04-10 12:36:34,154 - INFO - Processing time: 1.874
+2026-04-10 12:36:34,154 - INFO - Real-time factor: 0.519
+2026-04-10 12:36:44,124 - INFO - Processing audio with duration 00:01.792
+2026-04-10 12:36:44,129 - INFO - VAD filter removed 00:00.144 of audio
+2026-04-10 12:36:45,060 - INFO - Speak: Thinking...
+2026-04-10 12:36:45,061 - INFO - Text split into sentences.
+2026-04-10 12:36:45,061 - INFO - Input: ['Thinking...']
+2026-04-10 12:36:45,491 - INFO - Processing time: 0.430
+2026-04-10 12:36:45,491 - INFO - Real-time factor: 0.435
+2026-04-10 12:36:47,881 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:36:47,884 - INFO - VAD filter removed 00:01.024 of audio
+2026-04-10 12:36:49,163 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:36:49,168 - INFO - VAD filter removed 00:00.304 of audio
+2026-04-10 12:36:53,414 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:36:53,462 - INFO - VAD filter removed 00:00.336 of audio
+2026-04-10 12:36:56,263 - INFO - Speak: Stopped.
+2026-04-10 12:36:56,268 - INFO - Text split into sentences.
+2026-04-10 12:36:56,268 - INFO - Input: ['Stopped.']
+2026-04-10 12:36:57,374 - INFO - Processing time: 1.110
+2026-04-10 12:36:57,374 - INFO - Real-time factor: 0.985
+2026-04-10 12:37:02,017 - INFO - Processing audio with duration 00:01.664
+2026-04-10 12:37:02,027 - INFO - VAD filter removed 00:00.304 of audio
+2026-04-10 12:37:10,404 - INFO - Speak: Thinking...
+2026-04-10 12:37:10,405 - INFO - Text split into sentences.
+2026-04-10 12:37:10,405 - INFO - Input: ['Thinking...']
+2026-04-10 12:37:11,521 - INFO - Processing time: 1.117
+2026-04-10 12:37:11,521 - INFO - Real-time factor: 1.201
+2026-04-10 12:37:14,423 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:37:14,433 - INFO - VAD filter removed 00:00.000 of audio
+2026-04-10 12:37:16,613 - ERROR - AI Worker Error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout=30)
+2026-04-10 12:37:17,435 - INFO - Speak: Stopped.
+2026-04-10 12:37:17,436 - INFO - Text split into sentences.
+2026-04-10 12:37:17,437 - INFO - Input: ['Stopped.']
+2026-04-10 12:37:18,420 - INFO - Processing time: 0.984
+2026-04-10 12:37:18,420 - INFO - Real-time factor: 0.814
+2026-04-10 12:37:22,717 - INFO - Processing audio with duration 00:01.344
+2026-04-10 12:37:22,727 - INFO - VAD filter removed 00:00.144 of audio
+2026-04-10 12:37:29,027 - INFO - Speak: Thinking...
+2026-04-10 12:37:29,032 - INFO - Text split into sentences.
+2026-04-10 12:37:29,033 - INFO - Input: ['Thinking...']
+2026-04-10 12:37:30,176 - INFO - Processing time: 1.148
+2026-04-10 12:37:30,177 - INFO - Real-time factor: 1.220
+2026-04-10 12:37:32,737 - INFO - Processing audio with duration 00:01.024
+2026-04-10 12:37:32,743 - INFO - VAD filter removed 00:01.024 of audio
+2026-04-10 12:38:39,954 - INFO - JARVIS initialized with MCP support
+2026-04-10 12:38:39,954 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:38:49,800 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:38:49,819 - INFO - Using model: vits
+2026-04-10 12:38:49,834 - INFO - Setting up Audio Processor...
+2026-04-10 12:38:49,834 - INFO -  | sample_rate: 22050
+2026-04-10 12:38:49,834 - INFO -  | resample: False
+2026-04-10 12:38:49,835 - INFO -  | num_mels: 80
+2026-04-10 12:38:49,835 - INFO -  | log_func: np.log10
+2026-04-10 12:38:49,835 - INFO -  | min_level_db: 0
+2026-04-10 12:38:49,835 - INFO -  | frame_shift_ms: None
+2026-04-10 12:38:49,835 - INFO -  | frame_length_ms: None
+2026-04-10 12:38:49,836 - INFO -  | ref_level_db: None
+2026-04-10 12:38:49,836 - INFO -  | fft_size: 1024
+2026-04-10 12:38:49,836 - INFO -  | power: None
+2026-04-10 12:38:49,836 - INFO -  | preemphasis: 0.0
+2026-04-10 12:38:49,836 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:38:49,836 - INFO -  | signal_norm: None
+2026-04-10 12:38:49,836 - INFO -  | symmetric_norm: None
+2026-04-10 12:38:49,837 - INFO -  | mel_fmin: 0
+2026-04-10 12:38:49,837 - INFO -  | mel_fmax: None
+2026-04-10 12:38:49,837 - INFO -  | pitch_fmin: None
+2026-04-10 12:38:49,837 - INFO -  | pitch_fmax: None
+2026-04-10 12:38:49,837 - INFO -  | spec_gain: 20.0
+2026-04-10 12:38:49,837 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:38:49,838 - INFO -  | max_norm: 1.0
+2026-04-10 12:38:49,838 - INFO -  | clip_norm: True
+2026-04-10 12:38:49,838 - INFO -  | do_trim_silence: False
+2026-04-10 12:38:49,838 - INFO -  | trim_db: 60
+2026-04-10 12:38:49,838 - INFO -  | do_sound_norm: False
+2026-04-10 12:38:49,838 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:38:49,838 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:38:49,838 - INFO -  | do_rms_norm: False
+2026-04-10 12:38:49,839 - INFO -  | db_level: None
+2026-04-10 12:38:49,839 - INFO -  | stats_path: None
+2026-04-10 12:38:49,839 - INFO -  | base: 10
+2026-04-10 12:38:49,839 - INFO -  | hop_length: 256
+2026-04-10 12:38:49,839 - INFO -  | win_length: 1024
+2026-04-10 12:38:49,878 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:38:51,375 - INFO - Text split into sentences.
+2026-04-10 12:38:51,375 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:38:54,560 - INFO - Processing time: 3.204
+2026-04-10 12:38:54,561 - INFO - Real-time factor: 1.422
+2026-04-10 12:39:22,035 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-medium/revision/main "HTTP/1.1 200 OK"
+2026-04-10 12:39:22,437 - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-medium/resolve/08e178d48790749d25932bbc082711ddcfdfbc4f/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:39:22,437 - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-medium/resolve/08e178d48790749d25932bbc082711ddcfdfbc4f/model.bin "HTTP/1.1 302 Found"
+2026-04-10 12:39:22,438 - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-medium/resolve/08e178d48790749d25932bbc082711ddcfdfbc4f/vocabulary.txt "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:39:22,439 - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-04-10 12:39:22,454 - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-medium/resolve/08e178d48790749d25932bbc082711ddcfdfbc4f/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:39:22,480 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-medium/08e178d48790749d25932bbc082711ddcfdfbc4f/vocabulary.txt "HTTP/1.1 200 OK"
+2026-04-10 12:39:22,484 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-medium/08e178d48790749d25932bbc082711ddcfdfbc4f/tokenizer.json "HTTP/1.1 200 OK"
+2026-04-10 12:39:22,504 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-medium/08e178d48790749d25932bbc082711ddcfdfbc4f/config.json "HTTP/1.1 200 OK"
+2026-04-10 12:39:22,539 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-medium/08e178d48790749d25932bbc082711ddcfdfbc4f/vocabulary.txt "HTTP/1.1 200 OK"
+2026-04-10 12:39:22,544 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-medium/08e178d48790749d25932bbc082711ddcfdfbc4f/tokenizer.json "HTTP/1.1 200 OK"
+2026-04-10 12:39:22,552 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-medium/08e178d48790749d25932bbc082711ddcfdfbc4f/config.json "HTTP/1.1 200 OK"
+2026-04-10 12:39:22,744 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-medium/xet-read-token/08e178d48790749d25932bbc082711ddcfdfbc4f "HTTP/1.1 200 OK"
+2026-04-10 12:40:49,970 - INFO - JARVIS initialized with MCP support
+2026-04-10 12:40:49,970 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:40:56,651 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:40:56,674 - INFO - Using model: vits
+2026-04-10 12:40:56,675 - INFO - Setting up Audio Processor...
+2026-04-10 12:40:56,675 - INFO -  | sample_rate: 22050
+2026-04-10 12:40:56,676 - INFO -  | resample: False
+2026-04-10 12:40:56,676 - INFO -  | num_mels: 80
+2026-04-10 12:40:56,676 - INFO -  | log_func: np.log10
+2026-04-10 12:40:56,676 - INFO -  | min_level_db: 0
+2026-04-10 12:40:56,676 - INFO -  | frame_shift_ms: None
+2026-04-10 12:40:56,676 - INFO -  | frame_length_ms: None
+2026-04-10 12:40:56,676 - INFO -  | ref_level_db: None
+2026-04-10 12:40:56,676 - INFO -  | fft_size: 1024
+2026-04-10 12:40:56,676 - INFO -  | power: None
+2026-04-10 12:40:56,676 - INFO -  | preemphasis: 0.0
+2026-04-10 12:40:56,676 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:40:56,676 - INFO -  | signal_norm: None
+2026-04-10 12:40:56,676 - INFO -  | symmetric_norm: None
+2026-04-10 12:40:56,676 - INFO -  | mel_fmin: 0
+2026-04-10 12:40:56,676 - INFO -  | mel_fmax: None
+2026-04-10 12:40:56,676 - INFO -  | pitch_fmin: None
+2026-04-10 12:40:56,676 - INFO -  | pitch_fmax: None
+2026-04-10 12:40:56,676 - INFO -  | spec_gain: 20.0
+2026-04-10 12:40:56,676 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:40:56,676 - INFO -  | max_norm: 1.0
+2026-04-10 12:40:56,676 - INFO -  | clip_norm: True
+2026-04-10 12:40:56,676 - INFO -  | do_trim_silence: False
+2026-04-10 12:40:56,676 - INFO -  | trim_db: 60
+2026-04-10 12:40:56,676 - INFO -  | do_sound_norm: False
+2026-04-10 12:40:56,676 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:40:56,676 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:40:56,676 - INFO -  | do_rms_norm: False
+2026-04-10 12:40:56,676 - INFO -  | db_level: None
+2026-04-10 12:40:56,676 - INFO -  | stats_path: None
+2026-04-10 12:40:56,676 - INFO -  | base: 10
+2026-04-10 12:40:56,676 - INFO -  | hop_length: 256
+2026-04-10 12:40:56,676 - INFO -  | win_length: 1024
+2026-04-10 12:40:56,691 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:40:57,335 - INFO - Text split into sentences.
+2026-04-10 12:40:57,335 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:40:58,417 - INFO - Processing time: 1.090
+2026-04-10 12:40:58,417 - INFO - Real-time factor: 0.481
+2026-04-10 12:41:04,227 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-small/revision/main "HTTP/1.1 200 OK"
+2026-04-10 12:41:04,525 - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-small/resolve/536b0662742c02347bc0e980a01041f333bce120/model.bin "HTTP/1.1 302 Found"
+2026-04-10 12:41:04,525 - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-04-10 12:41:04,597 - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-small/resolve/536b0662742c02347bc0e980a01041f333bce120/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:41:04,600 - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-small/resolve/536b0662742c02347bc0e980a01041f333bce120/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:41:04,607 - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-small/resolve/536b0662742c02347bc0e980a01041f333bce120/vocabulary.txt "HTTP/1.1 307 Temporary Redirect"
+2026-04-10 12:41:04,645 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-small/536b0662742c02347bc0e980a01041f333bce120/config.json "HTTP/1.1 200 OK"
+2026-04-10 12:41:04,645 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-small/536b0662742c02347bc0e980a01041f333bce120/tokenizer.json "HTTP/1.1 200 OK"
+2026-04-10 12:41:04,650 - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-small/536b0662742c02347bc0e980a01041f333bce120/vocabulary.txt "HTTP/1.1 200 OK"
+2026-04-10 12:41:04,684 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-small/536b0662742c02347bc0e980a01041f333bce120/config.json "HTTP/1.1 200 OK"
+2026-04-10 12:41:04,687 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-small/536b0662742c02347bc0e980a01041f333bce120/tokenizer.json "HTTP/1.1 200 OK"
+2026-04-10 12:41:04,690 - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-small/536b0662742c02347bc0e980a01041f333bce120/vocabulary.txt "HTTP/1.1 200 OK"
+2026-04-10 12:41:04,829 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-small/xet-read-token/536b0662742c02347bc0e980a01041f333bce120 "HTTP/1.1 200 OK"
+2026-04-10 12:42:13,056 - INFO - JARVIS initialized with MCP support
+2026-04-10 12:42:13,056 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:42:19,385 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:42:19,408 - INFO - Using model: vits
+2026-04-10 12:42:19,409 - INFO - Setting up Audio Processor...
+2026-04-10 12:42:19,409 - INFO -  | sample_rate: 22050
+2026-04-10 12:42:19,409 - INFO -  | resample: False
+2026-04-10 12:42:19,409 - INFO -  | num_mels: 80
+2026-04-10 12:42:19,409 - INFO -  | log_func: np.log10
+2026-04-10 12:42:19,409 - INFO -  | min_level_db: 0
+2026-04-10 12:42:19,409 - INFO -  | frame_shift_ms: None
+2026-04-10 12:42:19,409 - INFO -  | frame_length_ms: None
+2026-04-10 12:42:19,409 - INFO -  | ref_level_db: None
+2026-04-10 12:42:19,409 - INFO -  | fft_size: 1024
+2026-04-10 12:42:19,409 - INFO -  | power: None
+2026-04-10 12:42:19,409 - INFO -  | preemphasis: 0.0
+2026-04-10 12:42:19,409 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:42:19,409 - INFO -  | signal_norm: None
+2026-04-10 12:42:19,409 - INFO -  | symmetric_norm: None
+2026-04-10 12:42:19,410 - INFO -  | mel_fmin: 0
+2026-04-10 12:42:19,410 - INFO -  | mel_fmax: None
+2026-04-10 12:42:19,410 - INFO -  | pitch_fmin: None
+2026-04-10 12:42:19,410 - INFO -  | pitch_fmax: None
+2026-04-10 12:42:19,410 - INFO -  | spec_gain: 20.0
+2026-04-10 12:42:19,410 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:42:19,410 - INFO -  | max_norm: 1.0
+2026-04-10 12:42:19,410 - INFO -  | clip_norm: True
+2026-04-10 12:42:19,410 - INFO -  | do_trim_silence: False
+2026-04-10 12:42:19,410 - INFO -  | trim_db: 60
+2026-04-10 12:42:19,410 - INFO -  | do_sound_norm: False
+2026-04-10 12:42:19,410 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:42:19,410 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:42:19,410 - INFO -  | do_rms_norm: False
+2026-04-10 12:42:19,410 - INFO -  | db_level: None
+2026-04-10 12:42:19,410 - INFO -  | stats_path: None
+2026-04-10 12:42:19,410 - INFO -  | base: 10
+2026-04-10 12:42:19,410 - INFO -  | hop_length: 256
+2026-04-10 12:42:19,410 - INFO -  | win_length: 1024
+2026-04-10 12:42:19,425 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:42:20,016 - INFO - Text split into sentences.
+2026-04-10 12:42:20,016 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:42:20,992 - INFO - Processing time: 0.985
+2026-04-10 12:42:20,993 - INFO - Real-time factor: 0.456
+2026-04-10 12:42:30,648 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-small/revision/main "HTTP/1.1 200 OK"
+2026-04-10 12:42:31,167 - INFO - HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-small/resolve/536b0662742c02347bc0e980a01041f333bce120/model.bin "HTTP/1.1 302 Found"
+2026-04-10 12:42:31,466 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-small/xet-read-token/536b0662742c02347bc0e980a01041f333bce120 "HTTP/1.1 200 OK"
+2026-04-10 12:45:03,365 - INFO - JARVIS initialized with MCP support
+2026-04-10 12:45:03,365 - INFO - Speak: Jarvis is online, How's your day?
+2026-04-10 12:45:13,179 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-04-10 12:45:13,200 - INFO - Using model: vits
+2026-04-10 12:45:13,208 - INFO - Setting up Audio Processor...
+2026-04-10 12:45:13,208 - INFO -  | sample_rate: 22050
+2026-04-10 12:45:13,208 - INFO -  | resample: False
+2026-04-10 12:45:13,208 - INFO -  | num_mels: 80
+2026-04-10 12:45:13,208 - INFO -  | log_func: np.log10
+2026-04-10 12:45:13,208 - INFO -  | min_level_db: 0
+2026-04-10 12:45:13,208 - INFO -  | frame_shift_ms: None
+2026-04-10 12:45:13,208 - INFO -  | frame_length_ms: None
+2026-04-10 12:45:13,208 - INFO -  | ref_level_db: None
+2026-04-10 12:45:13,208 - INFO -  | fft_size: 1024
+2026-04-10 12:45:13,208 - INFO -  | power: None
+2026-04-10 12:45:13,208 - INFO -  | preemphasis: 0.0
+2026-04-10 12:45:13,208 - INFO -  | griffin_lim_iters: None
+2026-04-10 12:45:13,208 - INFO -  | signal_norm: None
+2026-04-10 12:45:13,208 - INFO -  | symmetric_norm: None
+2026-04-10 12:45:13,208 - INFO -  | mel_fmin: 0
+2026-04-10 12:45:13,208 - INFO -  | mel_fmax: None
+2026-04-10 12:45:13,209 - INFO -  | pitch_fmin: None
+2026-04-10 12:45:13,209 - INFO -  | pitch_fmax: None
+2026-04-10 12:45:13,209 - INFO -  | spec_gain: 20.0
+2026-04-10 12:45:13,209 - INFO -  | stft_pad_mode: reflect
+2026-04-10 12:45:13,209 - INFO -  | max_norm: 1.0
+2026-04-10 12:45:13,209 - INFO -  | clip_norm: True
+2026-04-10 12:45:13,209 - INFO -  | do_trim_silence: False
+2026-04-10 12:45:13,209 - INFO -  | trim_db: 60
+2026-04-10 12:45:13,209 - INFO -  | do_sound_norm: False
+2026-04-10 12:45:13,209 - INFO -  | do_amp_to_db_linear: True
+2026-04-10 12:45:13,209 - INFO -  | do_amp_to_db_mel: True
+2026-04-10 12:45:13,209 - INFO -  | do_rms_norm: False
+2026-04-10 12:45:13,209 - INFO -  | db_level: None
+2026-04-10 12:45:13,209 - INFO -  | stats_path: None
+2026-04-10 12:45:13,209 - INFO -  | base: 10
+2026-04-10 12:45:13,209 - INFO -  | hop_length: 256
+2026-04-10 12:45:13,209 - INFO -  | win_length: 1024
+2026-04-10 12:45:13,223 - INFO - Initialization of speaker-embedding layers.
+2026-04-10 12:45:14,132 - INFO - Text split into sentences.
+2026-04-10 12:45:14,133 - INFO - Input: ["Jarvis is online, How's your day?"]
+2026-04-10 12:45:15,395 - INFO - Processing time: 1.283
+2026-04-10 12:45:15,396 - INFO - Real-time factor: 0.581
+2026-04-10 12:45:29,963 - INFO - Speak: Opening Google.
+2026-04-10 12:45:29,966 - INFO - Text split into sentences.
+2026-04-10 12:45:29,967 - INFO - Input: ['Opening Google.']
+2026-04-10 12:45:32,987 - INFO - Processing time: 3.022
+2026-04-10 12:45:32,990 - INFO - Real-time factor: 2.049
+2026-04-10 12:46:11,427 - INFO - Speak: Opening Github.
+2026-04-10 12:46:11,428 - INFO - Text split into sentences.
+2026-04-10 12:46:11,428 - INFO - Input: ['Opening Github.']
+2026-04-10 12:46:13,109 - INFO - Processing time: 1.682
+2026-04-10 12:46:13,110 - INFO - Real-time factor: 1.123
