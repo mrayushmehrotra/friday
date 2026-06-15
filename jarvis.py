@@ -1,8 +1,11 @@
 import datetime
+import json
 import os
 import subprocess
 import sys
+import urllib.request
 import webbrowser
+import xml.etree.ElementTree as ET
 
 from helpers import init_db, log_event, speak, takeCommand
 
@@ -11,6 +14,7 @@ class Jarvis:
     def __init__(self) -> None:
         init_db()
         log_event("JARVIS initialized")
+        self._music_proc = None
         self._start_web_ui()
 
     def _start_web_ui(self):
@@ -22,9 +26,18 @@ class Jarvis:
         )
         log_event("JARVIS Web UI started")
 
+    def _kill_music(self):
+        if self._music_proc and self._music_proc.poll() is None:
+            self._music_proc.terminate()
+            try:
+                self._music_proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                self._music_proc.kill()
+        self._music_proc = None
+
     def wishMe(self) -> None:
         music = os.path.expanduser("~/personal/friday/assets/background_music.mp3")
-        subprocess.Popen(
+        self._music_proc = subprocess.Popen(
             ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.1", music],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -55,13 +68,17 @@ class Jarvis:
             pass
 
         music = os.path.expanduser("~/personal/friday/assets/background_music.m4a")
-        subprocess.Popen(
+        self._music_proc = subprocess.Popen(
             ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.5", music],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
 
     def execute_query(self, query):
+        for prefix in ["jarvis ", "jarvis", "jarvis's "]:
+            if query.startswith(prefix):
+                query = query.removeprefix(prefix)
+                break
         # Handle hardcoded voice shortcuts first for speed
         if "time" in query:
             strTime = datetime.datetime.now().strftime("%H:%M:%S")
@@ -73,15 +90,25 @@ class Jarvis:
             webbrowser.open_new_tab("https://github.com/mrayushmehrotra")
             speak("Opening Github.")
 
-        elif (
-            "what's about the finance" in query
-            or "finance" in query
-            or "check market" in query
-        ):
-            webbrowser.open_new_tab(
-                "https://www.worldmonitor.app/?lat=20.0000&lon=-36.1535&zoom=1.00&view=global&timeRange=7d&layers=conflicts%2Cbases%2Cpipelines%2Chotspots%2Cnuclear%2Csanctions%2Cweather%2Ceconomic%2Cwaterways%2Coutages%2Cdatacenters%2Cmilitary%2Cnatural%2CiranAttacks"
-            )
-            speak("checking market")
+        elif "news" in query or "finance" in query or "market" in query:
+            try:
+                url = "https://news.google.com/rss/search?q=india+technology&hl=en-IN&gl=IN&ceid=IN:en"
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req, timeout=8) as r:
+                    xml_data = r.read().decode()
+                root = ET.fromstring(xml_data)
+                items = []
+                for item in root.iter('item'):
+                    title = item.find('title').text if item.find('title') is not None else ''
+                    if title:
+                        items.append(title)
+                if items:
+                    headlines = ". ".join(items[:4])
+                    speak(f"News. {headlines}")
+                else:
+                    speak("No news found, sir.")
+            except Exception:
+                speak("Could not fetch news, sir.")
         elif "open terminal" in query:
             if os.system("which kitty > /dev/null 2>&1") == 0:
                 os.system("kitty &")
@@ -120,7 +147,8 @@ class Jarvis:
             import subprocess
 
             mp3 = os.path.expanduser("~/personal/friday/assets/lets_work.m4a")
-            subprocess.Popen(
+            self._kill_music()
+            self._music_proc = subprocess.Popen(
                 ["ffplay", "-nodisp", "-autoexit", mp3],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -136,6 +164,9 @@ class Jarvis:
             self.handle_write(query)
         elif "close" in query:
             self.handle_close()
+        elif "stop the song" in query or "stop music" in query or "stop song" in query:
+            self._kill_music()
+            speak("Music stopped, sir.")
         elif "evade" in query:
             speak("Shutting down the system, sir.")
             os.system("shutdown now")

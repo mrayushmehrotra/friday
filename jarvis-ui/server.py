@@ -12,6 +12,7 @@ import subprocess
 import urllib.request
 import re
 import sqlite3
+import xml.etree.ElementTree as ET
 
 PORT = 8000
 
@@ -37,6 +38,31 @@ def fetch_weather_json():
             return json.loads(r.read().decode())
     except Exception:
         return None
+
+
+def fetch_india_news():
+    try:
+        url = "https://news.google.com/rss/search?q=india+technology&hl=en-IN&gl=IN&ceid=IN:en"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            xml_data = r.read().decode()
+        root = ET.fromstring(xml_data)
+        items = []
+        for item in root.iter('item'):
+            title = item.find('title').text if item.find('title') is not None else ''
+            link = item.find('link').text if item.find('link') is not None else ''
+            pub_date = item.find('pubDate').text if item.find('pubDate') is not None else ''
+            source = item.find('source').text if item.find('source') is not None else ''
+            items.append({
+                'title': title,
+                'link': link,
+                'date': pub_date,
+                'source': source,
+            })
+        return items[:15]
+    except Exception as e:
+        print(f"News fetch error: {e}")
+        return []
 
 
 def read_notes():
@@ -118,6 +144,13 @@ class JarvisAPI:
                 response = notes
             else:
                 response = "No notes for today, sir."
+        elif "news" in query:
+            news = fetch_india_news()
+            if news:
+                headlines = ". ".join([n['title'][:80] for n in news[:5]])
+                response = f"Top headlines. {headlines}"
+            else:
+                response = "Could not fetch news, sir."
         elif "weather" in query:
             w = fetch_weather()
             response = f"weather is {w}" if w else "Could not fetch weather, sir."
@@ -189,6 +222,8 @@ class ApiHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json(api.get_init_data())
         elif self.path == '/api/weather':
             self.send_json(api.get_init_data())
+        elif self.path == '/api/news':
+            self.send_json(fetch_india_news())
         else:
             super().do_GET()
 

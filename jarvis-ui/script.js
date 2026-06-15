@@ -8,11 +8,21 @@ function initHUD() {
     setupDates();
     startClock();
     setupEqualizer();
-    setupGraphs();
+    fetchPublicIP();
     fetchSystemStats();
     setInterval(fetchSystemStats, 3000);
     initJarvis();
+    fetchMarketNews();
     setupChatUI();
+}
+
+function fetchPublicIP() {
+    fetch('https://api.ipify.org/?format=json')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('ip-address').textContent = 'IP: ' + data.ip;
+        })
+        .catch(() => {});
 }
 
 function setupDates() {
@@ -63,58 +73,12 @@ function setupEqualizer() {
     }, 150);
 }
 
-function setupGraphs() {
-    const dlCanvas = document.getElementById('downloadGraph');
-    const ulCanvas = document.getElementById('uploadGraph');
-    if (!dlCanvas || !ulCanvas) return;
-    const dlCtx = dlCanvas.getContext('2d');
-    const ulCtx = ulCanvas.getContext('2d');
-    const color = '#00f3ff';
-    const dlData = new Array(50).fill(0).map(() => Math.random() * 30);
-    const ulData = new Array(50).fill(0).map(() => Math.random() * 20);
-
-    function drawGraph(ctx, data, width, height) {
-        ctx.clearRect(0, 0, width, height);
-        ctx.beginPath();
-        ctx.moveTo(0, height);
-        const step = width / (data.length - 1);
-        for (let i = 0; i < data.length; i++) {
-            ctx.lineTo(i * step, height - data[i]);
-        }
-        ctx.lineTo(width, height);
-        ctx.lineTo(0, height);
-        const gradient = ctx.createLinearGradient(0, 0, 0, height);
-        gradient.addColorStop(0, 'rgba(0, 243, 255, 0.5)');
-        gradient.addColorStop(1, 'rgba(0, 243, 255, 0)');
-        ctx.fillStyle = gradient;
-        ctx.fill();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-    }
-
-    function updateData(data, max) {
-        data.shift();
-        data.push(Math.random() * max + (Math.random() > 0.8 ? 20 : 0));
-    }
-
-    function render() {
-        updateData(dlData, 25);
-        updateData(ulData, 15);
-        drawGraph(dlCtx, dlData, dlCanvas.width, dlCanvas.height);
-        drawGraph(ulCtx, ulData, ulCanvas.width, ulCanvas.height);
-        requestAnimationFrame(render);
-    }
-    render();
-}
-
 function fetchSystemStats() {
     fetch('/api/system')
         .then(r => r.json())
         .then(data => {
             document.getElementById('cpu-value').textContent = Math.round(data.cpu) + '%';
             document.getElementById('ram-value').textContent = Math.round(data.ram) + '%';
-            document.getElementById('ip-address').textContent = 'IP: ' + data.ip;
 
             if (data.battery_percent !== null) {
                 document.getElementById('energy-value').textContent = Math.round(data.battery_percent) + '%';
@@ -126,9 +90,8 @@ function fetchSystemStats() {
             document.getElementById('disk-used').textContent = 'Used: ' + formatBytes(data.disk_used) + ' (' + data.disk_percent + '%)';
             document.getElementById('disk-free').textContent = 'Free: ' + formatBytes(data.disk_free);
 
-            document.getElementById('net-download').textContent = 'Download: ' + formatBytes(data.net_recv);
-            document.getElementById('net-upload').textContent = 'Upload: ' + formatBytes(data.net_sent);
-
+            document.getElementById('net-download').textContent = formatBytes(data.net_recv) + '/s';
+            document.getElementById('net-upload').textContent = formatBytes(data.net_sent) + '/s';
             document.getElementById('io-read').textContent = formatBytes(data.net_recv) + '/s';
             document.getElementById('io-write').textContent = formatBytes(data.net_sent) + '/s';
 
@@ -137,6 +100,39 @@ function fetchSystemStats() {
                 'Updated ' + now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
         })
         .catch(() => {});
+}
+
+function fetchMarketNews() {
+    fetch('/api/news')
+        .then(r => r.json())
+        .then(news => {
+            const container = document.getElementById('news-list');
+            if (!container) return;
+            if (!news || news.length === 0) {
+                container.innerHTML = '<div class="news-loading">No news available</div>';
+                return;
+            }
+            container.innerHTML = '';
+            news.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'news-item';
+                div.innerHTML = `
+                    <div class="news-title">${escapeHtml(item.title)}</div>
+                    <div class="news-meta">
+                        <span>${escapeHtml(item.source || 'Unknown')}</span>
+                        <span>${escapeHtml(item.date ? item.date.slice(0, 16) : '')}</span>
+                    </div>
+                `;
+                if (item.link) {
+                    div.addEventListener('click', () => window.open(item.link, '_blank'));
+                }
+                container.appendChild(div);
+            });
+        })
+        .catch(() => {
+            const container = document.getElementById('news-list');
+            if (container) container.innerHTML = '<div class="news-loading">Connection error</div>';
+        });
 }
 
 function formatBytes(bytes) {

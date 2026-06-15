@@ -9,6 +9,84 @@
 </head>
 <body>
     <div class="hud-container">
+        <!-- Sticky Market Bar -->
+        <div class="market-bar sticky-market-bar">
+            <div class="market-bar-inner">
+                <h3 class="box-title">MARKETS</h3>
+                <!-- TradingView Widget BEGIN -->
+                <div class="tradingview-widget-container">
+                  <div class="tradingview-widget-container__widget"></div>
+                  <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank"><span class="blue-text">World markets</span></a> by TradingView</div>
+                  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
+                  {
+                  "lineWidth": 2,
+                  "lineType": 0,
+                  "chartType": "area",
+                  "fontColor": "rgb(106, 109, 120)",
+                  "gridLineColor": "rgba(242, 242, 242, 0.06)",
+                  "volumeUpColor": "rgba(34, 171, 148, 0.5)",
+                  "volumeDownColor": "rgba(247, 82, 95, 0.5)",
+                  "backgroundColor": "#0F0F0F",
+                  "widgetFontColor": "#DBDBDB",
+                  "upColor": "#22ab94",
+                  "downColor": "#f7525f",
+                  "borderUpColor": "#22ab94",
+                  "borderDownColor": "#f7525f",
+                  "wickUpColor": "#22ab94",
+                  "wickDownColor": "#f7525f",
+                  "colorTheme": "dark",
+                  "isTransparent": false,
+                  "locale": "en",
+                  "chartOnly": false,
+                  "scalePosition": "right",
+                  "scaleMode": "Normal",
+                  "fontFamily": "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+                  "valuesTracking": "1",
+                  "changeMode": "price-and-percent",
+                  "symbols": [
+                    [
+                      "BSE:SENSEX|1D"
+                    ],
+                    [
+                      "FX_IDC:USDINR|1D"
+                    ],
+                    [
+                      "BSE:RELIANCE|1D"
+                    ],
+                    [
+                      "BSE:HDFCBANK|1D"
+                    ],
+                    [
+                      "BSE:INFY|1D"
+                    ],
+                    [
+                      "BSE:TMCV|1M"
+                    ]
+                  ],
+                  "dateRanges": [
+                    "1d|1",
+                    "1m|30",
+                    "3m|60",
+                    "12m|1D",
+                    "60m|1W",
+                    "all|1M"
+                  ],
+                  "fontSize": "10",
+                  "headerFontSize": "medium",
+                  "autosize": true,
+                  "width": "100%",
+                  "height": "100%",
+                  "noTimeScale": false,
+                  "hideDateRanges": false,
+                  "hideMarketStatus": false,
+                  "hideSymbolLogo": false
+                  }
+                  </script>
+                </div>
+                <!-- TradingView Widget END -->
+            </div>
+        </div>
+
         <!-- Overlay Effects -->
         <div class="scanline"></div>
         <div class="vignette"></div>
@@ -65,14 +143,12 @@
                     </div>
                 </div>
 
-                <!-- Communications list -->
-                <div class="widget communications tech-box">
-                    <h3 class="box-title">Communications</h3>
-                    <ul>
-                        <li><span class="icon">✉</span> New Emails</li>
-                        <li><span class="icon">✆</span> Operations</li>
-                        <li><span class="icon">↻</span> Sync</li>
-                    </ul>
+                <!-- Top News -->
+                <div class="widget news-widget tech-box">
+                    <h3 class="box-title">INDIA & TECH</h3>
+                    <div class="news-list" id="news-list">
+                        <div class="news-loading">Loading...</div>
+                    </div>
                 </div>
                 
                 <!-- Bottom Left small widget -->
@@ -183,15 +259,10 @@
                 </div>
 
                 <!-- Network Stats -->
-                <div class="widget network-stats tech-box">
-                    <div class="graph-container">
-                        <div class="graph-label" id="net-download">Download --</div>
-                        <canvas id="downloadGraph" width="250" height="40"></canvas>
-                    </div>
-                    <div class="graph-container">
-                        <div class="graph-label" id="net-upload">Upload --</div>
-                        <canvas id="uploadGraph" width="250" height="40"></canvas>
-                    </div>
+                <div class="widget network-stats-mini tech-box">
+                    <h3 class="box-title">NETWORK</h3>
+                    <div class="net-row"><span class="net-label">↓</span><span class="net-val" id="net-download">--</span></div>
+                    <div class="net-row"><span class="net-label">↑</span><span class="net-val" id="net-upload">--</span></div>
                 </div>
             </aside>
         </main>
