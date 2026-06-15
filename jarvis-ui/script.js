@@ -90,8 +90,6 @@ function fetchSystemStats() {
             document.getElementById('disk-used').textContent = 'Used: ' + formatBytes(data.disk_used) + ' (' + data.disk_percent + '%)';
             document.getElementById('disk-free').textContent = 'Free: ' + formatBytes(data.disk_free);
 
-            document.getElementById('net-download').textContent = formatBytes(data.net_recv) + '/s';
-            document.getElementById('net-upload').textContent = formatBytes(data.net_sent) + '/s';
             document.getElementById('io-read').textContent = formatBytes(data.net_recv) + '/s';
             document.getElementById('io-write').textContent = formatBytes(data.net_sent) + '/s';
 

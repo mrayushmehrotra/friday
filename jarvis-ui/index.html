@@ -9,84 +9,6 @@
 </head>
 <body>
     <div class="hud-container">
-        <!-- Sticky Market Bar -->
-        <div class="market-bar sticky-market-bar">
-            <div class="market-bar-inner">
-                <h3 class="box-title">MARKETS</h3>
-                <!-- TradingView Widget BEGIN -->
-                <div class="tradingview-widget-container">
-                  <div class="tradingview-widget-container__widget"></div>
-                  <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank"><span class="blue-text">World markets</span></a> by TradingView</div>
-                  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
-                  {
-                  "lineWidth": 2,
-                  "lineType": 0,
-                  "chartType": "area",
-                  "fontColor": "rgb(106, 109, 120)",
-                  "gridLineColor": "rgba(242, 242, 242, 0.06)",
-                  "volumeUpColor": "rgba(34, 171, 148, 0.5)",
-                  "volumeDownColor": "rgba(247, 82, 95, 0.5)",
-                  "backgroundColor": "#0F0F0F",
-                  "widgetFontColor": "#DBDBDB",
-                  "upColor": "#22ab94",
-                  "downColor": "#f7525f",
-                  "borderUpColor": "#22ab94",
-                  "borderDownColor": "#f7525f",
-                  "wickUpColor": "#22ab94",
-                  "wickDownColor": "#f7525f",
-                  "colorTheme": "dark",
-                  "isTransparent": false,
-                  "locale": "en",
-                  "chartOnly": false,
-                  "scalePosition": "right",
-                  "scaleMode": "Normal",
-                  "fontFamily": "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
-                  "valuesTracking": "1",
-                  "changeMode": "price-and-percent",
-                  "symbols": [
-                    [
-                      "BSE:SENSEX|1D"
-                    ],
-                    [
-                      "FX_IDC:USDINR|1D"
-                    ],
-                    [
-                      "BSE:RELIANCE|1D"
-                    ],
-                    [
-                      "BSE:HDFCBANK|1D"
-                    ],
-                    [
-                      "BSE:INFY|1D"
-                    ],
-                    [
-                      "BSE:TMCV|1M"
-                    ]
-                  ],
-                  "dateRanges": [
-                    "1d|1",
-                    "1m|30",
-                    "3m|60",
-                    "12m|1D",
-                    "60m|1W",
-                    "all|1M"
-                  ],
-                  "fontSize": "10",
-                  "headerFontSize": "medium",
-                  "autosize": true,
-                  "width": "100%",
-                  "height": "100%",
-                  "noTimeScale": false,
-                  "hideDateRanges": false,
-                  "hideMarketStatus": false,
-                  "hideSymbolLogo": false
-                  }
-                  </script>
-                </div>
-                <!-- TradingView Widget END -->
-            </div>
-        </div>
-
         <!-- Overlay Effects -->
         <div class="scanline"></div>
         <div class="vignette"></div>
@@ -106,6 +28,14 @@
         <main class="main-hud">
             <!-- Left Side -->
             <aside class="left-panel">
+                <!-- Top News -->
+                <div class="widget news-widget tech-box">
+                    <h3 class="box-title">INDIA & TECH</h3>
+                    <div class="news-list" id="news-list">
+                        <div class="news-loading">Loading...</div>
+                    </div>
+                </div>
+
                 <!-- Date Circle -->
                 <div class="widget">
                     <div class="circle-outer large date-circle">
@@ -116,18 +46,6 @@
                         <div class="ring rotating-slow"></div>
                         <div class="ring dashed rotating-reverse"></div>
                         <div class="ring thick-partial"></div>
-                    </div>
-                </div>
-
-                <!-- Storage Info -->
-                <div class="widget disk-info tech-box">
-                    <div class="info-row">
-                        <span class="icon">💿</span>
-                        <div class="details">
-                            <div id="disk-total">Total Volume: --</div>
-                            <div id="disk-used">Used: --</div>
-                            <div id="disk-free">Free: --</div>
-                        </div>
                     </div>
                 </div>
 
@@ -143,14 +61,6 @@
                     </div>
                 </div>
 
-                <!-- Top News -->
-                <div class="widget news-widget tech-box">
-                    <h3 class="box-title">INDIA & TECH</h3>
-                    <div class="news-list" id="news-list">
-                        <div class="news-loading">Loading...</div>
-                    </div>
-                </div>
-                
                 <!-- Bottom Left small widget -->
                 <div class="widget bottom-left-gauges">
                     <div class="circle-outer small">
@@ -225,11 +135,77 @@
                     </div>
                 </div>
 
-                <!-- Audio / Equalizer -->
-                <div class="widget audio-player tech-box">
-                    <h3 class="box-title">Audio Control</h3>
-                    <div class="equalizer" id="equalizer">
-                        <!-- Bars added by JS -->
+                <!-- Markets -->
+                <div class="widget tv-widget tech-box">
+                    <h3 class="box-title">MARKETS</h3>
+                    <div class="tradingview-widget-container">
+                      <div class="tradingview-widget-container__widget"></div>
+                      <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank"><span class="blue-text">World markets</span></a> by TradingView</div>
+                      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js" async>
+                      {
+                      "lineWidth": 2,
+                      "lineType": 0,
+                      "chartType": "area",
+                      "fontColor": "rgb(106, 109, 120)",
+                      "gridLineColor": "rgba(242, 242, 242, 0.06)",
+                      "volumeUpColor": "rgba(34, 171, 148, 0.5)",
+                      "volumeDownColor": "rgba(247, 82, 95, 0.5)",
+                      "backgroundColor": "#0F0F0F",
+                      "widgetFontColor": "#DBDBDB",
+                      "upColor": "#22ab94",
+                      "downColor": "#f7525f",
+                      "borderUpColor": "#22ab94",
+                      "borderDownColor": "#f7525f",
+                      "wickUpColor": "#22ab94",
+                      "wickDownColor": "#f7525f",
+                      "colorTheme": "dark",
+                      "isTransparent": false,
+                      "locale": "en",
+                      "chartOnly": false,
+                      "scalePosition": "right",
+                      "scaleMode": "Normal",
+                      "fontFamily": "-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif",
+                      "valuesTracking": "1",
+                      "changeMode": "price-and-percent",
+                      "symbols": [
+                        [
+                          "BSE:SENSEX|1D"
+                        ],
+                        [
+                          "FX_IDC:USDINR|1D"
+                        ],
+                        [
+                          "BSE:RELIANCE|1D"
+                        ],
+                        [
+                          "BSE:HDFCBANK|1D"
+                        ],
+                        [
+                          "BSE:INFY|1D"
+                        ],
+                        [
+                          "BSE:TMCV|1M"
+                        ]
+                      ],
+                      "dateRanges": [
+                        "1d|1",
+                        "1m|30",
+                        "3m|60",
+                        "12m|1D",
+                        "60m|1W",
+                        "all|1M"
+                      ],
+                      "fontSize": "10",
+                      "headerFontSize": "medium",
+                      "autosize": true,
+                      "width": "100%",
+                      "height": "100%",
+                      "noTimeScale": false,
+                      "hideDateRanges": false,
+                      "hideMarketStatus": false,
+                      "hideSymbolLogo": false
+                      }
+                      </script>
                     </div>
                 </div>
 
@@ -258,11 +234,12 @@
                     </div>
                 </div>
 
-                <!-- Network Stats -->
-                <div class="widget network-stats-mini tech-box">
-                    <h3 class="box-title">NETWORK</h3>
-                    <div class="net-row"><span class="net-label">↓</span><span class="net-val" id="net-download">--</span></div>
-                    <div class="net-row"><span class="net-label">↑</span><span class="net-val" id="net-upload">--</span></div>
+                <!-- Audio / Equalizer -->
+                <div class="widget audio-player tech-box">
+                    <h3 class="box-title">Audio Control</h3>
+                    <div class="equalizer" id="equalizer">
+                        <!-- Bars added by JS -->
+                    </div>
                 </div>
             </aside>
         </main>
