@@ -1,0 +1,1 @@
+your today's task is to fix yahoo finance scraping in wealthfino pdf generator

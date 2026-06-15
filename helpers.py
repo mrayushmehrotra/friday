@@ -101,7 +101,7 @@ def speak(audio) -> None:
                 fast_path = "output_fast.wav"
                 os.system(f"ffmpeg -i {output_path} -filter:a 'atempo={SPEECH_SPEED}' {fast_path} -y > /dev/null 2>&1")
                 output_path = fast_path
-            os.system(f"aplay {output_path} > /dev/null 2>&1")
+            os.system(f"paplay {output_path} > /dev/null 2>&1")
         except Exception as e:
             log_event(f"Coqui speech error: {e}", 'error')
     else:
