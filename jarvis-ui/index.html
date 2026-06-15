@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS HUD UI</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="hud-container">
+        <!-- Overlay Effects -->
+        <div class="scanline"></div>
+        <div class="vignette"></div>
+
+        <!-- Top Timeline/Status Bar -->
+        <header class="top-bar">
+            <div class="dates-row" id="dates-container">
+                <!-- Populated by JS -->
+            </div>
+            <div class="system-status">
+                <span class="location">Mau, India</span>
+                <span class="update-time">Updated 6/21/12 12:30 PM</span>
+            </div>
+        </header>
+
+        <!-- Main HUD Area -->
+        <main class="main-hud">
+            <!-- Left Side -->
+            <aside class="left-panel">
+                <!-- Date Circle -->
+                <div class="widget">
+                    <div class="circle-outer large date-circle">
+                        <div class="circle-inner">
+                            <span class="month" id="month-display">JUNE</span>
+                            <span class="day" id="day-display">21</span>
+                        </div>
+                        <div class="ring rotating-slow"></div>
+                        <div class="ring dashed rotating-reverse"></div>
+                        <div class="ring thick-partial"></div>
+                    </div>
+                </div>
+
+                <!-- Storage Info -->
+                <div class="widget disk-info tech-box">
+                    <div class="info-row">
+                        <span class="icon">💿</span>
+                        <div class="details">
+                            <div id="disk-total">Total Volume: --</div>
+                            <div id="disk-used">Used: --</div>
+                            <div id="disk-free">Free: --</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Energy Circle -->
+                <div class="widget">
+                    <div class="circle-outer medium energy-circle">
+                        <div class="circle-inner">
+                            <span class="label">Energy</span>
+                            <span class="value" id="energy-value">--%</span>
+                        </div>
+                        <div class="ring dashed rotating-fast"></div>
+                        <div class="ring glowing"></div>
+                    </div>
+                </div>
+
+                <!-- Communications list -->
+                <div class="widget communications tech-box">
+                    <h3 class="box-title">Communications</h3>
+                    <ul>
+                        <li><span class="icon">✉</span> New Emails</li>
+                        <li><span class="icon">✆</span> Operations</li>
+                        <li><span class="icon">↻</span> Sync</li>
+                    </ul>
+                </div>
+                
+                <!-- Bottom Left small widget -->
+                <div class="widget bottom-left-gauges">
+                    <div class="circle-outer small">
+                        <div class="circle-inner">
+                            <span class="value" id="io-read">--</span>
+                            <span class="label" id="io-write">--</span>
+                        </div>
+                        <div class="ring thick-partial rotating-slow"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center Arc Reactor -->
+            <section class="center-panel">
+                <div class="system-gauges top-gauges">
+                    <div class="gauge">
+                        <div class="circle-outer small gauge-cpu">
+                            <div class="circle-inner">
+                                <span class="label">CPU</span>
+                                <span class="value" id="cpu-value">--%</span>
+                            </div>
+                            <div class="ring rotating-normal"></div>
+                        </div>
+                    </div>
+                    <div class="gauge">
+                        <div class="circle-outer small gauge-ram">
+                            <div class="circle-inner">
+                                <span class="label">RAM</span>
+                                <span class="value" id="ram-value">--%</span>
+                            </div>
+                            <div class="ring rotating-reverse dashed"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arc-reactor">
+                    <div class="core"></div>
+                    <div class="ring ring-1"></div>
+                    <div class="ring ring-2 rotating-slow"></div>
+                    <div class="ring ring-3 rotating-reverse"></div>
+                    <div class="ring ring-4 dashed rotating-fast"></div>
+                    <div class="ring ring-5"></div>
+                    <div class="ring ring-6 dashed rotating-slow-reverse"></div>
+                    
+                    <div class="reactor-lines">
+                        <div class="line line-horiz"></div>
+                        <div class="line line-vert"></div>
+                        <div class="line line-diag-1"></div>
+                        <div class="line line-diag-2"></div>
+                    </div>
+
+                    <div class="reactor-text text-left">STARK<br>EXPO<br><span class="highlight">2010</span></div>
+                    <div class="reactor-text text-right">SYSTEM<br>ONLINE</div>
+                </div>
+                
+                <div class="center-bottom-labels">
+                    <div class="label-item">Games</div>
+                    <div class="label-item">Programs</div>
+                    <div class="label-item">Skydrive</div>
+                    <div class="label-item">Electronics</div>
+                </div>
+            </section>
+
+            <!-- Right Side -->
+            <aside class="right-panel">
+                <!-- Top Right Clock -->
+                <div class="widget top-right-clock">
+                    <div class="circle-outer medium clock-circle">
+                        <div class="circle-inner" id="clock-display">2:40</div>
+                        <div class="ring thick-partial rotating-normal"></div>
+                        <div class="ring dashed rotating-reverse"></div>
+                    </div>
+                </div>
+
+                <!-- Audio / Equalizer -->
+                <div class="widget audio-player tech-box">
+                    <h3 class="box-title">Audio Control</h3>
+                    <div class="equalizer" id="equalizer">
+                        <!-- Bars added by JS -->
+                    </div>
+                </div>
+
+                <!-- Weather Panel -->
+                <div class="widget weather-panel tech-box">
+                    <div class="weather-main">
+                        <span class="temp" id="weather-temp">--°C</span>
+                        <div class="weather-icon" id="weather-icon">🌍</div>
+                    </div>
+                    <div class="weather-details">
+                        <div id="weather-humidity">Humidity: --</div>
+                        <div id="weather-wind">Wind: --</div>
+                        <div id="weather-visibility">Visibility: --</div>
+                    </div>
+                    <div class="forecast">
+                        <div class="day">
+                            <span>Today</span>
+                            <span id="forecast-today">--° / --°</span>
+                            <span id="forecast-today-icon">❓</span>
+                        </div>
+                        <div class="day">
+                            <span>Tomorrow</span>
+                            <span id="forecast-tomorrow">--° / --°</span>
+                            <span id="forecast-tomorrow-icon">❓</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Network Stats -->
+                <div class="widget network-stats tech-box">
+                    <div class="graph-container">
+                        <div class="graph-label" id="net-download">Download --</div>
+                        <canvas id="downloadGraph" width="250" height="40"></canvas>
+                    </div>
+                    <div class="graph-container">
+                        <div class="graph-label" id="net-upload">Upload --</div>
+                        <canvas id="uploadGraph" width="250" height="40"></canvas>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Bottom Branding -->
+        <footer class="bottom-bar">
+            <div class="ip-address" id="ip-address">IP: --</div>
+            <div class="logo">STARK INDUSTRIES</div>
+            <div class="media-controls">
+                <span>⏮</span>
+                <span>⏯</span>
+                <span>⏭</span>
+                <span>🔊</span>
+            </div>
+        </footer>
+
+        <!-- Chat/Command Interface -->
+        <div class="chat-panel" id="chatPanel">
+            <div class="chat-header" id="chatHeader">
+                <span class="chat-title">JARVIS TERMINAL</span>
+                <span class="chat-toggle" id="chatToggle">−</span>
+            </div>
+            <div class="conversation" id="conversation"></div>
+            <div class="input-area">
+                <button class="mic-btn" id="micBtn" title="Voice input">🎤</button>
+                <input type="text" class="command-input" id="commandInput" placeholder="Enter command..." autofocus>
+                <button class="send-btn" id="sendBtn">SEND</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

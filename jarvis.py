@@ -11,11 +11,21 @@ class Jarvis:
     def __init__(self) -> None:
         init_db()
         log_event("JARVIS initialized")
+        self._start_web_ui()
+
+    def _start_web_ui(self):
+        server_path = os.path.join(os.path.dirname(__file__), "jarvis-ui", "server.py")
+        self._server_proc = subprocess.Popen(
+            [sys.executable, server_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        log_event("JARVIS Web UI started")
 
     def wishMe(self) -> None:
         music = os.path.expanduser("~/personal/friday/assets/background_music.mp3")
         subprocess.Popen(
-            ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.5", music],
+            ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.1", music],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -24,6 +34,7 @@ class Jarvis:
         speak(greeting)
         try:
             webbrowser.open_new_tab("https://app.todoist.com/app/inbox")
+            webbrowser.open_new_tab("http://localhost:8000")
             with open("notes.txt") as f:
                 notes = f.read().strip()
             if notes:
@@ -83,10 +94,13 @@ class Jarvis:
             speak("Unmuted.")
         elif "volume" in query:
             import re
-            nums = re.findall(r'\d+', query)
+
+            nums = re.findall(r"\d+", query)
             if nums:
                 level = min(int(nums[0]), 100)
-                os.system(f"wpctl set-volume @DEFAULT_AUDIO_SINK@ {level}% > /dev/null 2>&1")
+                os.system(
+                    f"wpctl set-volume @DEFAULT_AUDIO_SINK@ {level}% > /dev/null 2>&1"
+                )
                 speak(f"Volume set to {level} percent.")
             else:
                 speak("What volume level, sir?")
@@ -99,6 +113,9 @@ class Jarvis:
                 speak("I'll remember that, sir.")
             else:
                 speak("What should I remember?")
+        elif "daddy's home" in query or "daddy is home" in query or "daddy home" in query:
+            speak("Welcome home, sir!")
+            self.wishMe()
         elif "let's work" in query or "lets work" in query:
             import subprocess
 
@@ -122,8 +139,9 @@ class Jarvis:
         elif "evade" in query:
             speak("Shutting down the system, sir.")
             os.system("shutdown now")
-        elif "sleep" in query or "stop" in query:
+        elif "sleep" in query or "stop" in query or "goodbye" in query:
             speak("Goodbye SIR")
+            self._cleanup()
             sys.exit()
         else:
             speak("I don't know how to do that, sir")
@@ -159,15 +177,29 @@ class Jarvis:
         else:
             os.system("xdotool key ctrl+q")
 
+    def _cleanup(self):
+        if hasattr(self, "_server_proc") and self._server_proc.poll() is None:
+            self._server_proc.terminate()
+            try:
+                self._server_proc.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                self._server_proc.kill()
+
 
 def main():
     bot = Jarvis()
-    bot.wishMe()
-    while True:
-        query = takeCommand()
-        if query != "none":
-            bot.execute_query(query)
+    try:
+        bot.wishMe()
+        while True:
+            query = takeCommand()
+            if query != "none":
+                bot.execute_query(query)
+    finally:
+        bot._cleanup()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
