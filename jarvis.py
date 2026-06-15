@@ -31,7 +31,7 @@ class Jarvis:
         except FileNotFoundError:
             pass
 
-        music = os.path.expanduser("~/personal/friday/assets/background_music.mp3")
+        music = os.path.expanduser("~/personal/friday/assets/background_music.m4a")
         subprocess.Popen(
             ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.5", music],
             stdout=subprocess.DEVNULL,
@@ -69,6 +69,15 @@ class Jarvis:
         elif "unmute" in query:
             os.system("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0 > /dev/null 2>&1")
             speak("Unmuted.")
+        elif "remember" in query:
+            text = query.replace("remember", "", 1).strip()
+            if text:
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                with open("notes.txt", "a") as f:
+                    f.write(f"[{timestamp}] {text}\n")
+                speak("I'll remember that, sir.")
+            else:
+                speak("What should I remember?")
         elif "let's work" in query or "lets work" in query:
             import subprocess
 
