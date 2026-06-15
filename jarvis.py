@@ -1,5 +1,6 @@
 import datetime
 import os
+import subprocess
 import sys
 import webbrowser
 
@@ -12,7 +13,13 @@ class Jarvis:
         log_event("JARVIS initialized")
 
     def wishMe(self) -> None:
-        hour = int(datetime.datetime.now().hour)
+        music = os.path.expanduser("~/personal/friday/assets/background_music.mp3")
+        subprocess.Popen(
+            ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.5", music],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
         greeting = "welcome home, sir"
         speak(greeting)
         try:
@@ -23,6 +30,13 @@ class Jarvis:
                 speak(notes)
         except FileNotFoundError:
             pass
+
+        music = os.path.expanduser("~/personal/friday/assets/background_music.mp3")
+        subprocess.Popen(
+            ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.5", music],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
     def execute_query(self, query):
         # Handle hardcoded voice shortcuts first for speed
@@ -58,9 +72,7 @@ class Jarvis:
         elif "let's work" in query or "lets work" in query:
             import subprocess
 
-            mp3 = os.path.expanduser(
-                "~/personal/friday/assets/50_10_Pomodoro_Timer_with_Brown_Noise_🎧_2_Hour_Study_with_Me_for.mp3"
-            )
+            mp3 = os.path.expanduser("~/personal/friday/assets/lets_work.m4a")
             subprocess.Popen(
                 ["ffplay", "-nodisp", "-autoexit", mp3],
                 stdout=subprocess.DEVNULL,
