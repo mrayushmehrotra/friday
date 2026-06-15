@@ -31,6 +31,18 @@ class Jarvis:
         except FileNotFoundError:
             pass
 
+        try:
+            import urllib.request
+
+            with urllib.request.urlopen(
+                "https://wttr.in/Mau?format=%C+%t", timeout=5
+            ) as r:
+                weather = r.read().decode().strip()
+            if weather:
+                speak(f"weather is {weather}")
+        except Exception:
+            pass
+
         music = os.path.expanduser("~/personal/friday/assets/background_music.m4a")
         subprocess.Popen(
             ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.5", music],
@@ -69,6 +81,15 @@ class Jarvis:
         elif "unmute" in query:
             os.system("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0 > /dev/null 2>&1")
             speak("Unmuted.")
+        elif "volume" in query:
+            import re
+            nums = re.findall(r'\d+', query)
+            if nums:
+                level = min(int(nums[0]), 100)
+                os.system(f"wpctl set-volume @DEFAULT_AUDIO_SINK@ {level}% > /dev/null 2>&1")
+                speak(f"Volume set to {level} percent.")
+            else:
+                speak("What volume level, sir?")
         elif "remember" in query:
             text = query.replace("remember", "", 1).strip()
             if text:
