@@ -119,36 +119,49 @@ def takeCommand(timeout=None, phrase_limit=None) -> str:
         import speech_recognition as sr
     except ImportError:
         return 'none'
+
     _recognizer = sr.Recognizer()
-    
+    _recognizer.energy_threshold = 4000
+    _recognizer.dynamic_energy_threshold = True
+    _recognizer.dynamic_energy_adjustment_damping = 0.15
+    _recognizer.dynamic_energy_ratio = 1.5
+    _recognizer.pause_threshold = 1.0
+    _recognizer.phrase_threshold = 0.2
+    _recognizer.non_speaking_duration = 0.8
+
     with sr.Microphone() as source:
         if timeout is None:
             print('\n--- Listening ---')
-        
-        # Increased to allow more natural pauses without cutting the user off
-        _recognizer.pause_threshold = 1.2  # Seconds of silence to conclude a sentence
-        _recognizer.non_speaking_duration = 1.0 # Buffer from silence to non-silence
-        _recognizer.phrase_threshold = 0.3 # Minimum length of speech to be considered a phrase
-        
-        if timeout is None:
-            _recognizer.adjust_for_ambient_noise(source, duration=0.8)
-        
+
         try:
+            if timeout is None:
+                _recognizer.adjust_for_ambient_noise(source, duration=1.0)
             audio_sr = _recognizer.listen(source, timeout=timeout, phrase_time_limit=phrase_limit)
+        except sr.WaitTimeoutError:
+            return 'none'
         except Exception:
             return 'none'
 
-    try:
-        if timeout is None:
-            print("Recognizing...")
-        # Switching back to Google STT as requested
-        query = _recognizer.recognize_google(audio_sr, language='en-in')
-        query = query.lower()
-        
-        if query:
-            if timeout is None:
-                print(f'User: {query}')
-            return query
-    except Exception:
-        return 'none'
+    if timeout is None:
+        print("Recognizing...")
+
+    for attempt in range(2):
+        try:
+            query = _recognizer.recognize_google(audio_sr, language='en-IN').lower()
+            if query:
+                if timeout is None:
+                    print(f'User: {query}')
+                return query
+        except sr.UnknownValueError:
+            if attempt == 0:
+                print("Didn't catch that, trying again...")
+                continue
+            return 'none'
+        except sr.RequestError:
+            if attempt == 0:
+                print("Google STT unavailable, retrying...")
+                continue
+            return 'none'
+        except Exception:
+            continue
     return 'none'

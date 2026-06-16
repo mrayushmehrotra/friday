@@ -4417,3 +4417,241 @@ Remember that actual accessibility will depend on whether a real service exists 
 2026-06-16 14:32:02,244 - INFO - Input: ['weather is Sunny +45°C']
 2026-06-16 14:32:03,522 - INFO - Processing time: 1.279
 2026-06-16 14:32:03,522 - INFO - Real-time factor: 0.446
+2026-06-16 14:38:59,362 - INFO - JARVIS initialized
+2026-06-16 14:39:44,810 - INFO - JARVIS initialized
+2026-06-16 14:40:13,865 - INFO - JARVIS initialized
+2026-06-16 14:40:13,865 - INFO - JARVIS Web UI started
+2026-06-16 14:40:13,866 - INFO - Speak: welcome home, sir
+2026-06-16 14:40:20,332 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-06-16 14:40:20,353 - INFO - Using model: vits
+2026-06-16 14:40:20,355 - INFO - Setting up Audio Processor...
+2026-06-16 14:40:20,355 - INFO -  | sample_rate: 22050
+2026-06-16 14:40:20,355 - INFO -  | resample: False
+2026-06-16 14:40:20,355 - INFO -  | num_mels: 80
+2026-06-16 14:40:20,355 - INFO -  | log_func: np.log10
+2026-06-16 14:40:20,355 - INFO -  | min_level_db: 0
+2026-06-16 14:40:20,355 - INFO -  | frame_shift_ms: None
+2026-06-16 14:40:20,355 - INFO -  | frame_length_ms: None
+2026-06-16 14:40:20,355 - INFO -  | ref_level_db: None
+2026-06-16 14:40:20,355 - INFO -  | fft_size: 1024
+2026-06-16 14:40:20,355 - INFO -  | power: None
+2026-06-16 14:40:20,355 - INFO -  | preemphasis: 0.0
+2026-06-16 14:40:20,355 - INFO -  | griffin_lim_iters: None
+2026-06-16 14:40:20,355 - INFO -  | signal_norm: None
+2026-06-16 14:40:20,355 - INFO -  | symmetric_norm: None
+2026-06-16 14:40:20,355 - INFO -  | mel_fmin: 0
+2026-06-16 14:40:20,355 - INFO -  | mel_fmax: None
+2026-06-16 14:40:20,355 - INFO -  | pitch_fmin: None
+2026-06-16 14:40:20,355 - INFO -  | pitch_fmax: None
+2026-06-16 14:40:20,355 - INFO -  | spec_gain: 20.0
+2026-06-16 14:40:20,355 - INFO -  | stft_pad_mode: reflect
+2026-06-16 14:40:20,355 - INFO -  | max_norm: 1.0
+2026-06-16 14:40:20,355 - INFO -  | clip_norm: True
+2026-06-16 14:40:20,355 - INFO -  | do_trim_silence: False
+2026-06-16 14:40:20,355 - INFO -  | trim_db: 60
+2026-06-16 14:40:20,355 - INFO -  | do_sound_norm: False
+2026-06-16 14:40:20,355 - INFO -  | do_amp_to_db_linear: True
+2026-06-16 14:40:20,355 - INFO -  | do_amp_to_db_mel: True
+2026-06-16 14:40:20,355 - INFO -  | do_rms_norm: False
+2026-06-16 14:40:20,355 - INFO -  | db_level: None
+2026-06-16 14:40:20,355 - INFO -  | stats_path: None
+2026-06-16 14:40:20,355 - INFO -  | base: 10
+2026-06-16 14:40:20,355 - INFO -  | hop_length: 256
+2026-06-16 14:40:20,356 - INFO -  | win_length: 1024
+2026-06-16 14:40:20,369 - INFO - Initialization of speaker-embedding layers.
+2026-06-16 14:40:20,845 - INFO - Text split into sentences.
+2026-06-16 14:40:20,845 - INFO - Input: ['welcome home, sir']
+2026-06-16 14:40:21,671 - INFO - Processing time: 0.830
+2026-06-16 14:40:21,671 - INFO - Real-time factor: 0.423
+2026-06-16 14:40:23,740 - INFO - Speak: your today's task is to fix yahoo finance scraping in wealthfino pdf generator
+2026-06-16 14:40:23,743 - INFO - Text split into sentences.
+2026-06-16 14:40:23,743 - INFO - Input: ["your today's task is to fix yahoo finance scraping in wealthfino pdf generator"]
+2026-06-16 14:40:27,714 - INFO - Processing time: 3.973
+2026-06-16 14:40:27,714 - INFO - Real-time factor: 0.769
+2026-06-16 14:40:33,620 - INFO - Speak: weather is Sunny +45°C
+2026-06-16 14:40:33,621 - INFO - Text split into sentences.
+2026-06-16 14:40:33,621 - INFO - Input: ['weather is Sunny +45°C']
+2026-06-16 14:40:34,953 - INFO - Processing time: 1.332
+2026-06-16 14:40:34,953 - INFO - Real-time factor: 0.445
+2026-06-16 14:40:58,041 - INFO - Speak: I don't know how to do that, sir
+2026-06-16 14:40:58,043 - INFO - Text split into sentences.
+2026-06-16 14:40:58,043 - INFO - Input: ["I don't know how to do that, sir"]
+2026-06-16 14:40:58,962 - INFO - Processing time: 0.920
+2026-06-16 14:40:58,962 - INFO - Real-time factor: 0.410
+2026-06-16 14:41:11,494 - INFO - Speak: Opening Github.
+2026-06-16 14:41:11,496 - INFO - Text split into sentences.
+2026-06-16 14:41:11,497 - INFO - Input: ['Opening Github.']
+2026-06-16 14:41:12,355 - INFO - Processing time: 0.861
+2026-06-16 14:41:12,355 - INFO - Real-time factor: 0.526
+2026-06-16 14:44:19,306 - INFO - JARVIS initialized
+2026-06-16 14:44:19,306 - INFO - JARVIS Web UI started
+2026-06-16 14:44:19,308 - INFO - Speak: welcome home, sir
+2026-06-16 14:44:25,023 - INFO - Speak: Music stopped, sir.
+2026-06-16 14:44:25,214 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-06-16 14:44:25,217 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-06-16 14:44:25,247 - INFO - Using model: vits
+2026-06-16 14:44:25,249 - INFO - Setting up Audio Processor...
+2026-06-16 14:44:25,249 - INFO -  | sample_rate: 22050
+2026-06-16 14:44:25,249 - INFO -  | resample: False
+2026-06-16 14:44:25,249 - INFO -  | num_mels: 80
+2026-06-16 14:44:25,249 - INFO -  | log_func: np.log10
+2026-06-16 14:44:25,249 - INFO -  | min_level_db: 0
+2026-06-16 14:44:25,249 - INFO -  | frame_shift_ms: None
+2026-06-16 14:44:25,249 - INFO -  | frame_length_ms: None
+2026-06-16 14:44:25,249 - INFO -  | ref_level_db: None
+2026-06-16 14:44:25,249 - INFO -  | fft_size: 1024
+2026-06-16 14:44:25,249 - INFO -  | power: None
+2026-06-16 14:44:25,249 - INFO -  | preemphasis: 0.0
+2026-06-16 14:44:25,249 - INFO -  | griffin_lim_iters: None
+2026-06-16 14:44:25,249 - INFO -  | signal_norm: None
+2026-06-16 14:44:25,249 - INFO -  | symmetric_norm: None
+2026-06-16 14:44:25,249 - INFO -  | mel_fmin: 0
+2026-06-16 14:44:25,249 - INFO -  | mel_fmax: None
+2026-06-16 14:44:25,249 - INFO -  | pitch_fmin: None
+2026-06-16 14:44:25,249 - INFO -  | pitch_fmax: None
+2026-06-16 14:44:25,249 - INFO -  | spec_gain: 20.0
+2026-06-16 14:44:25,249 - INFO -  | stft_pad_mode: reflect
+2026-06-16 14:44:25,249 - INFO -  | max_norm: 1.0
+2026-06-16 14:44:25,249 - INFO -  | clip_norm: True
+2026-06-16 14:44:25,249 - INFO -  | do_trim_silence: False
+2026-06-16 14:44:25,249 - INFO -  | trim_db: 60
+2026-06-16 14:44:25,249 - INFO -  | do_sound_norm: False
+2026-06-16 14:44:25,249 - INFO -  | do_amp_to_db_linear: True
+2026-06-16 14:44:25,249 - INFO -  | do_amp_to_db_mel: True
+2026-06-16 14:44:25,251 - INFO -  | do_rms_norm: False
+2026-06-16 14:44:25,251 - INFO -  | db_level: None
+2026-06-16 14:44:25,251 - INFO -  | stats_path: None
+2026-06-16 14:44:25,251 - INFO -  | base: 10
+2026-06-16 14:44:25,252 - INFO -  | hop_length: 256
+2026-06-16 14:44:25,252 - INFO -  | win_length: 1024
+2026-06-16 14:44:25,274 - INFO - Initialization of speaker-embedding layers.
+2026-06-16 14:44:25,866 - INFO - Text split into sentences.
+2026-06-16 14:44:25,866 - INFO - Input: ['welcome home, sir']
+2026-06-16 14:44:26,722 - INFO - Processing time: 0.862
+2026-06-16 14:44:26,722 - INFO - Real-time factor: 0.476
+2026-06-16 14:44:28,687 - INFO - Speak: your today's task is to fix yahoo finance scraping in wealthfino pdf generator
+2026-06-16 14:44:28,690 - INFO - Text split into sentences.
+2026-06-16 14:44:28,691 - INFO - Input: ["your today's task is to fix yahoo finance scraping in wealthfino pdf generator"]
+2026-06-16 14:44:33,020 - INFO - Processing time: 4.332
+2026-06-16 14:44:33,020 - INFO - Real-time factor: 0.782
+2026-06-16 14:44:39,280 - INFO - Speak: weather is Sunny +45°C
+2026-06-16 14:44:39,280 - INFO - Text split into sentences.
+2026-06-16 14:44:39,280 - INFO - Input: ['weather is Sunny +45°C']
+2026-06-16 14:44:40,342 - INFO - Speak: I don't know how to do that, sir
+2026-06-16 14:44:40,344 - INFO - Text split into sentences.
+2026-06-16 14:44:40,345 - INFO - Input: ["I don't know how to do that, sir"]
+2026-06-16 14:44:40,608 - INFO - Processing time: 1.328
+2026-06-16 14:44:40,608 - INFO - Real-time factor: 0.455
+2026-06-16 14:44:41,406 - INFO - Processing time: 1.062
+2026-06-16 14:44:41,406 - INFO - Real-time factor: 0.505
+2026-06-16 14:44:49,636 - INFO - Speak: Music stopped, sir.
+2026-06-16 14:44:49,639 - INFO - Text split into sentences.
+2026-06-16 14:44:49,639 - INFO - Input: ['Music stopped, sir.']
+2026-06-16 14:44:50,455 - INFO - Processing time: 0.818
+2026-06-16 14:44:50,455 - INFO - Real-time factor: 0.440
+2026-06-16 14:45:07,177 - INFO - Speak: I don't know how to do that, sir
+2026-06-16 14:45:07,178 - INFO - Text split into sentences.
+2026-06-16 14:45:07,178 - INFO - Input: ["I don't know how to do that, sir"]
+2026-06-16 14:45:08,233 - INFO - Processing time: 1.055
+2026-06-16 14:45:08,233 - INFO - Real-time factor: 0.452
+2026-06-16 14:46:09,240 - INFO - Speak: News. Technology Adopter To Provider: PM Modi Pitches India As Innovation Partner - NDTV. Women’s Health Futures in India: Technology, Workforce, and Finance for Lifelong Well-Being - orfonline.org. Technology drives India-France strategic convergence - The Hindu. Bharat Innovates 2026 begins in Nice, forging new India–Europe deep-tech partnerships - PIB
+2026-06-16 14:46:09,244 - INFO - Text split into sentences.
+2026-06-16 14:46:09,244 - INFO - Input: ['News.', 'Technology Adopter To Provider: PM Modi Pitches India As Innovation Partner - NDTV.', 'Women’s Health Futures in India: Technology, Workforce, and Finance for Lifelong Well-Being - orfonline.org.', 'Technology drives India-France strategic convergence - The Hindu.', 'Bharat Innovates 2026 begins in Nice, forging new India–Europe deep-tech partnerships - PIB']
+2026-06-16 14:46:21,031 - INFO - Processing time: 11.791
+2026-06-16 14:46:21,031 - INFO - Real-time factor: 0.484
+2026-06-16 14:47:07,040 - INFO - JARVIS initialized
+2026-06-16 14:47:07,041 - INFO - JARVIS Web UI started
+2026-06-16 14:47:07,043 - INFO - Speak: welcome home, sir
+2026-06-16 14:47:12,191 - INFO - Speak: Music stopped, sir.
+2026-06-16 14:47:14,207 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-06-16 14:47:14,215 - INFO - tts_models/en/vctk/vits is already downloaded.
+2026-06-16 14:47:14,248 - INFO - Using model: vits
+2026-06-16 14:47:14,252 - INFO - Using model: vits
+2026-06-16 14:47:14,252 - INFO - Setting up Audio Processor...
+2026-06-16 14:47:14,253 - INFO -  | sample_rate: 22050
+2026-06-16 14:47:14,253 - INFO -  | resample: False
+2026-06-16 14:47:14,253 - INFO -  | num_mels: 80
+2026-06-16 14:47:14,253 - INFO -  | log_func: np.log10
+2026-06-16 14:47:14,253 - INFO -  | min_level_db: 0
+2026-06-16 14:47:14,253 - INFO -  | frame_shift_ms: None
+2026-06-16 14:47:14,253 - INFO -  | frame_length_ms: None
+2026-06-16 14:47:14,253 - INFO -  | ref_level_db: None
+2026-06-16 14:47:14,253 - INFO -  | fft_size: 1024
+2026-06-16 14:47:14,253 - INFO -  | power: None
+2026-06-16 14:47:14,253 - INFO -  | preemphasis: 0.0
+2026-06-16 14:47:14,253 - INFO -  | griffin_lim_iters: None
+2026-06-16 14:47:14,253 - INFO -  | signal_norm: None
+2026-06-16 14:47:14,253 - INFO -  | symmetric_norm: None
+2026-06-16 14:47:14,253 - INFO -  | mel_fmin: 0
+2026-06-16 14:47:14,253 - INFO -  | mel_fmax: None
+2026-06-16 14:47:14,253 - INFO -  | pitch_fmin: None
+2026-06-16 14:47:14,253 - INFO -  | pitch_fmax: None
+2026-06-16 14:47:14,253 - INFO -  | spec_gain: 20.0
+2026-06-16 14:47:14,254 - INFO -  | stft_pad_mode: reflect
+2026-06-16 14:47:14,254 - INFO -  | max_norm: 1.0
+2026-06-16 14:47:14,254 - INFO -  | clip_norm: True
+2026-06-16 14:47:14,254 - INFO -  | do_trim_silence: False
+2026-06-16 14:47:14,254 - INFO -  | trim_db: 60
+2026-06-16 14:47:14,254 - INFO -  | do_sound_norm: False
+2026-06-16 14:47:14,254 - INFO -  | do_amp_to_db_linear: True
+2026-06-16 14:47:14,254 - INFO -  | do_amp_to_db_mel: True
+2026-06-16 14:47:14,254 - INFO -  | do_rms_norm: False
+2026-06-16 14:47:14,254 - INFO -  | db_level: None
+2026-06-16 14:47:14,253 - INFO - Setting up Audio Processor...
+2026-06-16 14:47:14,254 - INFO -  | sample_rate: 22050
+2026-06-16 14:47:14,254 - INFO -  | resample: False
+2026-06-16 14:47:14,254 - INFO -  | num_mels: 80
+2026-06-16 14:47:14,254 - INFO -  | log_func: np.log10
+2026-06-16 14:47:14,254 - INFO -  | min_level_db: 0
+2026-06-16 14:47:14,254 - INFO -  | frame_shift_ms: None
+2026-06-16 14:47:14,254 - INFO -  | frame_length_ms: None
+2026-06-16 14:47:14,254 - INFO -  | ref_level_db: None
+2026-06-16 14:47:14,254 - INFO -  | fft_size: 1024
+2026-06-16 14:47:14,254 - INFO -  | power: None
+2026-06-16 14:47:14,254 - INFO -  | preemphasis: 0.0
+2026-06-16 14:47:14,254 - INFO -  | griffin_lim_iters: None
+2026-06-16 14:47:14,254 - INFO -  | signal_norm: None
+2026-06-16 14:47:14,254 - INFO -  | symmetric_norm: None
+2026-06-16 14:47:14,254 - INFO -  | mel_fmin: 0
+2026-06-16 14:47:14,254 - INFO -  | mel_fmax: None
+2026-06-16 14:47:14,254 - INFO -  | pitch_fmin: None
+2026-06-16 14:47:14,255 - INFO -  | pitch_fmax: None
+2026-06-16 14:47:14,255 - INFO -  | spec_gain: 20.0
+2026-06-16 14:47:14,255 - INFO -  | stft_pad_mode: reflect
+2026-06-16 14:47:14,255 - INFO -  | max_norm: 1.0
+2026-06-16 14:47:14,255 - INFO -  | clip_norm: True
+2026-06-16 14:47:14,255 - INFO -  | do_trim_silence: False
+2026-06-16 14:47:14,255 - INFO -  | trim_db: 60
+2026-06-16 14:47:14,255 - INFO -  | do_sound_norm: False
+2026-06-16 14:47:14,255 - INFO -  | do_amp_to_db_linear: True
+2026-06-16 14:47:14,255 - INFO -  | do_amp_to_db_mel: True
+2026-06-16 14:47:14,255 - INFO -  | do_rms_norm: False
+2026-06-16 14:47:14,255 - INFO -  | db_level: None
+2026-06-16 14:47:14,254 - INFO -  | stats_path: None
+2026-06-16 14:47:14,255 - INFO -  | base: 10
+2026-06-16 14:47:14,255 - INFO -  | hop_length: 256
+2026-06-16 14:47:14,255 - INFO -  | win_length: 1024
+2026-06-16 14:47:14,255 - INFO -  | stats_path: None
+2026-06-16 14:47:14,255 - INFO -  | base: 10
+2026-06-16 14:47:14,256 - INFO -  | hop_length: 256
+2026-06-16 14:47:14,256 - INFO -  | win_length: 1024
+2026-06-16 14:47:14,276 - INFO - Initialization of speaker-embedding layers.
+2026-06-16 14:47:14,285 - INFO - Initialization of speaker-embedding layers.
+2026-06-16 14:47:15,860 - INFO - Text split into sentences.
+2026-06-16 14:47:15,862 - INFO - Input: ['welcome home, sir']
+2026-06-16 14:47:15,985 - INFO - Text split into sentences.
+2026-06-16 14:47:15,989 - INFO - Input: ['Music stopped, sir.']
+2026-06-16 14:47:18,041 - INFO - Processing time: 2.064
+2026-06-16 14:47:18,042 - INFO - Real-time factor: 1.185
+2026-06-16 14:47:18,099 - INFO - Processing time: 2.245
+2026-06-16 14:47:18,099 - INFO - Real-time factor: 1.255
+2026-06-16 14:47:20,008 - INFO - Speak: your today's task is to fix yahoo finance scraping in wealthfino pdf generator
+2026-06-16 14:47:20,011 - INFO - Text split into sentences.
+2026-06-16 14:47:20,011 - INFO - Input: ["your today's task is to fix yahoo finance scraping in wealthfino pdf generator"]
+2026-06-16 14:47:24,647 - INFO - Processing time: 4.638
+2026-06-16 14:47:24,647 - INFO - Real-time factor: 0.884
+2026-06-16 14:47:30,634 - INFO - Speak: weather is Sunny +45°C
+2026-06-16 14:47:30,635 - INFO - Text split into sentences.
+2026-06-16 14:47:30,635 - INFO - Input: ['weather is Sunny +45°C']
+2026-06-16 14:47:31,902 - INFO - Processing time: 1.268
+2026-06-16 14:47:31,902 - INFO - Real-time factor: 0.433

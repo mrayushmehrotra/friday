@@ -235,7 +235,9 @@ class Jarvis:
 def main():
     bot = Jarvis()
     try:
-        bot.wishMe()
+        import threading
+
+        threading.Thread(target=bot.wishMe, daemon=True).start()
         while True:
             query = takeCommand()
             if query != "none":
