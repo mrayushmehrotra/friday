@@ -3,7 +3,6 @@ import sys
 import datetime
 import logging
 import sqlite3
-import speech_recognition as sr
 from ctypes import *
 
 # Silence ALSA/JACK errors
@@ -35,8 +34,7 @@ logging.basicConfig(
 
 # Global models and state
 _tts = None
-_tts_type = None 
-_recognizer = sr.Recognizer()
+_tts_type = None
 
 # SPEED CONFIG
 SPEECH_SPEED = 1.3 
@@ -47,13 +45,17 @@ def get_tts():
         try:
             from TTS.api import TTS
             print("Loading Coqui TTS male voice model...")
-            # We already have this model, so it shouldn't download much
             _tts = TTS(model_name="tts_models/en/vctk/vits", progress_bar=False, gpu=False)
             _tts_type = 'coqui'
         except Exception:
-            import pyttsx3
-            _tts = pyttsx3.init()
-            _tts_type = 'pyttsx3'
+            try:
+                import pyttsx3
+                _tts = pyttsx3.init()
+                _tts_type = 'pyttsx3'
+            except Exception:
+                _tts_type = None
+                print("WARNING: No TTS engine available. Voice output disabled.")
+                log_event("No TTS engine available", 'error')
     return _tts
 
 def init_db():
@@ -90,6 +92,8 @@ def speak(audio) -> None:
     print(f"JARVIS: {audio}")
     log_event(f"Speak: {audio}")
     engine = get_tts()
+    if engine is None or _tts_type is None:
+        return
     
     if _tts_type == 'coqui':
         try:
@@ -111,7 +115,11 @@ def speak(audio) -> None:
         engine.runAndWait()
 
 def takeCommand(timeout=None, phrase_limit=None) -> str:
-    global _recognizer
+    try:
+        import speech_recognition as sr
+    except ImportError:
+        return 'none'
+    _recognizer = sr.Recognizer()
     
     with sr.Microphone() as source:
         if timeout is None:

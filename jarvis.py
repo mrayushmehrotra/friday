@@ -24,6 +24,13 @@ class Jarvis:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+        config_dir = os.path.join(os.path.dirname(__file__), "jarvis-config")
+        self._svelte_proc = subprocess.Popen(
+            ["bun", "run", "dev"],
+            cwd=config_dir,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         log_event("JARVIS Web UI started")
 
     def _kill_music(self):
@@ -93,13 +100,17 @@ class Jarvis:
         elif "news" in query or "finance" in query or "market" in query:
             try:
                 url = "https://news.google.com/rss/search?q=india+technology&hl=en-IN&gl=IN&ceid=IN:en"
-                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
                 with urllib.request.urlopen(req, timeout=8) as r:
                     xml_data = r.read().decode()
                 root = ET.fromstring(xml_data)
                 items = []
-                for item in root.iter('item'):
-                    title = item.find('title').text if item.find('title') is not None else ''
+                for item in root.iter("item"):
+                    title = (
+                        item.find("title").text
+                        if item.find("title") is not None
+                        else ""
+                    )
                     if title:
                         items.append(title)
                 if items:
@@ -140,7 +151,9 @@ class Jarvis:
                 speak("I'll remember that, sir.")
             else:
                 speak("What should I remember?")
-        elif "daddy's home" in query or "daddy is home" in query or "daddy home" in query:
+        elif (
+            "daddy's home" in query or "daddy is home" in query or "daddy home" in query
+        ):
             speak("Welcome home, sir!")
             self.wishMe()
         elif "let's work" in query or "lets work" in query:
@@ -164,13 +177,13 @@ class Jarvis:
             self.handle_write(query)
         elif "close" in query:
             self.handle_close()
-        elif "stop the song" in query or "stop music" in query or "stop song" in query:
+        elif "stop" in query or "pause" in query:
             self._kill_music()
             speak("Music stopped, sir.")
         elif "evade" in query:
             speak("Shutting down the system, sir.")
             os.system("shutdown now")
-        elif "sleep" in query or "stop" in query or "goodbye" in query:
+        elif "sleep" in query or "goodbye" in query:
             speak("Goodbye SIR")
             self._cleanup()
             sys.exit()
@@ -209,12 +222,14 @@ class Jarvis:
             os.system("xdotool key ctrl+q")
 
     def _cleanup(self):
-        if hasattr(self, "_server_proc") and self._server_proc.poll() is None:
-            self._server_proc.terminate()
-            try:
-                self._server_proc.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                self._server_proc.kill()
+        for attr in ("_server_proc", "_svelte_proc"):
+            proc = getattr(self, attr, None)
+            if proc and proc.poll() is None:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
 
 
 def main():
@@ -225,6 +240,10 @@ def main():
             query = takeCommand()
             if query != "none":
                 bot.execute_query(query)
+            else:
+                import time
+
+                time.sleep(0.2)
     finally:
         bot._cleanup()
 
