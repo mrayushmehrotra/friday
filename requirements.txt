@@ -3,7 +3,8 @@ SpeechRecognition
 PyAudio
 requests
 numpy
-coqui-tts
-torch
-torchaudio
-torchcodec
+chromadb
+piper-tts
+PyAutoGUI
+google-api-python-client
+google-auth-oauthlib

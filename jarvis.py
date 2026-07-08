@@ -1,13 +1,25 @@
 import datetime
 import json
 import os
+import random
 import subprocess
 import sys
+import urllib.parse
 import urllib.request
 import webbrowser
-import xml.etree.ElementTree as ET
 
-from helpers import init_db, log_event, speak, takeCommand
+from enhanced import (
+    _query_llm,
+    clipboard_to_llm,
+    clipboard_translate,
+    query_todos,
+    query_with_news,
+    query_with_search,
+    speak_daily_briefing,
+)
+import autonomous
+from helpers import init_db, log_event, speak, stop_speech, takeCommand
+from memory import store as store_memory
 
 
 class Jarvis:
@@ -15,23 +27,6 @@ class Jarvis:
         init_db()
         log_event("JARVIS initialized")
         self._music_proc = None
-        self._start_web_ui()
-
-    def _start_web_ui(self):
-        server_path = os.path.join(os.path.dirname(__file__), "jarvis-ui", "server.py")
-        self._server_proc = subprocess.Popen(
-            [sys.executable, server_path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        config_dir = os.path.join(os.path.dirname(__file__), "jarvis-config")
-        self._svelte_proc = subprocess.Popen(
-            ["bun", "run", "dev"],
-            cwd=config_dir,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        log_event("JARVIS Web UI started")
 
     def _kill_music(self):
         if self._music_proc and self._music_proc.poll() is None:
@@ -42,46 +37,40 @@ class Jarvis:
                 self._music_proc.kill()
         self._music_proc = None
 
-    def wishMe(self) -> None:
-        music = os.path.expanduser("~/personal/friday/assets/background_music.mp3")
-        self._music_proc = subprocess.Popen(
-            ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.1", music],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+    def _play_background_music(self):
+        self._kill_music()
+        music_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "assets", "background_music.mp3"
         )
+        if os.path.exists(music_path):
+            self._music_proc = subprocess.Popen(
+                ["ffplay", "-nodisp", "-autoexit", "-volume", "20", music_path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
 
-        greeting = "welcome home, sir"
-        speak(greeting)
+    def _play_motivation(self):
+        self._kill_music()
+        assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+        videos = ["motivation_1.mp4", "motivation_2.mp4"]
+        chosen = os.path.join(assets_dir, random.choice(videos))
+        if os.path.exists(chosen):
+            subprocess.Popen(
+                ["ffplay", "-autoexit", "-fs", chosen],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+    def wishMe(self) -> None:
         try:
             webbrowser.open_new_tab("https://app.todoist.com/app/inbox")
-            webbrowser.open_new_tab("http://localhost:8000")
-            with open("notes.txt") as f:
-                notes = f.read().strip()
-            if notes:
-                speak(notes)
-        except FileNotFoundError:
-            pass
-
-        try:
-            import urllib.request
-
-            with urllib.request.urlopen(
-                "https://wttr.in/Mau?format=%C+%t", timeout=5
-            ) as r:
-                weather = r.read().decode().strip()
-            if weather:
-                speak(f"weather is {weather}")
         except Exception:
             pass
 
-        music = os.path.expanduser("~/personal/friday/assets/background_music.m4a")
-        self._music_proc = subprocess.Popen(
-            ["ffplay", "-nodisp", "-autoexit", "-af", "volume=0.5", music],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        speak_daily_briefing()
 
     def execute_query(self, query):
+        stop_speech()
         for prefix in ["jarvis ", "jarvis", "jarvis's "]:
             if query.startswith(prefix):
                 query = query.removeprefix(prefix)
@@ -98,32 +87,34 @@ class Jarvis:
             speak("Opening Github.")
 
         elif "news" in query or "finance" in query or "market" in query:
-            try:
-                url = "https://news.google.com/rss/search?q=india+technology&hl=en-IN&gl=IN&ceid=IN:en"
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=8) as r:
-                    xml_data = r.read().decode()
-                root = ET.fromstring(xml_data)
-                items = []
-                for item in root.iter("item"):
-                    title = (
-                        item.find("title").text
-                        if item.find("title") is not None
-                        else ""
-                    )
-                    if title:
-                        items.append(title)
-                if items:
-                    headlines = ". ".join(items[:4])
-                    speak(f"News. {headlines}")
-                else:
-                    speak("No news found, sir.")
-            except Exception:
-                speak("Could not fetch news, sir.")
+            topic = query
+            for kw in [
+                "news",
+                "finance",
+                "market",
+                "about",
+                "tell me about",
+                "what's",
+                "what is",
+            ]:
+                topic = topic.replace(kw, "", 1).strip()
+            if not topic:
+                topic = "stock market nifty sensex stocks"
+            answer = query_with_news(topic)
+            speak(answer or f"Could not fetch news about {topic}, sir.")
+            if answer:
+                store_memory(query, answer)
+        elif "cheatsheet" in query or "help" in query:
+            path = os.path.join(os.path.dirname(__file__), "assets", "cheatsheet.html")
+            webbrowser.open_new_tab("file://" + path)
+            speak("Opening cheatsheet.")
         elif "open terminal" in query:
             if os.system("which kitty > /dev/null 2>&1") == 0:
                 os.system("kitty &")
             speak("Opening terminal.")
+        elif "open your logs" in query:
+            os.system("kitty nvim ./jarvis.log")
+            speak("Muted.")
         elif "mute" in query:
             os.system("wpctl set-mute @DEFAULT_AUDIO_SINK@ 1 > /dev/null 2>&1")
             speak("Muted.")
@@ -146,27 +137,22 @@ class Jarvis:
             text = query.replace("remember", "", 1).strip()
             if text:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                with open("notes.txt", "a") as f:
+                with open(os.path.expanduser("~/notes.md"), "a") as f:
                     f.write(f"[{timestamp}] {text}\n")
                 speak("I'll remember that, sir.")
             else:
                 speak("What should I remember?")
+        elif "tired" in query or "i'm tired" in query or "i am tired" in query:
+            speak("Time to lock in, sir!")
+            self._play_motivation()
         elif (
             "daddy's home" in query or "daddy is home" in query or "daddy home" in query
         ):
             speak("Welcome home, sir!")
+            self._play_background_music()
             self.wishMe()
-        elif "let's work" in query or "lets work" in query:
-            import subprocess
-
-            mp3 = os.path.expanduser("~/personal/friday/assets/lets_work.m4a")
-            self._kill_music()
-            self._music_proc = subprocess.Popen(
-                ["ffplay", "-nodisp", "-autoexit", mp3],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            speak("Let's get to work, sir!")
+            news = query_with_news("current news")
+            speak(news)
         elif "copy" in query:
             text = query.replace("copy", "", 1).strip()
             import pyperclip
@@ -179,16 +165,135 @@ class Jarvis:
             self.handle_close()
         elif "stop" in query or "pause" in query:
             self._kill_music()
-            speak("Music stopped, sir.")
+            if autonomous.auto_active:
+                autonomous.stop_requested = True
+                speak("Autonomous mode stopping, sir.")
+            else:
+                speak("Music stopped, sir.")
         elif "evade" in query:
             speak("Shutting down the system, sir.")
             os.system("shutdown now")
-        elif "sleep" in query or "goodbye" in query:
-            speak("Goodbye SIR")
+        elif "sleep" in query or "goodbye" in query or "good bye" in query:
+            speak("Goodbye SIR", wait=True)
             self._cleanup()
             sys.exit()
+        elif "briefing" in query or "what's new" in query or "daily briefing" in query:
+            speak_daily_briefing()
+        elif "clipboard" in query and (
+            "summar" in query
+            or "analyse" in query
+            or "analyze" in query
+            or "explain" in query
+        ):
+            clipboard_to_llm()
+        elif "translate clipboard" in query or "clipboard translate" in query:
+            import re
+
+            langs = re.findall(
+                r"(?:to\s+)?(\w+(?:\s+\w+)?)(?:\s*$)",
+                query.replace("translate clipboard", "")
+                .replace("clipboard translate", "")
+                .strip(),
+            )
+            target = (
+                langs[0].strip().title() if langs and langs[0].strip() else "English"
+            )
+            clipboard_translate(target)
+        elif (
+            "todo" in query
+            or "task" in query
+            or "what i've to do" in query
+            or "what's my" in query
+        ):
+            answer = query_todos()
+            speak(answer)
+            store_memory(query, answer)
+        elif "on youtube" in query or "youtube" in query:
+            search_terms = query
+            for kw in ["search for", "search", "on youtube", "youtube"]:
+                search_terms = search_terms.replace(kw, "", 1).strip()
+            if search_terms:
+                url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(search_terms)}"
+                webbrowser.open_new_tab(url)
+                speak(f"Searching YouTube for {search_terms}.")
+            else:
+                webbrowser.open_new_tab("https://www.youtube.com")
+                speak("Opening YouTube.")
+        elif (
+            "search" in query
+            or "weather" in query
+            or "what's" in query
+            or "what is" in query
+            or "who is" in query
+            or "tell me about" in query
+        ):
+            search_terms = query
+            for kw in [
+                "search for",
+                "search",
+                "tell me about",
+                "what's",
+                "what is",
+                "who is",
+            ]:
+                search_terms = search_terms.replace(kw, "", 1).strip()
+            if search_terms:
+                answer = query_with_search(search_terms)
+                speak(answer or "I couldn't find an answer for that, sir.")
+                if answer:
+                    store_memory(query, answer)
+            else:
+                speak("What should I search for, sir?")
+        elif "upload" in query and ("youtube" in query or "video" in query):
+            import youtube_uploader
+            youtube_uploader.run(query)
+        elif any(
+            kw in query
+            for kw in [
+                "work for",
+                "take control",
+                "autonomous",
+                "auto pilot",
+                "act on its own",
+                "do my work",
+                "do everything",
+            ]
+        ):
+            import re
+
+            nums = re.findall(r"(\d+)\s*(?:min|minute)", query)
+            duration = int(nums[0]) if nums else 30
+
+            goal = query
+            for kw in [
+                "work for",
+                "take control",
+                "autonomous",
+                "auto pilot",
+                "act on its own",
+                "do my work",
+                "do everything",
+                f"{duration} minutes",
+                "for",
+            ]:
+                goal = goal.replace(kw, "", 1).strip()
+            if not goal:
+                goal = "general productivity work"
+
+            speak(
+                f"Entering autonomous mode for {duration} minutes. Goal: {goal}"
+            )
+            import threading
+            threading.Thread(
+                target=autonomous.run_autonomous,
+                args=(goal, duration),
+                daemon=True,
+            ).start()
         else:
-            speak("I don't know how to do that, sir")
+            answer = _query_llm(f"Answer concisely in one sentence: {query}")
+            speak(answer or "I don't know how to do that, sir")
+            if answer:
+                store_memory(query, answer)
 
     def handle_write(self, query):
         text_to_write = query.replace("write", "", 1).replace("right", "", 1).strip()
@@ -221,8 +326,50 @@ class Jarvis:
         else:
             os.system("xdotool key ctrl+q")
 
+    def _search_web(self, query: str) -> str:
+        try:
+            url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(query)}&format=json&no_html=1&skip_disambig=1"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=8) as r:
+                data = json.loads(r.read().decode())
+
+            if data.get("AbstractText"):
+                return data["AbstractText"][:300]
+            if data.get("Answer"):
+                return data["Answer"][:300]
+            if data.get("Definition"):
+                return data["Definition"][:300]
+            if data.get("Results"):
+                first = data["Results"][0]
+                if first.get("Text"):
+                    return first["Text"][:300]
+
+            fallback_url = (
+                f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
+            )
+            req = urllib.request.Request(
+                fallback_url, headers={"User-Agent": "Mozilla/5.0"}
+            )
+            with urllib.request.urlopen(req, timeout=8) as r:
+                html = r.read().decode()
+                import re
+
+                match = re.search(
+                    r'class="result__snippet"[^>]*>(.*?)</(?:a|span|td)>',
+                    html,
+                    re.DOTALL,
+                )
+                if match:
+                    snippet = re.sub(r"<[^>]+>", "", match.group(1)).strip()
+                    return snippet[:300]
+
+            return f"I couldn't find an answer for that, sir."
+        except Exception as e:
+            log_event(f"Search error: {e}", "error")
+            return "Search failed, sir."
+
     def _cleanup(self):
-        for attr in ("_server_proc", "_svelte_proc"):
+        for attr in ("_server_proc",):
             proc = getattr(self, attr, None)
             if proc and proc.poll() is None:
                 proc.terminate()
@@ -233,6 +380,7 @@ class Jarvis:
 
 
 def main():
+    print("Starting Jarvis...")
     bot = Jarvis()
     try:
         import threading
