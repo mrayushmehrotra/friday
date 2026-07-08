@@ -150,6 +150,7 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
       animate={{
         width: visible ? "92%" : "100%",
         y: visible ? 12 : 6,
+        backdropFilter: visible ? "blur(24px) saturate(1.5)" : "blur(0px)",
       }}
       transition={{
         type: "spring",
@@ -158,8 +159,9 @@ export const MobileNav = ({ children, className, visible }: MobileNavProps) => {
       }}
       className={cn(
         "relative z-50 mx-auto flex flex-col items-center justify-between rounded-full px-4 py-2 lg:hidden",
-        "bg-white/70 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] border border-white/20",
-        "dark:bg-neutral-900/70 dark:border-white/10",
+        visible
+          ? "bg-white/70 shadow-[0_8px_32px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] border border-white/20 dark:bg-neutral-900/70 dark:border-white/10"
+          : "bg-transparent shadow-none border-transparent",
         className,
       )}
     >

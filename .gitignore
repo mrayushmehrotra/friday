@@ -9,4 +9,5 @@ __pycache__/
 *$py.class
 .env
 .vscode/
+client_secret.json
 
