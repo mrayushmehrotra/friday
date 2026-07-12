@@ -201,9 +201,11 @@ class Jarvis:
             clipboard_translate(target)
         elif (
             "todo" in query
+            or "to do" in query
             or "task" in query
             or "what i've to do" in query
             or "what's my" in query
+            or "what are my" in query
         ):
             answer = query_todos()
             speak(answer)
@@ -354,6 +356,12 @@ class Jarvis:
                 )
             else:
                 answer = _query_llm(f"Answer concisely in one sentence: {query}")
+
+            if not answer or len(answer) < 5:
+                answer = _query_llm(
+                    f"Answer in exactly one short sentence: {query}"
+                )
+
             speak(answer or "I don't know how to do that, sir")
             if answer:
                 store_memory(query, answer)

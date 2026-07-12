@@ -215,20 +215,24 @@ def speak(audio, wait=False) -> None:
         _speech_thread.join()
 
 
+try:
+    import speech_recognition as sr
+except ImportError:
+    sr = None
+
+
 def takeCommand(timeout=None, phrase_limit=None) -> str:
-    try:
-        import speech_recognition as sr
-    except ImportError:
+    if sr is None:
         return "none"
 
     _recognizer = sr.Recognizer()
-    _recognizer.energy_threshold = 4000
+    _recognizer.energy_threshold = 2000
     _recognizer.dynamic_energy_threshold = True
     _recognizer.dynamic_energy_adjustment_damping = 0.15
     _recognizer.dynamic_energy_ratio = 1.5
-    _recognizer.pause_threshold = 2.0
+    _recognizer.pause_threshold = 1.0
     _recognizer.phrase_threshold = 0.3
-    _recognizer.non_speaking_duration = 1.5
+    _recognizer.non_speaking_duration = 0.8
 
     with sr.Microphone() as source:
         if timeout is None:
@@ -236,7 +240,7 @@ def takeCommand(timeout=None, phrase_limit=None) -> str:
 
         try:
             if timeout is None:
-                _recognizer.adjust_for_ambient_noise(source, duration=0.3)
+                _recognizer.adjust_for_ambient_noise(source, duration=0.5)
             audio_sr = _recognizer.listen(
                 source, timeout=timeout, phrase_time_limit=phrase_limit
             )
@@ -248,15 +252,32 @@ def takeCommand(timeout=None, phrase_limit=None) -> str:
     if timeout is None:
         print("Recognizing...")
 
-    try:
-        query = _recognizer.recognize_google(audio_sr).strip().lower()
-        if query:
-            if timeout is None:
-                print(f"User: {query}")
-            return query
-        return "none"
-    except sr.UnknownValueError:
-        return "none"
-    except sr.RequestError as e:
-        log_event(f"Google STT error: {e}", "error")
-        return "none"
+    query = _try_recognize(_recognizer, audio_sr, timeout is None)
+    return query
+
+
+def _try_recognize(recognizer, audio_sr, verbose: bool) -> str:
+    engines = [
+        ("Google Cloud", lambda: recognizer.recognize_google(audio_sr)),
+        (
+            "Faster Whisper",
+            lambda: recognizer.recognize_faster_whisper(
+                audio_sr, model="base", language="en"
+            ),
+        ),
+    ]
+
+    for name, fn in engines:
+        try:
+            query = fn().strip().lower()
+            if query:
+                if verbose:
+                    print(f"User ({name}): {query}")
+                return query
+        except sr.UnknownValueError:
+            continue
+        except Exception as e:
+            log_event(f"{name} STT error: {e}", "error")
+            continue
+
+    return "none"
