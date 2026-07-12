@@ -7417,3 +7417,235 @@ In summary, Rust's emphasis on memory safety, performance, and concurrency has m
 2026-07-08 11:04:28,254 - ERROR - LLM returned empty response
 2026-07-08 11:04:28,254 - INFO - Speak: Good morning, sir. Nifty 50 is at 24286, down by 113 points (-0.46%). Sensex is at 77776, down by 405 points (-0.52%).
 2026-07-08 11:04:28,255 - INFO - Daily briefing delivered
+2026-07-09 10:18:24,627 - INFO - JARVIS initialized
+2026-07-09 10:18:57,047 - ERROR - LLM query failed: timed out
+2026-07-09 10:18:57,048 - INFO - Speak: Good morning, sir. Nifty 50 is at 24046, up by 164 points (+0.69%). Sensex is at 77088, up by 585 points (+0.76%).
+2026-07-09 10:18:57,050 - INFO - Daily briefing delivered
+2026-07-09 10:19:42,734 - INFO - Speak: Starting the upload dashboard, sir.
+2026-07-09 10:26:15,685 - INFO - JARVIS initialized
+2026-07-09 10:26:43,024 - ERROR - LLM returned empty response
+2026-07-09 10:26:43,025 - INFO - Speak: Good morning, sir. Nifty 50 is at 24048, up by 166 points (+0.69%). Sensex is at 77078, up by 574 points (+0.75%).
+2026-07-09 10:26:43,025 - INFO - Daily briefing delivered
+2026-07-09 10:28:21,328 - ERROR - LLM returned empty response
+2026-07-09 10:28:21,328 - INFO - Speak: I don't know how to do that, sir
+2026-07-09 10:28:29,001 - INFO - Speak: Searching YouTube for upload  videos.
+2026-07-09 10:29:00,545 - INFO - Speak: Starting the upload dashboard, sir.
+2026-07-09 10:32:27,563 - INFO - Speak: Maine socha means "I watched" in Hindi.
+2026-07-09 10:35:21,165 - INFO - Speak: Entering autonomous mode for 30 minutes. Goal: general productivity work
+2026-07-09 10:35:21,166 - INFO - Speak: Taking control for 30 minutes. Goal: general productivity work
+2026-07-09 10:35:43,522 - ERROR - LLM returned empty response
+2026-07-09 10:35:43,522 - INFO - Speak: Planning failed. Retrying...
+2026-07-09 10:36:03,253 - ERROR - LLM returned empty response
+2026-07-09 10:36:03,254 - INFO - Speak: Planning failed. Retrying...
+2026-07-09 10:36:26,928 - ERROR - LLM returned empty response
+2026-07-09 10:36:26,929 - INFO - Speak: Planning failed. Retrying...
+2026-07-09 10:36:33,864 - INFO - Speak: Autonomous mode stopping, sir.
+2026-07-09 10:36:53,849 - ERROR - LLM returned empty response
+2026-07-09 10:36:53,850 - INFO - Speak: Planning failed. Retrying...
+2026-07-09 10:36:59,677 - INFO - Speak: Autonomous mode stopped.
+2026-07-09 11:37:10,353 - ERROR - LLM returned empty response
+2026-07-09 11:37:10,353 - INFO - Speak: I don't know how to do that, sir
+2026-07-09 11:37:40,521 - ERROR - LLM returned empty response
+2026-07-09 11:37:40,522 - INFO - Speak: I don't know how to do that, sir
+2026-07-09 11:40:06,513 - INFO - Speak: Indian blue in Hindi is commonly referred to as "नॉर्न ब्लू" (Narne Blue) or "अंतर्राष्ट्रीय ब्लू" (International
+2026-07-09 11:40:25,232 - INFO - JARVIS initialized
+2026-07-09 11:40:41,133 - INFO - Speak: Starting the upload dashboard, sir.
+2026-07-09 11:40:58,592 - ERROR - LLM query failed: timed out
+2026-07-09 11:40:58,593 - INFO - Speak: Good morning, sir. Nifty 50 is at 24048, up by 166 points (+0.70%). Sensex is at 77012, up by 509 points (+0.66%).
+2026-07-09 11:40:58,593 - INFO - Daily briefing delivered
+2026-07-09 11:56:10,723 - INFO - JARVIS initialized
+2026-07-09 11:56:40,309 - ERROR - LLM returned empty response
+2026-07-09 11:56:40,309 - INFO - Speak: Good morning, sir. Nifty 50 is at 24050, up by 168 points (+0.70%). Sensex is at 77029, up by 526 points (+0.69%).
+2026-07-09 11:56:40,310 - INFO - Daily briefing delivered
+2026-07-09 11:56:58,107 - ERROR - LLM returned empty response
+2026-07-09 11:56:58,107 - INFO - Speak: I couldn't find an answer for that, sir.
+2026-07-09 11:57:40,331 - INFO - Speak: Opening stock research system.
+2026-07-09 11:59:25,859 - ERROR - LLM returned empty response
+2026-07-09 11:59:25,859 - INFO - Speak: I don't know how to do that, sir
+2026-07-09 11:59:58,242 - INFO - JARVIS initialized
+2026-07-09 12:00:24,530 - ERROR - LLM returned empty response
+2026-07-09 12:00:24,531 - INFO - Speak: Good morning, sir. Nifty 50 is at 24049, up by 167 points (+0.70%). Sensex is at 77075, up by 571 points (+0.75%).
+2026-07-09 12:00:24,533 - INFO - Daily briefing delivered
+2026-07-09 12:00:59,681 - INFO - Speak: Music stopped, sir.
+2026-07-09 12:03:57,301 - INFO - JARVIS initialized
+2026-07-09 12:04:24,890 - ERROR - LLM returned empty response
+2026-07-09 12:04:24,890 - INFO - Speak: Good afternoon, sir. Nifty 50 is at 24066, up by 184 points (+0.77%). Sensex is at 77054, up by 550 points (+0.72%).
+2026-07-09 12:04:24,892 - INFO - Daily briefing delivered
+2026-07-09 12:04:45,197 - ERROR - LLM returned empty response
+2026-07-09 12:04:45,197 - INFO - Speak: I don't know how to do that, sir
+2026-07-09 12:05:26,005 - ERROR - LLM returned empty response
+2026-07-09 12:05:26,005 - INFO - Speak: I couldn't find an answer for that, sir.
+2026-07-09 12:05:51,037 - INFO - Speak: A Bhojpuri song is a musical composition or performance created in the Bhojpuri language, commonly found in regional music genres.
+2026-07-09 12:06:26,723 - ERROR - LLM returned empty response
+2026-07-09 12:06:26,724 - INFO - Speak: I couldn't find an answer for that, sir.
+2026-07-09 12:06:50,067 - INFO - Speak: Opening stock research system.
+2026-07-09 12:12:39,271 - ERROR - LLM returned empty response
+2026-07-09 12:12:39,272 - INFO - Speak: I don't know how to do that, sir
+2026-07-09 12:13:55,668 - ERROR - LLM returned empty response
+2026-07-09 12:13:55,668 - INFO - Speak: I don't know how to do that, sir
+2026-07-09 12:14:02,590 - INFO - Speak: Starting the upload dashboard, sir.
+2026-07-09 12:14:19,810 - INFO - Speak: Closing.
+2026-07-09 12:20:17,544 - INFO - Speak: Writing in 2 seconds.
+2026-07-09 12:20:20,127 - INFO - Speak: Done.
+2026-07-09 12:24:54,056 - ERROR - LLM query failed: timed out
+2026-07-09 12:24:54,057 - INFO - Speak: I don't know how to do that, sir
+2026-07-09 12:28:09,113 - INFO - JARVIS initialized
+2026-07-09 12:28:34,778 - INFO - Speak: Starting the upload dashboard, sir.
+2026-07-09 12:28:41,594 - ERROR - LLM query failed: timed out
+2026-07-09 12:28:41,594 - INFO - Speak: Good afternoon, sir. Nifty 50 is at 24066, up by 184 points (+0.77%). Sensex is at 77076, up by 572 points (+0.75%).
+2026-07-09 12:28:41,597 - INFO - Daily briefing delivered
+2026-07-09 13:09:52,000 - INFO - JARVIS initialized
+2026-07-09 13:10:16,762 - INFO - Speak: Opening stock research system.
+2026-07-09 13:10:26,004 - ERROR - LLM query failed: timed out
+2026-07-09 13:10:26,006 - INFO - Speak: Good afternoon, sir. Nifty 50 is at 24046, up by 164 points (+0.69%). Sensex is at 77041, up by 537 points (+0.70%).
+2026-07-09 13:10:26,009 - INFO - Daily briefing delivered
+2026-07-09 13:16:27,459 - ERROR - LLM query failed: timed out
+2026-07-09 13:16:27,459 - INFO - Speak: I don't know how to do that, sir
+2026-07-09 13:19:47,308 - ERROR - LLM query failed: timed out
+2026-07-09 13:19:47,309 - INFO - Speak: I don't know how to do that, sir
+2026-07-12 10:58:48,703 - INFO - JARVIS initialized
+2026-07-12 10:59:21,398 - ERROR - LLM returned empty response
+2026-07-12 10:59:21,398 - INFO - Speak: Good morning, sir. Nifty 50 is at 24207, up by 244 points (+1.02%). Sensex is at 77569, up by 828 points (+1.08%).
+2026-07-12 10:59:21,399 - INFO - Daily briefing delivered
+2026-07-12 10:59:25,573 - ERROR - LLM query failed: timed out
+2026-07-12 10:59:25,575 - INFO - Speak: I don't know how to do that, sir
+2026-07-12 11:00:51,140 - ERROR - LLM returned empty response
+2026-07-12 11:00:51,140 - INFO - Speak: I don't know how to do that, sir
+2026-07-12 11:03:12,994 - ERROR - LLM returned empty response
+2026-07-12 11:03:12,994 - INFO - Speak: I don't know how to do that, sir
+2026-07-12 11:03:55,761 - ERROR - LLM returned empty response
+2026-07-12 11:03:55,761 - INFO - Speak: I don't know how to do that, sir
+2026-07-12 11:04:20,089 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:04:34,297 - ERROR - LLM returned empty response
+2026-07-12 11:05:17,087 - ERROR - LLM returned empty response
+2026-07-12 11:05:17,087 - INFO - Speak: I couldn't find an answer for that, sir.
+2026-07-12 11:05:20,925 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:06:02,051 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:06:17,385 - ERROR - LLM returned empty response
+2026-07-12 11:06:50,351 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:07:56,989 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:08:10,891 - ERROR - LLM returned empty response
+2026-07-12 11:10:13,363 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:10:52,761 - ERROR - LLM returned empty response
+2026-07-12 11:10:53,391 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:11:38,527 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:12:16,095 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:12:56,609 - ERROR - LLM returned empty response
+2026-07-12 11:13:59,309 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:14:29,580 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:15:02,945 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:15:37,986 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:15:48,440 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:15:50,191 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 11:16:06,431 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:16:21,826 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:16:31,931 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:16:41,251 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:17:09,336 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:17:18,329 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:17:43,208 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:17:57,804 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:18:56,716 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:19:30,835 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:19:39,646 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:19:53,965 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:20:11,117 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:20:23,575 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:20:30,243 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:20:34,824 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:21:15,172 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:21:20,606 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:21:24,443 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:21:29,525 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:21:35,455 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:21:41,853 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:21:46,589 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:22:08,329 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:22:40,573 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:22:46,367 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:22:50,097 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:23:02,059 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:23:39,801 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:24:12,343 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:24:22,738 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:24:35,137 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:24:48,258 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:25:01,402 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:25:17,491 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:25:31,291 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:25:52,765 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:26:01,401 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:26:14,147 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:26:31,690 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:26:39,349 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:26:51,456 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:27:02,399 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:27:09,413 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:27:14,847 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:27:25,054 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:27:32,105 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:27:37,823 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:27:44,288 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:28:00,351 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:28:20,340 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:28:30,311 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:28:42,709 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:29:21,046 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:29:36,497 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:29:41,043 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:29:50,131 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:29:55,018 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:30:24,640 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:30:35,903 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:30:47,748 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:31:02,003 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:31:09,240 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:31:49,424 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:32:01,922 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:32:14,443 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:32:27,113 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:32:57,868 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:33:02,537 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:33:08,727 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:33:11,963 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:33:18,581 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:33:38,874 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:33:48,538 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:33:58,199 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:17,805 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:25,423 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:28,808 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:33,034 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:38,900 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:42,418 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:45,897 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:49,521 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:53,019 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:34:56,774 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 11:35:06,889 - ERROR - Google STT error: recognition connection failed: [Errno -3] Temporary failure in name resolution
+2026-07-12 12:02:04,934 - ERROR - LLM query failed: timed out
+2026-07-12 12:02:04,935 - INFO - Speak: I don't know how to do that, sir
+2026-07-12 12:04:24,043 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:04:54,178 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:05:15,782 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:05:45,138 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:15:20,525 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:15:39,312 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:15:42,556 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:15:57,601 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:22:06,731 - INFO - JARVIS initialized
+2026-07-12 12:22:25,491 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:23:09,627 - INFO - Speak: The Indian stock market saw mixed gains today, with the Nifty 50 rising 1.02% to 24,207 and the Sensex climbing 1.08% to 77,569. Bank Nifty led the gains, while major sectors like Bajaj Finance and HDFC Bank topped the list of top performers. The rally reflects positive sentiment driven by strong performance in key industries and investor optimism.
+2026-07-12 12:23:09,628 - INFO - Daily briefing delivered
+2026-07-12 12:23:46,574 - INFO - JARVIS initialized
+2026-07-12 12:23:56,661 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:24:04,879 - INFO - Speak: The stock market in India today saw some strong gains with the Nifty 50 rising by 1.02% to 24,207 points. Meanwhile, the Sensex increased by 1.08% to reach 7,7569 points. The latest news from the Indian equity market includes:
+
+- The Nifty 50 has risen higher than expected with a gain of 1.02%, reaching 24,207 points.
+- The Sensex is also up by 1.08% to hit 7,7569 points.
+- Some notable gains include:
+  - Honda (HJ) and Tata Motors (TMT) saw their shares rise significantly with a gain of around 10%, driving the overall market.
+  - A rise in the Bank Nifty also contributed positively for the Nifty 50, showing strong performance.
+2026-07-12 12:24:04,880 - INFO - Daily briefing delivered
+2026-07-12 12:24:07,003 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:24:07,006 - INFO - Speak: Your tools are your personal computer or device that you use to access the internet and perform tasks.

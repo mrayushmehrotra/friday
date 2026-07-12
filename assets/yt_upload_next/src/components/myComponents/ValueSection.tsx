@@ -5,30 +5,30 @@ import Link from "next/link";
 
 const ValueSection = () => {
   return (
-    <section className="bg-[#ffffff] w-full py-20 px-6" id="demo">
+    <section className="bg-black w-full py-20 px-6" id="demo">
       <div className="max-w-[980px] mx-auto text-center mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#f5f5f7]/80 backdrop-blur-xl text-[14px] text-[#7a7a7a] mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-xl text-[14px] text-white/50 mb-6">
           <Play className="w-3.5 h-3.5 text-[#0066cc]" />
           Live Demo
         </div>
 
-        <h2 className="font-[system-ui,-apple-system,sans-serif] text-[40px] font-semibold leading-[1.1] tracking-[0] text-[#1d1d1f] mb-3">
+        <h2 className="font-[system-ui,-apple-system,sans-serif] text-[40px] font-semibold leading-[1.1] tracking-[0] text-white mb-3">
           See real results from
           <br />
           our community
         </h2>
 
-        <p className="font-[system-ui,-apple-system,sans-serif] text-[17px] leading-[1.47] tracking-[-0.374px] text-[#7a7a7a] max-w-[680px] mx-auto mb-10">
+        <p className="font-[system-ui,-apple-system,sans-serif] text-[17px] leading-[1.47] tracking-[-0.374px] text-white/50 max-w-[680px] mx-auto mb-10">
           Discover how content creators are transforming their social media
           presence with our AI-powered tools and achieving remarkable growth.
         </p>
 
         <div className="flex flex-wrap justify-center gap-3 mb-14">
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#f5f5f7]/80 backdrop-blur-xl text-[14px] text-[#1d1d1f]">
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-xl text-[14px] text-white">
             <TrendingUp className="w-3.5 h-3.5 text-[#0066cc]" />
             300% Average Growth
           </span>
-          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#f5f5f7]/80 backdrop-blur-xl text-[14px] text-[#1d1d1f]">
+          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-xl text-[14px] text-white">
             <Sparkles className="w-3.5 h-3.5 text-[#0066cc]" />
             AI-Generated Content
           </span>
@@ -38,18 +38,18 @@ const ValueSection = () => {
       {/* Demo content grid */}
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
         {/* Left: Before vs After card */}
-        <div className="bg-[#f5f5f7]/80 backdrop-blur-xl rounded-[18px] p-8">
-          <h3 className="font-[system-ui,-apple-system,sans-serif] text-[17px] font-semibold leading-[1.24] tracking-[-0.374px] text-[#1d1d1f] mb-6">
+        <div className="bg-white/5 backdrop-blur-xl rounded-[18px] p-8">
+          <h3 className="font-[system-ui,-apple-system,sans-serif] text-[17px] font-semibold leading-[1.24] tracking-[-0.374px] text-white mb-6">
             Before vs After Results
           </h3>
           <div className="space-y-5">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[14px] text-[#7a7a7a]">Average Views</span>
+                <span className="text-[14px] text-white/50">Average Views</span>
                 <div className="flex items-center gap-2 text-[14px]">
-                  <span className="text-[#7a7a7a]">1.2K</span>
-                  <span className="text-[#7a7a7a]">→</span>
-                  <span className="text-[#1d1d1f] font-semibold">15.8K</span>
+                  <span className="text-white/50">1.2K</span>
+                  <span className="text-white/50">→</span>
+                  <span className="text-white font-semibold">15.8K</span>
                 </div>
               </div>
               <div className="h-1 bg-[#e0e0e0] rounded-full overflow-hidden">
@@ -58,11 +58,11 @@ const ValueSection = () => {
             </div>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[14px] text-[#7a7a7a]">Engagement Rate</span>
+                <span className="text-[14px] text-white/50">Engagement Rate</span>
                 <div className="flex items-center gap-2 text-[14px]">
-                  <span className="text-[#7a7a7a]">2.1%</span>
-                  <span className="text-[#7a7a7a]">→</span>
-                  <span className="text-[#1d1d1f] font-semibold">8.7%</span>
+                  <span className="text-white/50">2.1%</span>
+                  <span className="text-white/50">→</span>
+                  <span className="text-white font-semibold">8.7%</span>
                 </div>
               </div>
               <div className="h-1 bg-[#e0e0e0] rounded-full overflow-hidden">
@@ -71,11 +71,11 @@ const ValueSection = () => {
             </div>
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[14px] text-[#7a7a7a]">Follower Growth</span>
+                <span className="text-[14px] text-white/50">Follower Growth</span>
                 <div className="flex items-center gap-2 text-[14px]">
-                  <span className="text-[#7a7a7a]">+50/mo</span>
-                  <span className="text-[#7a7a7a]">→</span>
-                  <span className="text-[#1d1d1f] font-semibold">+1.2K/mo</span>
+                  <span className="text-white/50">+50/mo</span>
+                  <span className="text-white/50">→</span>
+                  <span className="text-white font-semibold">+1.2K/mo</span>
                 </div>
               </div>
               <div className="h-1 bg-[#e0e0e0] rounded-full overflow-hidden">
@@ -88,11 +88,11 @@ const ValueSection = () => {
         {/* Right: Testimonial card + phone mockups */}
         <div className="space-y-6">
           {/* Testimonial card */}
-          <div className="bg-[#f5f5f7]/80 backdrop-blur-xl rounded-[18px] p-8">
-            <h4 className="font-[system-ui,-apple-system,sans-serif] text-[17px] font-semibold leading-[1.24] tracking-[-0.374px] text-[#1d1d1f] mb-3">
+          <div className="bg-white/5 backdrop-blur-xl rounded-[18px] p-8">
+            <h4 className="font-[system-ui,-apple-system,sans-serif] text-[17px] font-semibold leading-[1.24] tracking-[-0.374px] text-white mb-3">
               What Our Users Say
             </h4>
-            <blockquote className="text-[17px] leading-[1.47] tracking-[-0.374px] text-[#7a7a7a] italic">
+            <blockquote className="text-[17px] leading-[1.47] tracking-[-0.374px] text-white/50 italic">
               &ldquo;Friday transformed my content strategy completely. My
               engagement increased by 400% in just 2 months!&rdquo;
             </blockquote>
@@ -101,8 +101,8 @@ const ValueSection = () => {
                 S
               </div>
               <div>
-                <div className="text-[14px] font-semibold text-[#1d1d1f]">Sarah Johnson</div>
-                <div className="text-[12px] text-[#7a7a7a]">Content Creator, 50K followers</div>
+                <div className="text-[14px] font-semibold text-white">Sarah Johnson</div>
+                <div className="text-[12px] text-white/50">Content Creator, 50K followers</div>
               </div>
             </div>
           </div>
@@ -122,11 +122,11 @@ const ValueSection = () => {
       </div>
 
       {/* CTA section */}
-      <div className="max-w-[680px] mx-auto mt-16 text-center rounded-[18px] bg-[#f5f5f7]/80 backdrop-blur-xl p-10">
-        <h3 className="font-[system-ui,-apple-system,sans-serif] text-[28px] font-[400] leading-[1.14] tracking-[0.196px] text-[#1d1d1f] mb-3">
+      <div className="max-w-[680px] mx-auto mt-16 text-center rounded-[18px] bg-white/5 backdrop-blur-xl p-10">
+        <h3 className="font-[system-ui,-apple-system,sans-serif] text-[28px] font-[400] leading-[1.14] tracking-[0.196px] text-white mb-3">
           Ready to Transform Your Content?
         </h3>
-        <p className="text-[17px] leading-[1.47] tracking-[-0.374px] text-[#7a7a7a] mb-6">
+        <p className="text-[17px] leading-[1.47] tracking-[-0.374px] text-white/50 mb-6">
           Join thousands of creators who are already growing their audience with
           our AI tools.
         </p>

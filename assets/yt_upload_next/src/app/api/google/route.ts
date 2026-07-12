@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { type NextRequest, NextResponse } from "next/server";
+import { Readable } from "stream";
 import {
   User,
   getSessionExpiryDate,
@@ -57,6 +58,42 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_SECRET,
   process.env.GOOGLE_REDIRECT_URI,
 );
+
+async function createYouTubeClient(accessToken: string, userId?: string) {
+  const client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI,
+  );
+
+  let refreshToken: string | undefined;
+  if (userId) {
+    const user = await User.findById(userId);
+    if (user) {
+      refreshToken = user.youtubeRefreshToken;
+    }
+  }
+
+  client.setCredentials({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  });
+
+  if (userId && refreshToken) {
+    client.on("tokens", async (tokens) => {
+      if (tokens.access_token) {
+        await User.findByIdAndUpdate(userId, {
+          $set: { youtubeAccessToken: tokens.access_token },
+        });
+      }
+    });
+  }
+
+  return {
+    youtube: google.youtube({ version: "v3", auth: client }),
+    youtubeAnalytics: google.youtubeAnalytics({ version: "v2", auth: client }),
+  };
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -332,12 +369,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    oauth2Client.setCredentials({ access_token: accessToken });
-    const youtube = google.youtube({ version: "v3", auth: oauth2Client });
-    const youtubeAnalytics = google.youtubeAnalytics({
-      version: "v2",
-      auth: oauth2Client,
-    });
+    const { youtube, youtubeAnalytics } = await createYouTubeClient(
+      accessToken,
+      userId,
+    );
 
     // =====================================================
     // ACTION: Update Video
@@ -403,161 +438,220 @@ export async function POST(request: NextRequest) {
     // ACTION: Upload Video
     // =====================================================
     if (action === "uploadVideo") {
-      if (!data.videoFile) {
+      try {
+        if (!data.videoFile) {
+          return NextResponse.json(
+            { error: "No video file provided" },
+            { status: 400 },
+          );
+        }
+
+        const buffer = Buffer.from(await data.videoFile.arrayBuffer());
+        const stream = Readable.from(buffer);
+
+        const response = await youtube.videos.insert({
+          part: ["snippet", "status"],
+          requestBody: {
+            snippet: {
+              title: data.title,
+              description: data.description,
+              tags: sanitizeTags(data.tags || []),
+            },
+            status: {
+              privacyStatus: data.privacy || "private",
+            },
+          },
+          media: {
+            body: stream,
+          },
+        });
+
+        return NextResponse.json({ success: true, videoId: response.data.id });
+      } catch (error: any) {
+        console.error("Upload Video Error:", error);
+        const errMsg =
+          error.response?.data?.error?.message ||
+          error.message ||
+          "Failed to upload video";
         return NextResponse.json(
-          { error: "No video file provided" },
-          { status: 400 },
+          { success: false, error: errMsg },
+          { status: error.response?.status || 500 },
         );
       }
-
-      const buffer = Buffer.from(await data.videoFile.arrayBuffer());
-      const { Readable } = await import("node:stream");
-      const stream = Readable.from(buffer);
-
-      const response = await youtube.videos.insert({
-        part: ["snippet", "status"],
-        requestBody: {
-          snippet: {
-            title: data.title,
-            description: data.description,
-            tags: sanitizeTags(data.tags || []),
-          },
-          status: {
-            privacyStatus: data.privacy || "private",
-          },
-        },
-        media: {
-          body: stream,
-        },
-      });
-
-      return NextResponse.json({ success: true, videoId: response.data.id });
     }
 
     // =====================================================
     // ACTION: Get Channel Data
     // =====================================================
     if (action === "getChannelData") {
-      const channelResponse = await youtube.channels.list({
-        part: ["snippet", "statistics", "brandingSettings", "contentDetails"],
-        mine: true,
-      });
-
-      const channel = channelResponse.data.items?.[0];
-      const uploadsPlaylistId =
-        channel?.contentDetails?.relatedPlaylists?.uploads;
-
-      let recentVideos: any[] = [];
-      if (uploadsPlaylistId) {
-        const videosResponse = await youtube.playlistItems.list({
-          part: ["snippet", "status"],
-          playlistId: uploadsPlaylistId,
-          maxResults: 50,
+      try {
+        const channelResponse = await youtube.channels.list({
+          part: ["snippet", "statistics", "brandingSettings", "contentDetails"],
+          mine: true,
         });
 
-        const playlistItems = videosResponse.data.items || [];
+        const channel = channelResponse.data.items?.[0];
+        const uploadsPlaylistId =
+          channel?.contentDetails?.relatedPlaylists?.uploads;
 
-        const videoIds = playlistItems
-          .map((item: any) => item.snippet?.resourceId?.videoId)
-          .filter(Boolean);
-
-        if (videoIds.length > 0) {
-          const statsResponse = await youtube.videos.list({
-            part: ["statistics", "contentDetails"],
-            id: videoIds,
+        let recentVideos: any[] = [];
+        if (uploadsPlaylistId) {
+          const videosResponse = await youtube.playlistItems.list({
+            part: ["snippet", "status"],
+            playlistId: uploadsPlaylistId,
+            maxResults: 50,
           });
 
-          const videoStats = statsResponse.data.items || [];
-          const statsMap = new Map(
-            videoStats.map((video: any) => [video.id, video]),
-          );
+          const playlistItems = videosResponse.data.items || [];
 
-          recentVideos = playlistItems.map((item: any) => {
-            const videoId = item.snippet?.resourceId?.videoId;
-            const stats = statsMap.get(videoId);
-            return {
-              ...item,
-              statistics: stats?.statistics,
-              contentDetails: stats?.contentDetails,
-            };
-          });
-        } else {
-          recentVideos = playlistItems;
+          const videoIds = playlistItems
+            .map((item: any) => item.snippet?.resourceId?.videoId)
+            .filter(Boolean);
+
+          if (videoIds.length > 0) {
+            const statsResponse = await youtube.videos.list({
+              part: ["statistics", "contentDetails"],
+              id: videoIds,
+            });
+
+            const videoStats = statsResponse.data.items || [];
+            const statsMap = new Map(
+              videoStats.map((video: any) => [video.id, video]),
+            );
+
+            recentVideos = playlistItems.map((item: any) => {
+              const videoId = item.snippet?.resourceId?.videoId;
+              const stats = statsMap.get(videoId);
+              return {
+                ...item,
+                statistics: stats?.statistics,
+                contentDetails: stats?.contentDetails,
+              };
+            });
+          } else {
+            recentVideos = playlistItems;
+          }
         }
-      }
 
-      return NextResponse.json({
-        success: true,
-        channel: channel,
-        recentVideos: recentVideos,
-      });
+        return NextResponse.json({
+          success: true,
+          statistics: channel?.statistics || {},
+          videos: recentVideos,
+        });
+      } catch (error: any) {
+        console.error("Get Channel Data Error:", error);
+        const errMsg =
+          error.response?.data?.error?.message ||
+          error.message ||
+          "Failed to fetch channel data";
+        return NextResponse.json(
+          { success: false, error: errMsg },
+          { status: error.response?.status || 500 },
+        );
+      }
     }
 
     // =====================================================
     // ACTION: Get Analytics
     // =====================================================
     if (action === "getAnalytics") {
-      const endDate = new Date().toISOString().split("T")[0];
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
+      try {
+        const endDate = new Date().toISOString().split("T")[0];
+        const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
 
-      const channelResponse = await youtube.channels.list({
-        part: ["id"],
-        mine: true,
-      });
+        const channelResponse = await youtube.channels.list({
+          part: ["id"],
+          mine: true,
+        });
 
-      const channelId = channelResponse.data.items?.[0]?.id;
+        const channelId = channelResponse.data.items?.[0]?.id;
 
-      if (!channelId) {
+        if (!channelId) {
+          return NextResponse.json(
+            { error: "Channel not found" },
+            { status: 404 },
+          );
+        }
+
+        const analyticsResponse = await youtubeAnalytics.reports.query({
+          ids: `channel==${channelId}`,
+          startDate,
+          endDate,
+          metrics:
+            "views,estimatedMinutesWatched,averageViewDuration,subscribersGained",
+          dimensions: "day",
+        });
+
+        const overviewResponse = await youtubeAnalytics.reports.query({
+          ids: `channel==${channelId}`,
+          startDate,
+          endDate,
+          metrics:
+            "views,estimatedMinutesWatched,likes,comments,shares,subscribersGained",
+        });
+
+        const overviewColumns =
+          overviewResponse.data.columnHeaders?.map((h: any) => h.name) || [];
+        const overviewRow = overviewResponse.data.rows?.[0] || [];
+        const rawAnalytics: Record<string, number> = {};
+        overviewColumns.forEach((name: string, i: number) => {
+          rawAnalytics[name] = Number(overviewRow[i]) || 0;
+        });
+
+        return NextResponse.json({
+          success: true,
+          analytics: {
+            views: rawAnalytics.views || 0,
+            watchTime: rawAnalytics.estimatedMinutesWatched || 0,
+            likes: rawAnalytics.likes || 0,
+            subscribersGained: rawAnalytics.subscribersGained || 0,
+          },
+        });
+      } catch (error: any) {
+        console.error("Get Analytics Error:", error);
+        const errMsg =
+          error.response?.data?.error?.message ||
+          error.message ||
+          "Failed to fetch analytics";
         return NextResponse.json(
-          { error: "Channel not found" },
-          { status: 404 },
+          { success: false, error: errMsg },
+          { status: error.response?.status || 500 },
         );
       }
-
-      const analyticsResponse = await youtubeAnalytics.reports.query({
-        ids: `channel==${channelId}`,
-        startDate,
-        endDate,
-        metrics:
-          "views,estimatedMinutesWatched,averageViewDuration,subscribersGained",
-        dimensions: "day",
-      });
-
-      const overviewResponse = await youtubeAnalytics.reports.query({
-        ids: `channel==${channelId}`,
-        startDate,
-        endDate,
-        metrics:
-          "views,estimatedMinutesWatched,likes,comments,shares,subscribersGained",
-      });
-
-      return NextResponse.json({
-        success: true,
-        dailyStats: analyticsResponse.data,
-        overview: overviewResponse.data,
-      });
     }
 
     // =====================================================
     // ACTION: Get Video Analytics
     // =====================================================
     if (action === "getVideoAnalytics") {
-      const endDate = new Date().toISOString().split("T")[0];
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
+      try {
+        const endDate = new Date().toISOString().split("T")[0];
+        const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0];
 
-      const response = await youtubeAnalytics.reports.query({
-        ids: `video==${data.videoId}`,
-        startDate,
-        endDate,
-        metrics:
-          "views,likes,dislikes,comments,shares,estimatedMinutesWatched,averageViewDuration",
-      });
+        const response = await youtubeAnalytics.reports.query({
+          ids: `video==${data.videoId}`,
+          startDate,
+          endDate,
+          metrics:
+            "views,likes,dislikes,comments,shares,estimatedMinutesWatched,averageViewDuration",
+        });
 
-      return NextResponse.json({ success: true, data: response.data });
+        return NextResponse.json({ success: true, data: response.data });
+      } catch (error: any) {
+        console.error("Get Video Analytics Error:", error);
+        const errMsg =
+          error.response?.data?.error?.message ||
+          error.message ||
+          "Failed to fetch video analytics";
+        return NextResponse.json(
+          { success: false, error: errMsg },
+          { status: error.response?.status || 500 },
+        );
+      }
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

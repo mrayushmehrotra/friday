@@ -72,40 +72,30 @@ def clipboard_translate(target_lang: str = "English") -> str:
 
 def _query_llm(prompt: str, model: str | None = None) -> str:
     if model is None:
-        model = os.environ.get("JARVIS_LLM_MODEL", "qwen3:1.7b")
+        model = os.environ.get("JARVIS_LLM_MODEL", "qwen2.5:0.5b")
+
+    base_url = os.environ.get("JARVIS_LLM_ENDPOINT", "http://localhost:11434")
+    base_url = base_url.replace("/api/generate", "").replace("/api/chat", "")
+
+    from langchain_ollama import ChatOllama
+
+    llm = ChatOllama(
+        model=model,
+        base_url=base_url,
+        temperature=0.6,
+        num_predict=512,
+        num_ctx=4096,
+    )
 
     ctx = build_context(prompt)
+    messages = []
     if ctx:
-        prompt = f"{ctx}\n\nNow answer this: {prompt}"
+        messages.append(("system", ctx))
+    messages.append(("human", prompt))
 
-    endpoint = os.environ.get(
-        "JARVIS_LLM_ENDPOINT", "http://localhost:11434/api/generate"
-    )
-
-    payload = json.dumps(
-        {
-            "model": model,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "num_predict": 200,
-                "num_ctx": 768,
-                "num_thread": 3,
-                "temperature": 0.6,
-            },
-        }
-    ).encode()
-
-    req = urllib.request.Request(
-        endpoint,
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
     try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            data = json.loads(r.read().decode())
-        raw = (data.get("response") or "").strip()
+        result = llm.invoke(messages)
+        raw = result.content.strip()
         if raw:
             return raw
         log_event("LLM returned empty response", "error")
@@ -290,49 +280,38 @@ def _fetch_news_rss(topic: str) -> str:
 
 
 def _ollama_chat(query: str) -> str:
-    """Synchronous Ollama chat call."""
-    ctx = build_context(query)
-    messages = [{"role": "user", "content": query}]
-    if ctx:
-        messages.insert(0, {"role": "system", "content": ctx})
+    """Synchronous Ollama chat call via ChatOllama. Low temperature for structured output."""
+    model = os.environ.get("JARVIS_LLM_MODEL", "qwen2.5:0.5b")
+    base_url = os.environ.get("JARVIS_LLM_ENDPOINT", "http://localhost:11434")
+    base_url = base_url.replace("/api/generate", "").replace("/api/chat", "")
 
-    endpoint = "http://localhost:11434/api/chat"
-    payload = json.dumps(
-        {
-            "model": "qwen3:1.7b",
-            "messages": messages,
-            "stream": False,
-            "options": {
-                "num_predict": 300,
-                "num_ctx": 768,
-                "num_thread": 2,
-                "temperature": 0.1,
-            },
-        }
-    ).encode()
+    from langchain_ollama import ChatOllama
 
-    req = urllib.request.Request(
-        endpoint,
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
+    llm = ChatOllama(
+        model=model,
+        base_url=base_url,
+        temperature=0.1,
+        num_predict=512,
+        num_ctx=4096,
     )
+
+    ctx = build_context(query)
+    messages = []
+    if ctx:
+        messages.append(("system", ctx))
+    messages.append(("human", query))
+
     try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            data = json.loads(r.read().decode())
-        content = (data.get("message", {}).get("content") or "").strip()
-        return (
-            content
-            if content
-            else _query_llm(
-                f"Answer in exactly one sentence: {query.split('Search results')[0].strip()}"
-            )
-        )
+        result = llm.invoke(messages)
+        content = result.content.strip()
+        if content:
+            return content
     except Exception as e:
         log_event(f"Ollama chat failed: {e}", "error")
-        return _query_llm(
-            f"Answer in exactly one sentence: {query.split('Search results')[0].strip()}"
-        )
+
+    return _query_llm(
+        f"Answer in exactly one sentence: {query.split('Search results')[0].strip()}"
+    )
 
 
 def query_with_search(query: str) -> str:

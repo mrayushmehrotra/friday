@@ -23,7 +23,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   return (
     <div
       ref={contentRef}
-      className="h-full w-full bg-[#f5f5f7] transition-all duration-300 ease-in-out"
+      className="h-full w-full bg-black transition-all duration-300 ease-in-out"
       style={{
         paddingLeft: `${isCollapsed ? 80 : 240}px`,
       }}
@@ -64,7 +64,7 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7] text-gray-700">
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
         <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );

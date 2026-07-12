@@ -60,7 +60,7 @@ export default function CreativeFooter() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full overflow-hidden bg-[#EFEFEF] pt-24 pb-0"
+      className="relative w-full overflow-hidden bg-black pt-24 pb-0"
     >
       {/* Floating shapes */}
       <div
@@ -110,10 +110,10 @@ export default function CreativeFooter() {
             <div className="w-8 h-8 rounded-lg bg-[#0066cc] flex items-center justify-center text-white text-sm font-semibold">
               F
             </div>
-            <span className="text-sm text-[#7a7a7a]">Friday</span>
+            <span className="text-sm text-white/50">Friday</span>
           </div>
 
-          <div className="flex items-center gap-6 text-xs text-[#7a7a7a]">
+          <div className="flex items-center gap-6 text-xs text-white/50">
             <Link href="#" className="hover:text-[#0066cc] transition-colors">
               Privacy
             </Link>
@@ -125,7 +125,7 @@ export default function CreativeFooter() {
             </a>
           </div>
 
-          <div className="text-xs text-[#7a7a7a]">
+          <div className="text-xs text-white/50">
             © {new Date().getFullYear()} Friday
           </div>
         </div>

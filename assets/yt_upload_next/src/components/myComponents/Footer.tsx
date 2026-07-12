@@ -12,7 +12,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#f5f5f7] w-full py-16 px-6">
+    <footer className="bg-black w-full py-16 px-6 border-t border-white/10">
       <div className="max-w-[1200px] mx-auto">
         {/* Main grid: 4 columns */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
@@ -22,11 +22,11 @@ const Footer = () => {
               <div className="w-8 h-8 rounded-[8px] bg-[#0066cc] flex items-center justify-center text-white text-sm font-semibold">
                 F
               </div>
-              <span className="text-[17px] font-semibold text-[#1d1d1f]">
+              <span className="text-[17px] font-semibold text-white">
                 Friday
               </span>
             </div>
-            <p className="text-[14px] leading-[1.43] tracking-[-0.224px] text-[#7a7a7a] max-w-[260px]">
+            <p className="text-[14px] leading-[1.43] tracking-[-0.224px] text-white/50 max-w-[260px]">
               AI-powered tools for content creators to generate viral titles,
               engaging descriptions, and trending hashtags.
             </p>
@@ -34,7 +34,7 @@ const Footer = () => {
 
           {/* Product links */}
           <div>
-            <h4 className="text-[14px] font-semibold leading-[1.29] tracking-[-0.224px] text-[#1d1d1f] mb-4">
+            <h4 className="text-[14px] font-semibold leading-[1.29] tracking-[-0.224px] text-white mb-4">
               Product
             </h4>
             <ul className="space-y-2">
@@ -48,7 +48,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-[14px] leading-[2.41] tracking-[-0.224px] text-[#7a7a7a] hover:text-[#0066cc] transition-colors"
+                    className="text-[14px] leading-[2.41] tracking-[-0.224px] text-white/50 hover:text-[#0066cc] transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -59,7 +59,7 @@ const Footer = () => {
 
           {/* Company links */}
           <div>
-            <h4 className="text-[14px] font-semibold leading-[1.29] tracking-[-0.224px] text-[#1d1d1f] mb-4">
+            <h4 className="text-[14px] font-semibold leading-[1.29] tracking-[-0.224px] text-white mb-4">
               Company
             </h4>
             <ul className="space-y-2">
@@ -73,7 +73,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-[14px] leading-[2.41] tracking-[-0.224px] text-[#7a7a7a] hover:text-[#0066cc] transition-colors"
+                    className="text-[14px] leading-[2.41] tracking-[-0.224px] text-white/50 hover:text-[#0066cc] transition-colors"
                   >
                     {link.name}
                   </Link>
@@ -84,19 +84,19 @@ const Footer = () => {
 
           {/* Contact column */}
           <div>
-            <h4 className="text-[14px] font-semibold leading-[1.29] tracking-[-0.224px] text-[#1d1d1f] mb-4">
+            <h4 className="text-[14px] font-semibold leading-[1.29] tracking-[-0.224px] text-white mb-4">
               Contact
             </h4>
             <ul className="space-y-2">
               <li>
                 <a
                   href="mailto:hello@friday.ai"
-                  className="text-[14px] leading-[2.41] tracking-[-0.224px] text-[#7a7a7a] hover:text-[#0066cc] transition-colors"
+                  className="text-[14px] leading-[2.41] tracking-[-0.224px] text-white/50 hover:text-[#0066cc] transition-colors"
                 >
                   hello@friday.ai
                 </a>
               </li>
-              <li className="text-[14px] leading-[2.41] tracking-[-0.224px] text-[#7a7a7a]">
+              <li className="text-[14px] leading-[2.41] tracking-[-0.224px] text-white/50">
                 San Francisco, CA
               </li>
             </ul>
@@ -111,7 +111,7 @@ const Footer = () => {
                 <a
                   key={idx}
                   href={href}
-                  className="w-9 h-9 rounded-full bg-white/70 backdrop-blur-xl border border-[#e0e0e0]/60 flex items-center justify-center text-[#7a7a7a] hover:text-[#0066cc] hover:border-[#0066cc]/30 transition-colors"
+                  className="w-9 h-9 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white/40 hover:text-[#0066cc] hover:border-[#0066cc]/30 transition-colors"
                 >
                   <Icon size={16} />
                 </a>
@@ -121,11 +121,11 @@ const Footer = () => {
         </div>
 
         {/* Bottom legal bar */}
-        <div className="border-t border-[#e0e0e0] pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-[12px] leading-[1] tracking-[-0.12px] text-[#7a7a7a]">
+        <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-[12px] leading-[1] tracking-[-0.12px] text-white/50">
             © {currentYear} Friday. All rights reserved.
           </div>
-          <div className="flex items-center gap-4 text-[12px] leading-[1] tracking-[-0.12px] text-[#7a7a7a]">
+          <div className="flex items-center gap-4 text-[12px] leading-[1] tracking-[-0.12px] text-white/50">
             <Link href="#" className="hover:text-[#0066cc] transition-colors">
               Privacy
             </Link>

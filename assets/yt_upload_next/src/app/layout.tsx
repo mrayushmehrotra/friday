@@ -95,7 +95,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth dark">
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -131,10 +131,10 @@ export default function RootLayout({
           toastOptions={{
             duration: 4000,
             style: {
-              background: "rgba(255, 255, 255, 0.1)",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              color: "#fff",
+              background: "rgba(30, 30, 35, 0.90)",
+              backdropFilter: "blur(24px) saturate(1.5)",
+              border: "0.5px solid rgba(255, 255, 255, 0.08)",
+              color: "#f5f5f5",
               borderRadius: "12px",
             },
             success: {

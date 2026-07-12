@@ -5,7 +5,7 @@ import ValueSection from "@/components/myComponents/ValueSection";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#EFEFEF]">
+    <div className="min-h-screen bg-black">
       <Navbar />
       <Hero />
       <ValueSection />

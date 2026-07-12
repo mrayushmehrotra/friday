@@ -14,18 +14,7 @@ import { useState } from "react";
 
 export default function NavbarComponent() {
   const navItems = [
-    {
-      name: "Features",
-      link: "#features",
-    },
-    {
-      name: "Pricing",
-      link: "#pricing",
-    },
-    {
-      name: "Contact",
-      link: "#contact",
-    },
+
   ];
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -73,15 +62,9 @@ export default function NavbarComponent() {
                 variant="primary"
                 className="w-full"
               >
-                Login
+                Let's Go
               </NavbarButton>
-              <NavbarButton
-                onClick={() => setIsMobileMenuOpen(false)}
-                variant="primary"
-                className="w-full"
-              >
-                Book a call
-              </NavbarButton>
+
             </div>
           </MobileNavMenu>
         </MobileNav>

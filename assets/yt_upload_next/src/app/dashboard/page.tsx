@@ -92,7 +92,7 @@ const Page = () => {
   return (
     <div
       ref={rootRef}
-      className="relative min-h-screen overflow-hidden bg-[#f5f5f7]"
+      className="relative min-h-screen overflow-hidden bg-black"
     >
       <div
         ref={orb1Ref}

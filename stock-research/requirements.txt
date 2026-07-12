@@ -1,0 +1,16 @@
+# requirements.txt
+streamlit
+langchain
+langchain-openai
+langchain-groq
+langchain-mcp-adapters
+langgraph
+langgraph_supervisor
+plotly
+pandas
+python-dotenv
+
+# For development
+black
+flake8
+pytest

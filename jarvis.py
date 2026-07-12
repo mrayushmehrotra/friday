@@ -244,9 +244,52 @@ class Jarvis:
                     store_memory(query, answer)
             else:
                 speak("What should I search for, sir?")
+        elif "open" in query and ("app" in query or "all" in query or "everything" in query):
+            speak("Opening all servers, sir.")
+            devnull = subprocess.DEVNULL
+            # Start YouTube upload dashboard
+            next_app = os.path.join(os.path.dirname(__file__), "assets", "yt_upload_next")
+            subprocess.Popen(
+                ["bun", "run", "dev"],
+                cwd=next_app,
+                stdout=devnull,
+                stderr=devnull,
+            )
+            # Start stock research
+            stock_dir = os.path.join(os.path.dirname(__file__), "stock-research")
+            subprocess.Popen(
+                ["bash", "run.sh"],
+                cwd=stock_dir,
+                stdout=devnull,
+                stderr=devnull,
+            )
+            webbrowser.open_new_tab("http://localhost:3000")
+            webbrowser.open_new_tab("http://localhost:8501")
         elif "upload" in query and ("youtube" in query or "video" in query):
-            import youtube_uploader
-            youtube_uploader.run(query)
+            next_app = os.path.join(os.path.dirname(__file__), "assets", "yt_upload_next")
+            speak("Starting the upload dashboard, sir.")
+            devnull = subprocess.DEVNULL
+            subprocess.Popen(
+                ["bun", "run", "dev"],
+                cwd=next_app,
+                stdout=devnull,
+                stderr=devnull,
+            )
+            webbrowser.open_new_tab("http://localhost:3000")
+        elif "close" in query and ("upload" in query or "server" in query or "youtube" in query):
+            speak("Shutting down the upload server, sir.")
+            subprocess.run(
+                ["sh", "-c", "lsof -ti tcp:3000 | xargs kill -9 2>/dev/null"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        elif "close" in query and ("nse" in query or "stock" in query or "research" in query):
+            speak("Shutting down the stock research engine, sir.")
+            subprocess.run(
+                ["sh", "-c", "lsof -ti tcp:8501 | xargs kill -9 2>/dev/null"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
         elif any(
             kw in query
             for kw in [
@@ -289,8 +332,28 @@ class Jarvis:
                 args=(goal, duration),
                 daemon=True,
             ).start()
+        elif "stock" in query or "nse" in query or ("research" in query and "market" in query):
+            stock_dir = os.path.join(os.path.dirname(__file__), "stock-research")
+            speak("Opening stock research system.")
+            devnull = subprocess.DEVNULL
+            subprocess.Popen(
+                ["bash", "run.sh"],
+                cwd=stock_dir,
+                stdout=devnull,
+                stderr=devnull,
+            )
+            webbrowser.open_new_tab("http://localhost:8501")
         else:
-            answer = _query_llm(f"Answer concisely in one sentence: {query}")
+            if "quick" in query:
+                fast_model = os.environ.get(
+                    "JARVIS_FAST_LLM_MODEL", "qwen2.5:0.5b"
+                )
+                answer = _query_llm(
+                    f"Answer concisely in one sentence: {query}",
+                    model=fast_model,
+                )
+            else:
+                answer = _query_llm(f"Answer concisely in one sentence: {query}")
             speak(answer or "I don't know how to do that, sir")
             if answer:
                 store_memory(query, answer)

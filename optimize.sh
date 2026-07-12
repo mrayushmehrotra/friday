@@ -50,7 +50,7 @@ sudo systemctl restart ollama
 info "Ollama restarted with optimized settings"
 
 # ── 3. Verify the model exists locally ─────────────────
-MODEL="qwen3:1.7b"
+MODEL="qwen2.5:0.5b"
 info "Checking model $MODEL"
 if ollama list 2>/dev/null | grep -q "$MODEL"; then
     info "Model $MODEL is already pulled"

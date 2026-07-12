@@ -5,14 +5,14 @@ import { Hero2 } from "./Hero2";
 const Hero = () => {
   return (
     <main>
-      <section className="bg-[#ffffff] w-full pt-24 pb-20 px-6">
+      <section className="bg-black w-full pt-24 pb-20 px-6">
         <div className="max-w-[980px] mx-auto text-center">
-          <h1 className="font-[system-ui,-apple-system,sans-serif] text-[56px] md:text-[56px] font-semibold leading-[1.07] tracking-[-0.28px] text-[#1d1d1f] mb-4">
+          <h1 className="font-[system-ui,-apple-system,sans-serif] text-[56px] md:text-[56px] font-semibold leading-[1.07] tracking-[-0.28px] text-white mb-4">
             Engage your audience
             <br />
             with stunning videos
           </h1>
-          <p className="font-[system-ui,-apple-system,sans-serif] text-[17px] leading-[1.47] tracking-[-0.374px] text-[#7a7a7a] max-w-[680px] mx-auto mb-10">
+          <p className="font-[system-ui,-apple-system,sans-serif] text-[17px] leading-[1.47] tracking-[-0.374px] text-white/60 max-w-[680px] mx-auto mb-10">
             Transform your content strategy with AI-powered insights that
             maximize visibility, engagement, and growth across all platforms.
           </p>
@@ -25,7 +25,7 @@ const Hero = () => {
             </Link>
             <Link
               href="#demo"
-              className="inline-flex items-center px-5 py-2.5 bg-white/70 backdrop-blur-xl text-[#0066cc] text-[17px] rounded-full border border-[#0066cc]/30 hover:bg-white/90 transition-colors active:scale-[0.95]"
+              className="inline-flex items-center px-5 py-2.5 bg-white/5 backdrop-blur-xl text-white text-[17px] rounded-full border border-white/20 hover:bg-white/10 transition-colors active:scale-[0.95]"
             >
               Learn More
             </Link>
@@ -34,7 +34,7 @@ const Hero = () => {
       </section>
 
       {/* Showcase gallery — Apple-style product imagery row */}
-      <section className="bg-[#ffffff] w-full pb-20 overflow-hidden">
+      <section className="bg-black w-full pb-20 overflow-hidden">
         <div className="relative h-[280px] md:h-[360px] [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)]">
           <div
             className="flex gap-4 animate-scroll-left"

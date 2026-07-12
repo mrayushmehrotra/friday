@@ -4,23 +4,23 @@
 
 @layer base {
   :root {
-    --background: 0 0% 93.7%;
-    --foreground: 0 0% 12%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 12%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 12%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 100%;
 
     --primary: 239 72% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 90%;
-    --secondary-foreground: 0 0% 12%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 90%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
 
     --accent: 239 72% 56%;
     --accent-foreground: 0 0% 100%;
@@ -28,36 +28,19 @@
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 86%;
-    --input: 0 0% 86%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
     --ring: 239 72% 56%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-  .dark {
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 14%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
@@ -84,24 +67,24 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.25);
 }
 
-/* Liquid Glass — triple-layer mixed glass system */
+/* Dark Liquid Glass */
 .glass {
-  background: linear-gradient(135deg, rgba(255,255,255,0.75), rgba(240,245,255,0.60), rgba(255,255,255,0.70));
+  background: linear-gradient(135deg, rgba(30,30,35,0.75), rgba(20,22,28,0.60), rgba(30,30,35,0.70));
   backdrop-filter: blur(24px) saturate(1.5);
   -webkit-backdrop-filter: blur(24px) saturate(1.5);
-  border: 0.5px solid rgba(0, 0, 0, 0.06);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
   position: relative;
 }
 .glass::before {
@@ -109,16 +92,16 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(200,220,255,0.05), rgba(255,255,255,0.12));
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(200,220,255,0.03), rgba(255,255,255,0.06));
   pointer-events: none;
   z-index: 1;
 }
 
 .glass-strong {
-  background: linear-gradient(135deg, rgba(255,255,255,0.82), rgba(240,245,255,0.65), rgba(255,255,255,0.78));
+  background: linear-gradient(135deg, rgba(40,40,45,0.82), rgba(30,32,38,0.65), rgba(40,40,45,0.78));
   backdrop-filter: blur(24px) saturate(1.5);
   -webkit-backdrop-filter: blur(24px) saturate(1.5);
-  border: 0.5px solid rgba(0, 0, 0, 0.10);
+  border: 0.5px solid rgba(255, 255, 255, 0.10);
   position: relative;
 }
 .glass-strong::before {
@@ -126,16 +109,16 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(200,220,255,0.06), rgba(255,255,255,0.14));
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(200,220,255,0.03), rgba(255,255,255,0.08));
   pointer-events: none;
   z-index: 1;
 }
 
 .glass-subtle {
-  background: linear-gradient(135deg, rgba(255,255,255,0.55), rgba(240,245,255,0.45), rgba(255,255,255,0.50));
+  background: linear-gradient(135deg, rgba(20,20,25,0.55), rgba(15,17,22,0.45), rgba(20,20,25,0.50));
   backdrop-filter: blur(20px) saturate(1.3);
   -webkit-backdrop-filter: blur(20px) saturate(1.3);
-  border: 0.5px solid rgba(0, 0, 0, 0.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.04);
   position: relative;
 }
 .glass-subtle::before {
@@ -143,17 +126,17 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(200,220,255,0.03), rgba(255,255,255,0.10));
+  background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(200,220,255,0.02), rgba(255,255,255,0.05));
   pointer-events: none;
   z-index: 1;
 }
 
 /* Dark liquid glass variant */
 .glass-dark {
-  background: linear-gradient(135deg, rgba(29,29,31,0.80), rgba(40,40,45,0.70), rgba(29,29,31,0.75));
+  background: linear-gradient(135deg, rgba(10,10,12,0.80), rgba(15,15,18,0.70), rgba(10,10,12,0.75));
   backdrop-filter: blur(24px) saturate(1.5);
   -webkit-backdrop-filter: blur(24px) saturate(1.5);
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
   position: relative;
 }
 .glass-dark::before {
@@ -161,7 +144,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(200,220,255,0.03), rgba(255,255,255,0.10));
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(200,220,255,0.02), rgba(255,255,255,0.06));
   pointer-events: none;
   z-index: 1;
 }
@@ -185,14 +168,14 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #4f46e5, #a855f7);
+  background: linear-gradient(135deg, #818cf8, #a855f7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .gradient-text-purple {
-  background: linear-gradient(135deg, #7c3aed, #ec4899, #6366f1);
+  background: linear-gradient(135deg, #a78bfa, #f472b6, #818cf8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -223,13 +206,13 @@ body {
 }
 
 ::selection {
-  background: rgba(79, 70, 229, 0.2);
+  background: rgba(129, 140, 248, 0.3);
   color: inherit;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
 @keyframes border-spin {

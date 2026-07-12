@@ -62,7 +62,7 @@ export function Hero2() {
                 {feature.tags.map((tag, tagIndex) => (
                   <span
                     key={tagIndex}
-                    className="text-[12px] leading-[1] tracking-[-0.12px] text-[#7a7a7a]"
+                    className="text-[12px] leading-[1] tracking-[-0.12px] text-white/50"
                   >
                     {tag}
                     {tagIndex < feature.tags.length - 1 && (
@@ -89,7 +89,7 @@ export function Hero2() {
               <div className="text-[28px] font-[400] leading-[1.14] tracking-[0.196px] text-white mb-1">
                 {stat.value}
               </div>
-              <div className="text-[12px] leading-[1] tracking-[-0.12px] text-[#7a7a7a]">
+              <div className="text-[12px] leading-[1] tracking-[-0.12px] text-white/50">
                 {stat.label}
               </div>
             </div>
