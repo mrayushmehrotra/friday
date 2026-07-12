@@ -1,0 +1,362 @@
+make the jarvis-config webpage UI to add and remove commands from the jarvis,
+and jarvis will include or exclude them based on the user's preferences
+
+make the update todo command to in mcp, which can be used to input new text in the todo
+e.g. add in todo, create the design.md website whcih takes github repo and extracts all css from it then give you a design.md file => so it'll add this in the todo
+
+1. Replace raw HTTP \_query_llm() with ChatOllama from langchain-ollama. This would give you message templating, output parsers, streaming support, and callbacks without any HTTP boilerplate.
+2. Replace the if/elif chain with LangChain's intent classifier -- either via LLMChain with a structured output schema, or LangGraph for routing.
+3. Use StringOutputParser or PydanticOutputParser in the autonomous mode's generate_plan() -- currently it manually does find("[") + json.loads(), which is brittle.
+4. Standardize all LLM calls -- currently \_query_llm and \_ollama_chat use different endpoints, different options, and different model env var conventions. LangChain would unify this.
+5. Leverage LangSmith for observability/tracing across all LLM calls.
+
+--- Daily Work ---
+
+```markdown
+# 6-month ai software engineer roadmap
+
+> goal: become an interview-ready full stack + ai engineer.
+
+---
+
+# daily checklist
+
+## dsa (60 min)
+
+- [ ] solve 1-2 leetcode problems
+- [ ] write solution without ai
+- [ ] optimize solution
+- [ ] review yesterday's problems
+
+---
+
+## computer science (60 min)
+
+rotate one topic every day.
+
+- [ ] operating systems
+- [ ] networking
+- [ ] database internals
+- [ ] system design
+
+---
+
+## ai learning (90 min)
+
+- [ ] watch course/video
+- [ ] take notes
+- [ ] build a small demo
+- [ ] read documentation
+
+---
+
+## project development (2 hours)
+
+- [ ] build one feature
+- [ ] write tests
+- [ ] refactor code
+- [ ] push to github
+
+---
+
+## ai-free coding (30 min)
+
+- [ ] build something without ai assistance
+- [ ] ask ai only after finishing your first attempt
+
+---
+
+## reading (30 min)
+
+- [ ] documentation
+- [ ] blog
+- [ ] engineering article
+
+---
+
+# month 1 — engineering foundations
+
+## week 1
+
+### javascript / typescript
+
+- [ ] event loop
+- [ ] closures
+- [ ] execution context
+- [ ] prototype chain
+- [ ] async/await
+- [ ] promises
+- [ ] generators
+- [ ] iterators
+
+### python
+
+- [ ] modern syntax
+- [ ] type hints
+- [ ] dataclasses
+- [ ] virtual environments
+- [ ] pydantic
+
+### dsa
+
+- [ ] arrays
+- [ ] strings
+
+---
+
+## week 2
+
+### node.js
+
+- [ ] streams
+- [ ] buffers
+- [ ] eventemitter
+- [ ] worker threads
+- [ ] child processes
+
+### python
+
+- [ ] asyncio
+- [ ] fastapi basics
+
+### dsa
+
+- [ ] hash maps
+- [ ] sliding window
+- [ ] two pointers
+
+---
+
+## week 3
+
+### backend
+
+- [ ] rest apis
+- [ ] authentication
+- [ ] jwt
+- [ ] validation
+- [ ] error handling
+
+### python
+
+- [ ] fastapi crud
+
+### dsa
+
+- [ ] linked list
+- [ ] stack
+- [ ] queue
+
+---
+
+## week 4
+
+### project
+
+- [ ] build rest api
+- [ ] authentication
+- [ ] database
+- [ ] documentation
+- [ ] testing
+
+---
+
+# month 2 — backend mastery
+
+## postgresql
+
+- [ ] indexes
+- [ ] joins
+- [ ] transactions
+- [ ] query optimization
+- [ ] window functions
+
+## redis
+
+- [ ] caching
+- [ ] pub/sub
+- [ ] rate limiting
+
+## mongodb
+
+- [ ] aggregation
+- [ ] indexes
+
+## backend
+
+- [ ] file upload
+- [ ] background jobs
+- [ ] websockets
+
+## dsa
+
+- [ ] trees
+- [ ] bst
+- [ ] heap
+- [ ] graph basics
+
+---
+
+# month 3 — ai fundamentals
+
+## watch
+
+- [ ] neural networks: zero to hero
+- [ ] let's build gpt
+- [ ] intro to llms
+
+## learn
+
+- [ ] tokens
+- [ ] embeddings
+- [ ] transformers
+- [ ] attention
+- [ ] context window
+- [ ] prompt engineering
+- [ ] function calling
+- [ ] structured outputs
+
+## project
+
+- [ ] ai chatbot
+
+---
+
+# month 4 — ai engineering
+
+## learn
+
+- [ ] rag
+- [ ] vector databases
+- [ ] chunking
+- [ ] retrieval
+- [ ] langgraph
+- [ ] mcp
+- [ ] ai agents
+- [ ] memory
+- [ ] evaluation
+
+## projects
+
+- [ ] chat with pdfs
+- [ ] ai customer support
+- [ ] ai research assistant
+
+---
+
+# month 5 — production ai
+
+## learn
+
+- [ ] docker
+- [ ] ci/cd
+- [ ] logging
+- [ ] monitoring
+- [ ] streaming
+- [ ] background workers
+- [ ] deployment
+
+## projects
+
+- [ ] ai meeting summarizer
+- [ ] ai code reviewer
+- [ ] browser agent
+
+---
+
+# month 6 — interview preparation
+
+## dsa
+
+- [ ] trees
+- [ ] graphs
+- [ ] dynamic programming
+- [ ] backtracking
+
+## system design
+
+- [ ] url shortener
+- [ ] chat app
+- [ ] notification service
+- [ ] ai saas design
+
+## networking
+
+- [ ] http
+- [ ] tcp/ip
+- [ ] dns
+- [ ] load balancer
+- [ ] reverse proxy
+
+## operating systems
+
+- [ ] processes
+- [ ] threads
+- [ ] memory
+- [ ] scheduling
+
+## final project
+
+- [ ] next.js frontend
+- [ ] node backend
+- [ ] fastapi ai service
+- [ ] postgresql
+- [ ] redis
+- [ ] docker
+- [ ] langgraph
+- [ ] mcp
+- [ ] rag
+- [ ] authentication
+- [ ] deployment
+
+---
+
+# weekly review
+
+- [ ] 10+ leetcode problems solved
+- [ ] 5 github commits
+- [ ] 1 blog/article read
+- [ ] 1 project feature completed
+- [ ] notes updated
+- [ ] resume updated (if needed)
+
+---
+
+# monthly goals
+
+## month 1
+
+- [ ] strong typescript
+- [ ] strong node.js
+- [ ] modern python
+- [ ] fastapi basics
+
+## month 2
+
+- [ ] backend ready
+- [ ] postgresql
+- [ ] redis
+- [ ] authentication
+
+## month 3
+
+- [ ] understand llms
+- [ ] build ai chatbot
+
+## month 4
+
+- [ ] build rag applications
+- [ ] learn langgraph
+- [ ] learn mcp
+
+## month 5
+
+- [ ] deploy production ai apps
+- [ ] docker + ci/cd
+
+## month 6
+
+- [ ] interview ready
+- [ ] portfolio complete
+- [ ] apply to companies
+```

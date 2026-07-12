@@ -18,6 +18,12 @@ from helpers import log_event, speak
 from memory import build_context
 from memory import store as store_memory
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # ---------------------------------------------------------------------------
 #  Clipboard → LLM  (local Ollama)
 # ---------------------------------------------------------------------------
@@ -144,6 +150,88 @@ def _fetch_market_data() -> str | None:
         return None
 
 
+def _fetch_moneycontrol_stocks() -> list[dict[str, str]]:
+    try:
+        import requests
+        from lxml import html
+
+        url = "https://www.moneycontrol.com/news/business/stocks/"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        resp = requests.get(url, headers=headers, timeout=10)
+        tree = html.fromstring(resp.content)
+
+        articles: list[dict[str, str]] = []
+        for li in tree.xpath("//li[.//h2]"):
+            a = li.find(".//a")
+            href = a.get("href", "") if a is not None else ""
+            h2 = li.findtext(".//h2", "")
+            full = li.text_content().strip()
+            if h2:
+                articles.append({"title": h2.strip(), "url": href, "text": full[:500]})
+        return articles
+    except Exception as e:
+        log_event(f"Moneycontrol scrape failed: {e}", "error")
+        return []
+
+
+def _groq_stock_recommendations(articles: list[dict[str, str]]) -> str:
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return ""
+    if not articles:
+        return ""
+
+    headlines = "\n\n".join(
+        f"{i+1}. {a['title']}"
+        for i, a in enumerate(articles[:15])
+    )
+
+    try:
+        from groq import Groq
+
+        client = Groq(api_key=api_key)
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a stock market analyst. Given today's Indian stock market news headlines "
+                        "from Moneycontrol, identify the top recommended stocks for today. "
+                        "Answer in 2-3 concise sentences. Mention specific stock names and whether "
+                        "they are a buy, sell, or hold. Be brief and natural."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"Here are today's stock market headlines:\n\n{headlines}\n\nWhat are the top recommended stocks today?",
+                },
+            ],
+            temperature=0.3,
+            max_tokens=200,
+        )
+        return completion.choices[0].message.content.strip()
+    except Exception as e:
+        log_event(f"Groq stock analysis failed: {e}", "error")
+        return ""
+
+
+def _strip_markdown(text: str) -> str:
+    text = text.replace("**", "")
+    text = text.replace("*", "")
+    text = text.replace("__", "")
+    text = text.replace("`", "")
+    text = text.replace("###", "").replace("##", "").replace("#", "")
+    lines = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("- ") or stripped.startswith("* "):
+            stripped = stripped[2:]
+        if stripped:
+            lines.append(stripped)
+    return " ".join(lines)
+
+
 def daily_briefing() -> str:
     now = datetime.datetime.now()
     hour = now.hour
@@ -155,24 +243,93 @@ def daily_briefing() -> str:
         period = "evening"
 
     market = _fetch_market_data()
-    headlines = _fetch_headlines(4)
     parts = [f"Good {period}, sir."]
     if market:
         parts.append(market)
-    context = f"Today's stock market: {market or 'unavailable'}\n\n" + "\n".join(headlines)
-    summary = _query_llm(
-        f"{context}\n\nSummarize the market movement and these headlines into 2-3 concise, natural sentences. Read like a news anchor."
-    )
-    if summary:
-        return summary
-    return " ".join(parts)
+
+    stocks = _fetch_moneycontrol_stocks()
+    groq_take = _groq_stock_recommendations(stocks)
+    if groq_take:
+        parts.append(_strip_markdown(groq_take))
+
+    return ". ".join(parts)
 
 
 def speak_daily_briefing() -> None:
     briefing = daily_briefing()
     if briefing:
         speak(briefing)
+    plan = _read_notes_plan()
+    if plan:
+        speak(plan)
     log_event("Daily briefing delivered")
+
+
+_NOTES_PATH = os.path.expanduser("~/.notes.md")
+_WEEKDAYS = [
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
+]
+
+
+def _read_notes_plan() -> str:
+    try:
+        with open(_NOTES_PATH) as f:
+            text = f.read()
+    except FileNotFoundError:
+        return ""
+
+    today = datetime.datetime.now().strftime("%A").lower()
+    lines = text.splitlines()
+
+    today_section: list[str] = []
+    in_today = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("### ") and stripped[4:].strip().lower().startswith(today):
+            in_today = True
+            continue
+        if in_today:
+            if stripped.startswith("### ") or stripped.startswith("---"):
+                break
+            if stripped:
+                today_section.append(stripped)
+
+    todo_done: list[str] = []
+    todo_pending: list[str] = []
+    in_todo = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped == "## Immediate Jarvis TODO (This Week)":
+            in_todo = True
+            continue
+        if in_todo:
+            if stripped.startswith("## ") or stripped.startswith("---"):
+                break
+            if stripped.startswith("- [x]"):
+                todo_done.append(stripped[5:].strip())
+            elif stripped.startswith("- [ ]"):
+                todo_pending.append(stripped[5:].strip())
+
+    parts: list[str] = []
+
+    if today_section:
+        today_name = datetime.datetime.now().strftime("%A")
+        items = []
+        for item in today_section:
+            clean = item.lstrip("-* ").strip().replace("**", "")
+            if clean and not clean.startswith("|"):
+                items.append(clean)
+        if items:
+            parts.append(f"Today is {today_name}. Plan: " + ". ".join(items))
+
+    if todo_done:
+        done = [t.replace("**", "").strip() for t in todo_done]
+        parts.append("Done: " + ". ".join(done))
+    if todo_pending:
+        count = len(todo_pending)
+        parts.append(f"You have {count} pending tasks in your notes")
+
+    return ". ".join(parts) if parts else ""
 
 
 def _fetch_headlines(max_items: int = 4) -> list[str]:

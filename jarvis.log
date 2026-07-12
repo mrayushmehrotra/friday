@@ -7696,3 +7696,307 @@ These actions will help improve the user experience and streamline the checkout 
 2026-07-12 12:33:52,730 - INFO - JARVIS initialized
 2026-07-12 12:33:59,531 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
 2026-07-12 12:34:00,051 - INFO - Processing audio with duration 00:02.183
+2026-07-12 12:34:02,028 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:34:06,185 - INFO - Speak: The Nifty 50 stock market closed higher today with an 84-point gain (+1.07%), marking the latest positive move in the tech-heavy Nifty 50 index. The Sensex, on the other hand, recorded a 29-point increase (+1.06%), reflecting the broader market's robust performance. Meanwhile, the Bank Nifty also experienced a slight rise of 4 points (+0.87%), while BSE/NSE India's Nifty 50 index saw a modest gain of 3 points (+0.09%).
+2026-07-12 12:34:06,186 - INFO - Daily briefing delivered
+2026-07-12 12:34:06,274 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:34:07,980 - INFO - Processing audio with duration 00:01.416
+2026-07-12 12:34:12,315 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:34:13,177 - INFO - Speak: Improve the clarity and impact of your project section by adding headings, specific goals, methodology, results, and future plans.
+2026-07-12 12:34:27,892 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:34:28,179 - INFO - Speak: New girls are opening up about their sexual experiences.
+2026-07-12 12:34:35,319 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:34:35,656 - INFO - Processing audio with duration 00:02.694
+2026-07-12 12:34:42,024 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:34:42,176 - INFO - Speak: What is the question?
+2026-07-12 12:34:47,714 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:34:48,335 - INFO - Speak: what the fuck are you? is a question asking about someone's feelings, thoughts, or intentions.
+2026-07-12 12:34:58,605 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:34:58,960 - INFO - Processing audio with duration 00:03.483
+2026-07-12 12:35:03,255 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:35:03,368 - INFO - Speak: i am so worried
+2026-07-12 12:35:10,195 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:35:10,555 - INFO - Processing audio with duration 00:04.110
+2026-07-12 12:35:12,943 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:35:13,275 - INFO - Speak: It's not possible to answer the given question.
+2026-07-12 12:35:29,069 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:35:29,430 - INFO - Processing audio with duration 00:11.471
+2026-07-12 12:35:31,792 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:35:32,504 - INFO - Speak: Improve the clarity and impact of your project section by adding headings, specific goals, methodology, results, and future plans.
+2026-07-12 12:35:49,560 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:35:50,050 - INFO - Processing audio with duration 00:07.221
+2026-07-12 12:35:52,021 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:35:52,873 - INFO - Speak: Improve the clarity and impact of your project section by adding headings, specific goals, methodology, results, and future plans.
+2026-07-12 12:36:06,340 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:36:07,208 - INFO - Speak: I'm not sure what specifically you'd like to know about about. Can you please provide more context or clarify your question?
+2026-07-12 12:36:17,994 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:36:18,295 - INFO - Speak: Holland is the Dutch word for Amsterdam.
+2026-07-12 12:36:23,558 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:36:23,963 - INFO - Processing audio with duration 00:02.183
+2026-07-12 12:36:32,178 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:36:32,566 - INFO - Processing audio with duration 00:04.296
+2026-07-12 12:36:36,166 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:36:37,011 - INFO - Speak: Improve the clarity and impact of your project section by adding headings, specific goals, methodology, results, and future plans.
+2026-07-12 12:36:49,072 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:36:49,404 - INFO - Processing audio with duration 00:02.856
+2026-07-12 12:36:50,816 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:36:51,593 - INFO - Speak: Improve the clarity and impact of your project section by adding headings, specific goals, methodology, results, and future plans.
+2026-07-12 12:37:03,711 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:37:04,054 - INFO - Processing audio with duration 00:02.949
+2026-07-12 12:37:10,402 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:37:10,739 - INFO - Processing audio with duration 00:02.949
+2026-07-12 12:37:15,583 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:37:15,915 - INFO - Processing audio with duration 00:01.672
+2026-07-12 12:37:17,221 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:37:17,995 - INFO - Speak: Improve the clarity and impact of your project section by adding headings, specific goals, methodology, results, and future plans.
+2026-07-12 12:37:36,913 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:37:37,350 - INFO - Processing audio with duration 00:09.172
+2026-07-12 12:37:42,839 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:37:43,222 - INFO - Processing audio with duration 00:01.974
+2026-07-12 12:37:48,244 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:37:48,648 - INFO - Processing audio with duration 00:01.300
+2026-07-12 12:37:50,839 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:37:51,755 - INFO - Speak: Improve the clarity and impact of your project section by adding headings, specific goals, methodology, results, and future plans.
+2026-07-12 12:38:05,803 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:38:06,533 - INFO - Speak: Pakistan is a country located in South Asia, bordered by India and Afghanistan, with its capital in Islamabad.
+2026-07-12 12:38:19,909 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:38:20,290 - INFO - Processing audio with duration 00:04.110
+2026-07-12 12:38:28,317 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:38:28,609 - INFO - Speak: You don't want to be with them.
+2026-07-12 12:38:34,245 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:38:34,621 - INFO - Processing audio with duration 00:03.042
+2026-07-12 12:38:40,385 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:38:40,712 - INFO - Processing audio with duration 00:02.090
+2026-07-12 12:38:47,103 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:38:47,452 - INFO - Speak: no, it is not possible to answer the given question.
+2026-07-12 12:38:54,113 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:38:54,463 - INFO - Processing audio with duration 00:02.740
+2026-07-12 12:38:56,602 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:38:57,593 - INFO - Speak: Add a heading to your project section, set clear goals, outline your methodology, present results with specific data points and analysis, and conclude with future plan details.
+2026-07-12 12:39:10,030 - INFO - JARVIS initialized
+2026-07-12 12:39:18,173 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:39:20,854 - INFO - Speak: The recent stock market saw an up move for both the Nifty 50 index and the Sensex, with the Nifty gaining 1.08% to close at 24,207 points and the Sensex rising 1.02% to reach a new high of 7,7569 points. The latest news includes today's ICC Awards highlights in The Evening Standard.
+2026-07-12 12:39:20,854 - INFO - Speak: Sir, today is Sunday. Weekly Review: Check goals, update notes, review DSA problems. Refactor: Clean up code, add tests, push to GitHub. Plan: Set goals for next week. Rest — or light reading. Pending tasks: Replace if/elif chain with LangChain intent classifier + structured output. Unify LLM calls — standardize `_query_llm` and `_ollama_chat` through a single `JarvisLLM` class. PydanticOutputParser for `generate_plan()` instead of fragile `find("[")` + json.loads. Add LangSmith for observability across all LLM calls. RAG memory — improve `build_context()` with better chunking + reranking. MCP server for Jarvis — expose todo management, file ops as MCP tools. Tool-following agent — let autonomous mode use real tools (browser, file system, etc.)
+2026-07-12 12:39:20,854 - INFO - Daily briefing delivered
+2026-07-12 12:39:24,003 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:39:24,715 - INFO - Processing audio with duration 00:08.243
+2026-07-12 12:39:56,565 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:39:56,916 - INFO - Processing audio with duration 00:09.009
+2026-07-12 12:40:00,105 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:40:03,133 - INFO - Speak: To create a personalized AI-powered system that can understand and respond to user queries using a predefined set of rules, you need to first identify common words or phrases (like "alarm," "standardize," and "query") in your content. Next, use these identified terms as the basis for creating a parser that can generate responses based on the context provided by users. Finally, integrate this AI system with Jarvis's capabilities to handle complex queries and provide personalized experiences.
+2026-07-12 12:40:37,263 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:40:37,687 - INFO - Processing audio with duration 00:03.065
+2026-07-12 12:40:45,831 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:40:46,201 - INFO - Processing audio with duration 00:04.133
+2026-07-12 12:40:56,388 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:40:56,762 - INFO - Processing audio with duration 00:01.486
+2026-07-12 12:41:06,488 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:41:06,933 - INFO - Processing audio with duration 00:03.785
+2026-07-12 12:41:17,171 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:41:17,528 - INFO - Processing audio with duration 00:05.805
+2026-07-12 12:41:30,537 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:41:30,899 - INFO - Processing audio with duration 00:09.009
+2026-07-12 12:41:46,359 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:41:46,724 - INFO - Processing audio with duration 00:06.060
+2026-07-12 12:41:54,349 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:41:54,700 - INFO - Processing audio with duration 00:03.297
+2026-07-12 12:42:06,571 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:42:06,930 - INFO - Processing audio with duration 00:08.127
+2026-07-12 12:42:14,286 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:42:14,554 - INFO - Speak: I am cutting the item in half twice.
+2026-07-12 12:42:26,536 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:42:27,014 - INFO - Processing audio with duration 00:09.009
+2026-07-12 12:42:30,524 - INFO - JARVIS initialized
+2026-07-12 12:42:38,536 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:42:42,119 - INFO - Speak: Today's stock market showed mixed results with both the Nifty 50 (Indian Stock Exchange) rising by 1.08%, contributing to an overall gain of 24 points (+2.10%). The Sensex (S&P Bursa Malaysia) also saw a significant rise, increasing by 1.02% or 82 points (+9.36%). While the Nifty 50 is up, it's down by 244 points (-0.7%), indicating some volatility in the market.
+2026-07-12 12:42:42,119 - INFO - Speak: Sir, today is Sunday. Weekly Review: Check goals, update notes, review DSA problems. Refactor: Clean up code, add tests, push to GitHub. Plan: Set goals for next week. Rest — or light reading. Pending tasks: Replace if/elif chain with LangChain intent classifier + structured output. Unify LLM calls — standardize `_query_llm` and `_ollama_chat` through a single `JarvisLLM` class. PydanticOutputParser for `generate_plan()` instead of fragile `find("[")` + json.loads. Add LangSmith for observability across all LLM calls. RAG memory — improve `build_context()` with better chunking + reranking. MCP server for Jarvis — expose todo management, file ops as MCP tools. Tool-following agent — let autonomous mode use real tools (browser, file system, etc.)
+2026-07-12 12:42:42,120 - INFO - Daily briefing delivered
+2026-07-12 12:42:45,081 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:42:45,083 - INFO - Speak: Yes, I understand. What do you need assistance with?
+2026-07-12 12:42:59,374 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:42:59,734 - INFO - Processing audio with duration 00:09.009
+2026-07-12 12:43:05,264 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:43:08,222 - INFO - Speak: • Indian stock market saw mixed results with both Nifty 50 and BSE Sensex showing resilience, but the Nifty 50 index showed a slight increase of 1.08%.
+• The latest ICC Awards highlighted achievements in cricket, recognizing contributions from India's cricket team.
+• Gift Nifty, US-Iran ceasefire, HCL Tech Q4 results: These are key events that have affected Indian stock market overnight.
+2026-07-12 12:43:25,788 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:43:26,216 - INFO - Processing audio with duration 00:07.546
+2026-07-12 12:43:30,896 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:43:31,789 - INFO - Speak: The 90-Fing Index increased by 1.08% from the latest ICC War Thailand result.
+2026-07-12 12:43:40,179 - INFO - JARVIS initialized
+2026-07-12 12:43:42,391 - INFO - Speak: Good afternoon, sir. Nifty 50 is at 24207, up by 244 points (+1.02%). Sensex is at 77569, up by 828 points (+1.08%). Headlines: Share Market Today: Nifty 50, Bank Nifty | July 10, 2026 - Liquide Blog. Sensex Today Tanks 531 Points | Nifty Below 24,250 | Bajaj Finance & ITC Top Losers - Equitymaster. Stock Market News - Share Market News, Sensex Today, BSE/NSE India, Nifty 50 Updates | CNBCTV18 - LinkedIn. Share Market Today: Nifty 50, Bank Nifty | July 09, 2026 - Liquide Blog
+2026-07-12 12:43:42,392 - INFO - Speak: Today is Sunday. Plan: Weekly Review: Check goals, update notes, review DSA problems. Refactor: Clean up code, add tests, push to GitHub. Plan: Set goals for next week. Rest — or light reading. You have 7 pending tasks in your notes
+2026-07-12 12:43:42,392 - INFO - Daily briefing delivered
+2026-07-12 12:43:50,107 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:43:50,475 - INFO - Processing audio with duration 00:02.624
+2026-07-12 12:44:11,487 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:44:11,839 - INFO - Processing audio with duration 00:09.009
+2026-07-12 12:44:13,814 - INFO - Speak: I couldn't find any news about 28 points plus 1.08% 10 lines, share  today, nifty 50, bank nifty july 10, 2027., sir.
+2026-07-12 12:44:35,405 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:44:35,763 - INFO - Processing audio with duration 00:09.009
+2026-07-12 12:44:40,456 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:44:41,130 - INFO - Speak: The current target for 5050 is $9, with a 2026 outlook.
+2026-07-12 12:44:51,778 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:44:52,200 - INFO - Processing audio with duration 00:04.435
+2026-07-12 12:45:04,083 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:45:04,530 - INFO - Processing audio with duration 00:08.173
+2026-07-12 12:45:17,082 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:45:17,493 - INFO - Processing audio with duration 00:08.173
+2026-07-12 12:45:30,176 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:45:30,562 - INFO - Processing audio with duration 00:08.034
+2026-07-12 12:45:47,271 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:45:47,775 - INFO - Processing audio with duration 00:09.009
+2026-07-12 12:45:55,330 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:45:55,826 - INFO - Processing audio with duration 00:03.297
+2026-07-12 12:46:03,849 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:46:04,284 - INFO - Processing audio with duration 00:03.228
+2026-07-12 12:46:15,212 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:46:15,584 - INFO - Processing audio with duration 00:06.269
+2026-07-12 12:46:23,498 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:46:23,932 - INFO - Processing audio with duration 00:04.040
+2026-07-12 12:46:33,004 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:46:33,488 - INFO - Processing audio with duration 00:02.879
+2026-07-12 12:46:44,177 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:46:44,688 - INFO - Processing audio with duration 00:06.478
+2026-07-12 12:47:06,353 - INFO - JARVIS initialized
+2026-07-12 12:47:08,445 - INFO - Speak: Good afternoon, sir. Nifty 50 is at 24207, up by 244 points (+1.02%). Sensex is at 77569, up by 828 points (+1.08%). Headlines: Share Market Today: Nifty 50, Bank Nifty | July 10, 2026 - Liquide Blog. Stock Market News - Share Market News, Sensex Today, BSE/NSE India, Nifty 50 Updates | CNBCTV18 - LinkedIn. Share Market Today: Nifty 50, Bank Nifty | July 09, 2026 - Liquide Blog. Stock market today (May 6, 2026): Sensex jumps 940 points, Nifty tops 24,300; check top gainers and loser - The Times of India
+2026-07-12 12:47:08,461 - INFO - Speak: Today is Sunday. Plan: Weekly Review: Check goals, update notes, review DSA problems. Refactor: Clean up code, add tests, push to GitHub. Plan: Set goals for next week. Rest — or light reading. You have 7 pending tasks in your notes
+2026-07-12 12:47:10,206 - INFO - Daily briefing delivered
+2026-07-12 12:47:14,706 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:47:15,062 - INFO - Processing audio with duration 00:01.579
+2026-07-12 12:47:47,615 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:48:09,550 - INFO - Speak: • Indian stock market saw mixed results with both Nifty 50 and BSE Sensex showing resilience, but the Nifty 50 index showed a slight increase of 1.08%.
+• The latest ICC Awards highlighted achievements in cricket, recognizing contributions from India's cricket team.
+• Share Market Live News: Indian Stock Market Prediction, Nifty 50 - Liquide Blog
+• Trading Plan: Can Nifty 50, Bank Nifty extend their upward journey for another session as oil prices cool? - Moneycontrol.com
+• Nifty PSU Bank soars 4%, Indian Bank up 10% post Q1 nos; analysts upbeat - Business Standard
+• Q1 results 2026: HCL Tech, Wipro to Jio Financial among companies to declare Q1 results next week; check full list here - livemint.com
+• Market Wrap, July 10: SENSEX up 827 pts, NIFTY50 ends at 24,207; Jio Fin, Adani Ent among top gainers - Upstox
+• Share Market Today: Nifty 50, Bank Nifty | July 10, 2026 - Liquide Blog
+• Can Nifty 50 touch 25,000 this month? Analysts see bank, auto, IT stocks driving the next leg up - livemint.com
+• Share Market Today: Nifty 50, Bank Nifty | July 09, 2026 - Liquide Blog
+• Can Nifty 50 touch 25,000 this month? Analysts see bank, auto, IT stocks driving the next leg up - livemint.com
+• Share Market Today: Nifty 50, Bank Nifty | July 08, 2026 - Liquide Blog
+• Can Nifty 50 touch 25,000 this month? Analysts see bank, auto, IT stocks driving the next leg up - livemint.com
+• Share Market Today: Nifty 50, Bank Nifty | July 07, 2026 - Liquide Blog
+• Can Nifty 50 touch 25,000 this month? Analysts see bank, auto, IT stocks driving the next leg up - livemint.com
+• Share Market Today: Nifty 50
+2026-07-12 12:48:22,231 - INFO - JARVIS initialized
+2026-07-12 12:48:24,440 - INFO - Speak: Good afternoon, sir. Nifty 50 is at 24207, up by 244 points (+1.02%). Sensex is at 77569, up by 828 points (+1.08%). Headlines: Sensex Today Tanks 531 Points | Nifty Below 24,250 | Bajaj Finance & ITC Top Losers - Equitymaster. Stock Market News - Share Market News, Sensex Today, BSE/NSE India, Nifty 50 Updates | CNBCTV18 - LinkedIn. Stock market today (May 6, 2026): Sensex jumps 940 points, Nifty tops 24,300; check top gainers and loser - The Times of India. Sensex Today Trades Higher | Nifty Above 24,100 | Bajaj Finance & HDFC Bank Top Gainers - Equitymaster
+2026-07-12 12:48:24,488 - INFO - Speak: Today is Sunday. Plan: Weekly Review: Check goals, update notes, review DSA problems. Refactor: Clean up code, add tests, push to GitHub. Plan: Set goals for next week. Rest — or light reading. You have 7 pending tasks in your notes
+2026-07-12 12:48:30,108 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:48:30,493 - INFO - Processing audio with duration 00:02.415
+2026-07-12 12:49:22,840 - INFO - Daily briefing delivered
+2026-07-12 12:49:32,907 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:49:33,526 - INFO - Processing audio with duration 00:09.009
+2026-07-12 12:49:40,599 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:49:41,578 - INFO - Speak: Today is Sunday. Class goes weekly review, check goals, update notes, review DSA problems.
+2026-07-12 12:49:53,973 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:49:54,440 - INFO - Processing audio with duration 00:05.178
+2026-07-12 12:50:07,437 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:50:08,035 - INFO - Processing audio with duration 00:08.336
+2026-07-12 12:50:24,201 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:50:24,490 - INFO - Speak: No specific date can be accurately determined.
+2026-07-12 12:50:31,905 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:50:32,354 - INFO - Processing audio with duration 00:03.669
+2026-07-12 12:50:40,940 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:50:41,469 - INFO - Processing audio with duration 00:04.598
+2026-07-12 12:50:57,625 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:50:58,112 - INFO - Processing audio with duration 00:01.532
+2026-07-12 12:51:11,312 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:51:11,777 - INFO - Processing audio with duration 00:08.522
+2026-07-12 12:51:25,243 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:51:25,850 - INFO - Speak: moneycontrol is a news website that focuses on financial information.
+2026-07-12 12:51:36,187 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:51:37,699 - INFO - Processing audio with duration 00:04.807
+2026-07-12 12:51:51,582 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:51:52,213 - INFO - Processing audio with duration 00:04.644
+2026-07-12 12:51:58,863 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:51:59,081 - INFO - Speak: I am starting the engine.
+2026-07-12 12:52:10,481 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:52:10,883 - INFO - Processing audio with duration 00:08.498
+2026-07-12 12:52:24,035 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:52:24,426 - INFO - Processing audio with duration 00:08.243
+2026-07-12 12:52:31,508 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:52:31,897 - INFO - Processing audio with duration 00:02.786
+2026-07-12 12:52:44,170 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:52:44,563 - INFO - Processing audio with duration 00:08.173
+2026-07-12 12:53:08,731 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:53:09,417 - INFO - Processing audio with duration 00:08.150
+2026-07-12 12:53:31,345 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:53:31,837 - INFO - Processing audio with duration 00:08.568
+2026-07-12 12:53:45,172 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:53:45,571 - INFO - Processing audio with duration 00:08.057
+2026-07-12 12:53:52,483 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:53:53,093 - INFO - Speak: It seems like you're feeling a little emotional and I am concerned for your well-being.
+2026-07-12 12:54:07,626 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:54:08,051 - INFO - Processing audio with duration 00:08.986
+2026-07-12 12:54:19,770 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:54:20,453 - INFO - Processing audio with duration 00:07.175
+2026-07-12 12:54:33,242 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:54:33,719 - INFO - Processing audio with duration 00:08.011
+2026-07-12 12:54:44,133 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:54:44,440 - INFO - Speak: That's what I'm talking about.
+2026-07-12 12:54:50,908 - INFO - Speak: Entering autonomous mode for 30 minutes. Goal: general productivity work
+2026-07-12 12:54:50,928 - INFO - Speak: Taking control for 30 minutes. Goal: general productivity work
+2026-07-12 12:55:01,685 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:55:06,859 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:55:07,832 - INFO - Speak: Taking control for 30 minutes includes setting goals, practicing mindfulness exercises, and analyzing progress towards those goals.
+2026-07-12 12:55:21,384 - INFO - Speak: Autonomous mode stopping, sir.
+2026-07-12 12:55:28,992 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:55:29,519 - INFO - Processing audio with duration 00:04.551
+2026-07-12 12:55:43,335 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:55:43,915 - INFO - Processing audio with duration 00:08.336
+2026-07-12 12:55:56,631 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:55:57,004 - INFO - Speak: I am cutting the item in half twice.
+2026-07-12 12:55:59,425 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-07-12 12:55:59,426 - ERROR - Groq stock analysis failed: Error code: 400 - {'error': {'message': 'The model `llama3-70b-8192` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}
+2026-07-12 12:56:05,423 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:56:05,984 - INFO - Processing audio with duration 00:04.783
+2026-07-12 12:56:07,329 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-07-12 12:56:07,330 - ERROR - Groq stock analysis failed: Error code: 400 - {'error': {'message': 'The model `llama3-70b-8192` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}
+2026-07-12 12:56:17,655 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2026-07-12 12:56:21,228 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:56:21,736 - INFO - Processing audio with duration 00:08.150
+2026-07-12 12:56:36,595 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:56:37,211 - INFO - Processing audio with duration 00:08.197
+2026-07-12 12:56:40,281 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-12 12:56:48,961 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-12 12:57:04,108 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:57:04,661 - INFO - Speak: Open the stock exchange website or app for more information on specific stocks.
+2026-07-12 12:57:20,238 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:57:20,653 - INFO - Processing audio with duration 00:09.009
+2026-07-12 12:57:29,093 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:57:29,538 - INFO - Processing audio with duration 00:02.206
+2026-07-12 12:57:41,361 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:57:42,154 - INFO - Processing audio with duration 00:08.034
+2026-07-12 12:58:00,207 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 12:58:00,527 - INFO - Speak: I am making a new item.
+2026-07-12 12:58:10,030 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:58:10,739 - INFO - Processing audio with duration 00:05.642
+2026-07-12 12:58:17,381 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:58:17,947 - INFO - Processing audio with duration 00:02.252
+2026-07-12 12:58:47,488 - INFO - JARVIS initialized
+2026-07-12 12:58:49,969 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-12 12:58:49,986 - INFO - Speak: Good afternoon, sir.. Nifty 50 is at 24207, up by 244 points (+1.02%). Sensex is at 77569, up by 828 points (+1.08%).. Based on the headlines, I recommend the following stocks:
+
+- **Buy:** TCS (target price of Rs 2350 by Motilal Oswal), Kalyan Jewellers (surge of 34% in three days on bullish brokerage calls), and Indian Bank (up nearly 10% post-Q1 results).
+
+- **Hold:** SBI Life, HDFC Life, and ICICI Prudential (in focus as June premium growth picks up).
+
+- **Monitor:** Aastha Spintex, Knack Packaging, and Vedanta Iron And Steel (due to recent acquisition announcements and stake purchases).
+2026-07-12 12:58:50,005 - INFO - Speak: Today is Sunday. Plan: Weekly Review: Check goals, update notes, review DSA problems. Refactor: Clean up code, add tests, push to GitHub. Plan: Set goals for next week. Rest — or light reading. You have 7 pending tasks in your notes
+2026-07-12 12:58:57,450 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:58:57,817 - INFO - Processing audio with duration 00:02.554
+2026-07-12 12:59:48,059 - INFO - Daily briefing delivered
+2026-07-12 12:59:58,121 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 12:59:58,483 - INFO - Processing audio with duration 00:09.009
+2026-07-12 13:00:02,763 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 13:00:03,710 - INFO - Speak: Today is Sunday. Claire will conduct a weekly review, check goals, update notes, review DSA problems, and refactor the code section.
+2026-07-12 13:00:21,921 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 13:00:22,329 - INFO - Processing audio with duration 00:09.009
+2026-07-12 13:00:30,889 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2026-07-12 13:00:31,037 - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-12 13:00:31,406 - INFO - Speak: education contacts refers to interactions with students, teachers, or educational institutions.
+2026-07-12 13:00:41,477 - INFO - HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+2026-07-12 13:00:41,827 - INFO - Processing audio with duration 00:02.856

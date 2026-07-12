@@ -23,6 +23,9 @@ try:
 except Exception:
     pass
 
+# Silence ctranslate2 float16 warnings
+os.environ["CT2_VERBOSE"] = "0"
+
 # Setup Logging
 logging.basicConfig(
     filename="jarvis.log",
@@ -173,8 +176,9 @@ def speak(audio, wait=False) -> None:
     print(f"JARVIS: {audio}")
     log_event(f"Speak: {audio}")
 
+    _mute_mic(True)
+
     def _worker(text):
-        _mute_mic(True)
         try:
             try:
                 voice = get_piper_voice()
@@ -206,9 +210,13 @@ def speak(audio, wait=False) -> None:
             engine.runAndWait()
         finally:
             _mute_mic(False)
+            import time
+            time.sleep(0.3)
 
     global _speech_thread
     with _speech_lock:
+        if _speech_thread is not None and _speech_thread.is_alive():
+            _speech_thread.join()
         _speech_thread = threading.Thread(target=_worker, args=(audio,), daemon=True)
         _speech_thread.start()
     if wait:
@@ -226,13 +234,13 @@ def takeCommand(timeout=None, phrase_limit=None) -> str:
         return "none"
 
     _recognizer = sr.Recognizer()
-    _recognizer.energy_threshold = 2000
+    _recognizer.energy_threshold = 4000
     _recognizer.dynamic_energy_threshold = True
     _recognizer.dynamic_energy_adjustment_damping = 0.15
     _recognizer.dynamic_energy_ratio = 1.5
-    _recognizer.pause_threshold = 1.0
+    _recognizer.pause_threshold = 1.5
     _recognizer.phrase_threshold = 0.3
-    _recognizer.non_speaking_duration = 0.8
+    _recognizer.non_speaking_duration = 1.0
 
     with sr.Microphone() as source:
         if timeout is None:
@@ -242,7 +250,7 @@ def takeCommand(timeout=None, phrase_limit=None) -> str:
             if timeout is None:
                 _recognizer.adjust_for_ambient_noise(source, duration=0.5)
             audio_sr = _recognizer.listen(
-                source, timeout=timeout, phrase_time_limit=phrase_limit
+                source, timeout=timeout, phrase_time_limit=phrase_limit or 8
             )
         except sr.WaitTimeoutError:
             return "none"
@@ -254,6 +262,17 @@ def takeCommand(timeout=None, phrase_limit=None) -> str:
 
     query = _try_recognize(_recognizer, audio_sr, timeout is None)
     return query
+
+
+def _is_garbage(text: str) -> bool:
+    stripped = text.strip().strip(".")
+    if not stripped:
+        return True
+    # Reject if fewer than 2 alphabet letters
+    letters = sum(1 for c in stripped if c.isalpha())
+    if letters < 2:
+        return True
+    return False
 
 
 def _try_recognize(recognizer, audio_sr, verbose: bool) -> str:
@@ -269,8 +288,12 @@ def _try_recognize(recognizer, audio_sr, verbose: bool) -> str:
 
     for name, fn in engines:
         try:
-            query = fn().strip().lower()
-            if query:
+            raw = fn()
+            if isinstance(raw, str):
+                query = raw.strip().lower()
+            else:
+                continue
+            if query and not _is_garbage(query):
                 if verbose:
                     print(f"User ({name}): {query}")
                 return query

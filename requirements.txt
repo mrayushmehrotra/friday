@@ -2,6 +2,7 @@ pyttsx3
 SpeechRecognition
 PyAudio
 requests
+lxml
 numpy
 chromadb
 piper-tts
