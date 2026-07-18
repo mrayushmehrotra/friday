@@ -9,4 +9,9 @@ piper-tts
 PyAutoGUI
 google-api-python-client
 google-auth-oauthlib
-langchain-ollama
+langgraph>=0.4.0
+langchain-ollama>=0.2.0
+langchain-core>=0.3.0
+yfinance
+gs-quant
+

@@ -69,6 +69,7 @@ def _jitter():
         return
     try:
         import pyautogui
+
         pyautogui.moveRel(
             random.randint(-5, 5),
             random.randint(-5, 5),
@@ -84,6 +85,7 @@ def _type_text(text: str):
         return
     try:
         import pyautogui
+
         for ch in text:
             pyautogui.write(ch, interval=random.uniform(0.03, 0.12))
             if random.random() < 0.02:
@@ -98,6 +100,7 @@ def _press_hotkey(*keys):
         return
     try:
         import pyautogui
+
         pyautogui.hotkey(*keys)
     except ImportError:
         pass
@@ -108,6 +111,7 @@ def _click():
         return
     try:
         import pyautogui
+
         pyautogui.click()
     except ImportError:
         pass
@@ -118,6 +122,7 @@ def _scroll(clicks: int):
         return
     try:
         import pyautogui
+
         pyautogui.scroll(clicks)
     except ImportError:
         pass
@@ -134,6 +139,7 @@ def _register_action(name: str):
     def wrapper(fn):
         HANDLERS[name] = fn
         return fn
+
     return wrapper
 
 
@@ -149,7 +155,11 @@ def _handle_type(params):
 
 @_register_action("hotkey")
 def _handle_hotkey(params):
-    keys = params["keys"] if isinstance(params["keys"], list) else params["keys"].split("+")
+    keys = (
+        params["keys"]
+        if isinstance(params["keys"], list)
+        else params["keys"].split("+")
+    )
     _press_hotkey(*keys)
 
 
@@ -176,8 +186,10 @@ def _handle_speak(params):
 @_register_action("run")
 def _handle_run(params):
     subprocess.Popen(
-        params["cmd"], shell=True,
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        params["cmd"],
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
 
@@ -185,7 +197,8 @@ def _handle_run(params):
 def _handle_launch(params):
     subprocess.Popen(
         [params["app"]],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
 
@@ -193,8 +206,10 @@ def _handle_launch(params):
 def _handle_move_mouse(params):
     try:
         import pyautogui
+
         pyautogui.moveTo(
-            params.get("x", 500), params.get("y", 400),
+            params.get("x", 500),
+            params.get("y", 400),
             duration=random.uniform(0.3, 1.0),
         )
     except ImportError:

@@ -18,6 +18,47 @@ from helpers import log_event, speak
 from memory import build_context
 from memory import store as store_memory
 
+from langgraph.graph import StateGraph, MessagesState, START, END
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_ollama import ChatOllama
+from langchain_core.messages import HumanMessage, SystemMessage
+
+_JARVIS_THREAD = "jarvis_main"
+_checkpointer = MemorySaver()
+_llm_graphs: dict[str, any] = {}
+
+
+def _build_llm_graph(model: str, temperature: float):
+    base_url = os.environ.get("JARVIS_LLM_ENDPOINT", "http://localhost:11434")
+    base_url = base_url.replace("/api/generate", "").replace("/api/chat", "").rstrip("/")
+
+    llm = ChatOllama(
+        model=model,
+        base_url=base_url,
+        temperature=temperature,
+        num_predict=512,
+        num_ctx=4096,
+    )
+
+    def call_model(state: MessagesState):
+        response = llm.invoke(state["messages"])
+        return {"messages": [response]}
+
+    builder = StateGraph(MessagesState)
+    builder.add_node("llm", call_model)
+    builder.add_edge(START, "llm")
+    builder.add_edge("llm", END)
+
+    return builder.compile(checkpointer=_checkpointer)
+
+
+def _get_llm_graph(model: str | None = None, temperature: float = 0.6):
+    model_name = model or os.environ.get("JARVIS_LLM_MODEL", "qwen2.5:0.5b")
+    key = f"{model_name}_{temperature}"
+    if key not in _llm_graphs:
+        _llm_graphs[key] = _build_llm_graph(model_name, temperature)
+    return _llm_graphs[key]
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -76,34 +117,21 @@ def clipboard_translate(target_lang: str = "English") -> str:
     return result
 
 
-def _query_llm(prompt: str, model: str | None = None) -> str:
-    if model is None:
-        model = os.environ.get("JARVIS_LLM_MODEL", "qwen2.5:0.5b")
-
-    base_url = os.environ.get("JARVIS_LLM_ENDPOINT", "http://localhost:11434")
-    base_url = base_url.replace("/api/generate", "").replace("/api/chat", "")
-
-    from langchain_ollama import ChatOllama
-
-    llm = ChatOllama(
-        model=model,
-        base_url=base_url,
-        temperature=0.6,
-        num_predict=512,
-        num_ctx=4096,
-    )
-
-    ctx = build_context(prompt)
-    messages = []
-    if ctx:
-        messages.append(("system", ctx))
-    messages.append(("human", prompt))
-
+def _query_llm(prompt: str, model: str | None = None, temperature: float = 0.6) -> str:
     try:
-        result = llm.invoke(messages)
-        raw = result.content.strip()
-        if raw:
-            return raw
+        graph = _get_llm_graph(model, temperature)
+        config = {"configurable": {"thread_id": _JARVIS_THREAD}}
+
+        ctx = build_context(prompt)
+        messages = []
+        if ctx:
+            messages.append(SystemMessage(content=ctx))
+        messages.append(HumanMessage(content=prompt))
+
+        result = graph.invoke({"messages": messages}, config=config)
+        content = result["messages"][-1].content.strip()
+        if content:
+            return content
         log_event("LLM returned empty response", "error")
     except Exception as e:
         log_event(f"LLM query failed: {e}", "error")
@@ -232,6 +260,90 @@ def _strip_markdown(text: str) -> str:
     return " ".join(lines)
 
 
+_YOUTUBE_CHANNEL_HANDLE = "@shortscaster-o9t"
+_YOUTUBE_CHANNEL_ID = "UCgHiG-4239dZcxdpkQ9OX9w"
+_YOUTUBE_TRACK_PATH = os.path.join(os.path.dirname(__file__), ".youtube_track.json")
+
+
+def _youtube_channel_stats() -> str | None:
+    try:
+        import requests
+        import json
+        import re
+
+        headers = {"User-Agent": "Mozilla/5.0"}
+        channel_url = f"https://www.youtube.com/{_YOUTUBE_CHANNEL_HANDLE}"
+        resp = requests.get(channel_url, headers=headers, timeout=10)
+
+        sub_match = re.search(r'(\d+[\d,.]*)\s*subscriber', resp.text, re.IGNORECASE)
+        prev = {}
+        if os.path.exists(_YOUTUBE_TRACK_PATH):
+            try:
+                prev = json.load(open(_YOUTUBE_TRACK_PATH))
+            except Exception:
+                prev = {}
+
+        sub_count = 0
+        sub_text = "0"
+        if sub_match:
+            sub_text = sub_match.group(1).replace(",", "")
+            sub_count = int(float(sub_text.replace("K", "000").replace("M", "000000").split(".")[0]) if "K" in sub_text.upper() or "M" in sub_text.upper() else float(sub_text))
+            if "K" in sub_text.upper():
+                sub_count = int(float(sub_text.replace("K", "")) * 1000)
+            elif "M" in sub_text.upper():
+                sub_count = int(float(sub_text.replace("M", "")) * 1000000)
+
+        # Latest video via RSS + InnerTube
+        rss = requests.get(
+            f"https://www.youtube.com/feeds/videos.xml?channel_id={_YOUTUBE_CHANNEL_ID}",
+            headers=headers, timeout=10
+        )
+        root = ET.fromstring(rss.content)
+        ns = {"atom": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015"}
+        entries = root.findall("atom:entry", ns)
+        video_title = ""
+        video_views = 0
+        if entries:
+            video_id = entries[0].find("yt:videoId", ns).text
+            video_title = entries[0].find("atom:title", ns).text or ""
+            # Clean title for speech
+            video_title = re.sub(r'[^\w\s.,!?-]', '', video_title).strip()
+
+            payload = {
+                "videoId": video_id,
+                "context": {
+                    "client": {"clientName": "WEB", "clientVersion": "2.20231001.00.00"}
+                }
+            }
+            innertube = requests.post(
+                f"https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+                json=payload, headers={"Content-Type": "application/json"}, timeout=10
+            )
+            if innertube.status_code == 200:
+                video_views = int(innertube.json().get("videoDetails", {}).get("viewCount", 0))
+
+        parts = []
+        parts.append(f"Your channel {_YOUTUBE_CHANNEL_HANDLE} has {sub_text} subscribers")
+        if video_title and video_views > 0:
+            parts.append(f"your latest video has {video_views} views")
+        elif video_title:
+            parts.append(f"your latest video is titled {video_title[:60]}")
+
+        sub_change = sub_count - prev.get("subs", sub_count)
+        if sub_change > 0:
+            parts.append(f"you gained {sub_change} new subscriber since last check")
+        elif sub_change > 0:
+            parts.append(f"you lost {abs(sub_change)} subscribers since last check")
+
+        # Save current state
+        json.dump({"subs": sub_count, "views": video_views, "video_title": video_title}, open(_YOUTUBE_TRACK_PATH, "w"))
+
+        return ". ".join(parts)
+    except Exception as e:
+        log_event(f"YouTube stats failed: {e}", "error")
+        return None
+
+
 def daily_briefing() -> str:
     now = datetime.datetime.now()
     hour = now.hour
@@ -251,6 +363,10 @@ def daily_briefing() -> str:
     groq_take = _groq_stock_recommendations(stocks)
     if groq_take:
         parts.append(_strip_markdown(groq_take))
+
+    yt = _youtube_channel_stats()
+    if yt:
+        parts.append(yt)
 
     return ". ".join(parts)
 
@@ -437,35 +553,10 @@ def _fetch_news_rss(topic: str) -> str:
 
 
 def _ollama_chat(query: str) -> str:
-    """Synchronous Ollama chat call via ChatOllama. Low temperature for structured output."""
-    model = os.environ.get("JARVIS_LLM_MODEL", "qwen2.5:0.5b")
-    base_url = os.environ.get("JARVIS_LLM_ENDPOINT", "http://localhost:11434")
-    base_url = base_url.replace("/api/generate", "").replace("/api/chat", "")
-
-    from langchain_ollama import ChatOllama
-
-    llm = ChatOllama(
-        model=model,
-        base_url=base_url,
-        temperature=0.1,
-        num_predict=512,
-        num_ctx=4096,
-    )
-
-    ctx = build_context(query)
-    messages = []
-    if ctx:
-        messages.append(("system", ctx))
-    messages.append(("human", query))
-
-    try:
-        result = llm.invoke(messages)
-        content = result.content.strip()
-        if content:
-            return content
-    except Exception as e:
-        log_event(f"Ollama chat failed: {e}", "error")
-
+    """Synchronous Ollama chat via LangGraph. Low temperature for structured output."""
+    result = _query_llm(query, temperature=0.1)
+    if result:
+        return result
     return _query_llm(
         f"Answer in exactly one sentence: {query.split('Search results')[0].strip()}"
     )

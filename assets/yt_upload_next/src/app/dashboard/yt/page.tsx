@@ -9,6 +9,7 @@ import {
   Sparkles,
   Upload,
   Users,
+  LogOut,
   X,
   Youtube,
 } from "lucide-react";
@@ -209,7 +210,8 @@ const DashboardPage = () => {
   };
 
   const handleEditClick = (video: any) => {
-    setEditingVideo(video);
+    const videoId = video.snippet?.resourceId?.videoId || video.id;
+    setEditingVideo({ ...video, id: videoId });
     setEditTitle(video.snippet?.title || "");
     setEditDescription(video.snippet?.description || "");
     setEditTags(video.snippet?.tags?.join(", ") || "");
@@ -253,7 +255,7 @@ const DashboardPage = () => {
     setGeneratingHints(true);
     const toastId = toast.loading("Generating AI hints...");
     try {
-      const response = await fetch("/api/gemini", {
+      const response = await fetch("/api/groq", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -286,7 +288,18 @@ const DashboardPage = () => {
   ) => {
     if (field === "title") setEditTitle(value);
     else if (field === "description") setEditDescription(value);
-    else if (field === "tags") setEditTags(value);
+    else if (field === "tags") {
+      const current = editTags
+        .split(",")
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean);
+      const existing = new Set(current);
+      const newTags = value
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t && !existing.has(t.toLowerCase()));
+      setEditTags([...current, ...newTags].join(", "));
+    }
   };
 
   const remainingChars = (text: string, max: number) => max - text.length;
@@ -298,7 +311,10 @@ const DashboardPage = () => {
         <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-[18px] bg-white/5 p-6 animate-pulse">
+              <div
+                key={i}
+                className="rounded-[18px] bg-white/5 p-6 animate-pulse"
+              >
                 <div className="h-4 bg-[#e0e0e0] rounded w-1/2 mb-3" />
                 <div className="h-8 bg-[#e0e0e0] rounded w-1/3" />
               </div>
@@ -337,12 +353,15 @@ const DashboardPage = () => {
                 href="/sign-in"
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0066cc]/85 backdrop-blur-xl text-white text-[15px] rounded-full hover:bg-[#0066cc] transition-colors active:scale-[0.95] border-[0.5px] border-white/20"
               >
-                <Youtube className="w-5 h-5" />
-                Reconnect YouTube Account
+                <LogOut className="w-5 h-5" />
+                Sign Out
               </a>
             ) : (
               <button
-                onClick={() => { setError(null); fetchChannelData(); }}
+                onClick={() => {
+                  setError(null);
+                  fetchChannelData();
+                }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 backdrop-blur-xl text-white text-[15px] rounded-full hover:bg-white/10 transition-colors active:scale-[0.95] border-[0.5px] border-white/10"
               >
                 Sign Out
@@ -405,7 +424,9 @@ const DashboardPage = () => {
 
         {/* Upload Section */}
         <div className="bg-white/5 backdrop-blur-2xl rounded-[18px] p-8 border border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
-          <h2 className="text-[20px] font-semibold text-white mb-6">Upload Video</h2>
+          <h2 className="text-[20px] font-semibold text-white mb-6">
+            Upload Video
+          </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left: File picker */}
             <div className="space-y-4">
@@ -422,7 +443,9 @@ const DashboardPage = () => {
                 />
               </label>
               <div>
-                <label className="text-[13px] text-white/50 mb-1 block">Privacy</label>
+                <label className="text-[13px] text-white/50 mb-1 block">
+                  Privacy
+                </label>
                 <select
                   value={privacy}
                   onChange={(e) => setPrivacy(e.target.value)}
@@ -489,7 +512,9 @@ const DashboardPage = () => {
         {/* 30-Day Analytics */}
         {analytics?.analytics && (
           <div className="bg-white/5 backdrop-blur-2xl rounded-[18px] p-8 border border-white/10 shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
-            <h2 className="text-[20px] font-semibold text-white mb-6">30-Day Analytics</h2>
+            <h2 className="text-[20px] font-semibold text-white mb-6">
+              30-Day Analytics
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div>
                 <div className="text-[24px] font-semibold text-white">
@@ -499,7 +524,10 @@ const DashboardPage = () => {
               </div>
               <div>
                 <div className="text-[24px] font-semibold text-white">
-                  {Math.round(analytics.analytics.watchTime / 60)?.toLocaleString() || "—"} min
+                  {Math.round(
+                    analytics.analytics.watchTime / 60,
+                  )?.toLocaleString() || "—"}{" "}
+                  min
                 </div>
                 <div className="text-[13px] text-white/50">Watch Time</div>
               </div>
@@ -511,7 +539,8 @@ const DashboardPage = () => {
               </div>
               <div>
                 <div className="text-[24px] font-semibold text-white">
-                  {analytics.analytics.subscribersGained?.toLocaleString() || "—"}
+                  {analytics.analytics.subscribersGained?.toLocaleString() ||
+                    "—"}
                 </div>
                 <div className="text-[13px] text-white/50">Subscribers</div>
               </div>
@@ -561,7 +590,9 @@ const DashboardPage = () => {
                       <span>{video.statistics?.viewCount || 0} views</span>
                       <span>
                         {video.snippet?.publishedAt
-                          ? new Date(video.snippet.publishedAt).toLocaleDateString()
+                          ? new Date(
+                              video.snippet.publishedAt,
+                            ).toLocaleDateString()
                           : ""}
                       </span>
                     </div>
@@ -595,7 +626,9 @@ const DashboardPage = () => {
                 <div className="w-8 h-8 rounded-full bg-[#0066cc]/10 flex items-center justify-center">
                   <Edit2 className="w-4 h-4 text-[#0066cc]" />
                 </div>
-                <span className="text-[15px] font-semibold text-white">Edit Metadata</span>
+                <span className="text-[15px] font-semibold text-white">
+                  Edit Metadata
+                </span>
               </div>
               <button
                 onClick={() => setEditingVideo(null)}
@@ -618,7 +651,9 @@ const DashboardPage = () => {
 
               {/* Title */}
               <div>
-                <label className="text-[13px] text-white/50 mb-1 block">Title</label>
+                <label className="text-[13px] text-white/50 mb-1 block">
+                  Title
+                </label>
                 <input
                   type="text"
                   value={editTitle}
@@ -633,7 +668,9 @@ const DashboardPage = () => {
 
               {/* Description */}
               <div>
-                <label className="text-[13px] text-white/50 mb-1 block">Description</label>
+                <label className="text-[13px] text-white/50 mb-1 block">
+                  Description
+                </label>
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
@@ -648,7 +685,9 @@ const DashboardPage = () => {
 
               {/* Tags */}
               <div>
-                <label className="text-[13px] text-white/50 mb-1 block">Tags</label>
+                <label className="text-[13px] text-white/50 mb-1 block">
+                  Tags
+                </label>
                 <input
                   type="text"
                   value={editTags}
@@ -660,7 +699,9 @@ const DashboardPage = () => {
 
               {/* Target Audience */}
               <div>
-                <label className="text-[13px] text-white/50 mb-1 block">Target Audience</label>
+                <label className="text-[13px] text-white/50 mb-1 block">
+                  Target Audience
+                </label>
                 <input
                   type="text"
                   value={targetAudience}
@@ -690,11 +731,16 @@ const DashboardPage = () => {
                     <div className="bg-white/5 backdrop-blur-xl rounded-[18px] p-5 border border-white/10">
                       <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-4 h-4 text-[#0066cc]" />
-                        <h4 className="text-[14px] font-semibold text-white">Title Suggestions</h4>
+                        <h4 className="text-[14px] font-semibold text-white">
+                          Title Suggestions
+                        </h4>
                       </div>
                       <div className="space-y-2">
                         {aiHints.titles.map((hint, i) => (
-                          <div key={i} className="flex items-center gap-2 text-[13px] text-white/50">
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 text-[13px] text-white/50"
+                          >
                             <span className="flex-1">{hint}</span>
                             <button
                               onClick={() => applySuggestion("title", hint)}
@@ -712,14 +758,21 @@ const DashboardPage = () => {
                     <div className="bg-white/5 backdrop-blur-xl rounded-[18px] p-5 border border-white/10">
                       <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-4 h-4 text-[#0066cc]" />
-                        <h4 className="text-[14px] font-semibold text-white">Description Suggestions</h4>
+                        <h4 className="text-[14px] font-semibold text-white">
+                          Description Suggestions
+                        </h4>
                       </div>
                       <div className="space-y-2">
                         {aiHints.descriptions.map((hint, i) => (
-                          <div key={i} className="flex items-center gap-2 text-[13px] text-white/50">
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 text-[13px] text-white/50"
+                          >
                             <span className="flex-1">{hint}</span>
                             <button
-                              onClick={() => applySuggestion("description", hint)}
+                              onClick={() =>
+                                applySuggestion("description", hint)
+                              }
                               className="w-6 h-6 rounded-full bg-[#0066cc]/10 flex items-center justify-center hover:bg-[#0066cc]/20 transition-colors"
                             >
                               <Plus className="w-3 h-3 text-[#0066cc]" />
@@ -734,7 +787,9 @@ const DashboardPage = () => {
                     <div className="bg-white/5 backdrop-blur-xl rounded-[18px] p-5 border border-white/10">
                       <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-4 h-4 text-[#0066cc]" />
-                        <h4 className="text-[14px] font-semibold text-white">Tags Suggestions</h4>
+                        <h4 className="text-[14px] font-semibold text-white">
+                          Tags Suggestions
+                        </h4>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {aiHints.tags.map((hint, i) => (
@@ -754,9 +809,13 @@ const DashboardPage = () => {
                     <div className="bg-white/5 backdrop-blur-xl rounded-[18px] p-5 border border-white/10">
                       <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-4 h-4 text-[#0066cc]" />
-                        <h4 className="text-[14px] font-semibold text-white">General Tips</h4>
+                        <h4 className="text-[14px] font-semibold text-white">
+                          General Tips
+                        </h4>
                       </div>
-                      <p className="text-[13px] text-white/50">{aiHints.general}</p>
+                      <p className="text-[13px] text-white/50">
+                        {aiHints.general}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -786,7 +845,9 @@ const DashboardPage = () => {
                   <div>
                     <div className="text-[18px] font-semibold text-white">
                       {editingVideo.snippet?.publishedAt
-                        ? new Date(editingVideo.snippet.publishedAt).toLocaleDateString()
+                        ? new Date(
+                            editingVideo.snippet.publishedAt,
+                          ).toLocaleDateString()
                         : "—"}
                     </div>
                     <div className="text-[11px] text-white/50">Published</div>

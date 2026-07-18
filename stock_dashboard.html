@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #131722; --surface: #1e222d; --border: #2a2e39;
+    --text: #d1d4dc; --text-muted: #787b86; --accent: #2962ff;
+    --green: #089981; --red: #f23645; --yellow: #ff9800;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px;
+  }
+  header h1 { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+  header .subtitle { color: var(--text-muted); font-size: 0.85rem; }
+  .tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .tab {
+    padding: 10px 20px; cursor: pointer; color: var(--text-muted);
+    border-bottom: 2px solid transparent; font-size: 0.85rem; transition: all 0.2s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab-content { display: none; padding: 20px 0; }
+  .tab-content.active { display: block; }
+  .search-box { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .search-box input, .search-box select {
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--surface); color: var(--text); font-size: 0.9rem; outline: none;
+  }
+  .search-box input:focus, .search-box select:focus { border-color: var(--accent); }
+  .search-box input::placeholder { color: var(--text-muted); }
+  .search-box input.small { width: 80px; }
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 4px; font-size: 0.85rem;
+    cursor: pointer; transition: opacity 0.2s; font-weight: 500;
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 16px; }
+  .card h3 { font-size: 1rem; margin-bottom: 12px; color: #fff; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .metric { background: var(--bg); border-radius: 4px; padding: 12px; border: 1px solid var(--border); }
+  .metric .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .metric .value { font-size: 1.2rem; font-weight: 600; margin-top: 4px; }
+  .metric .value.positive { color: var(--green); }
+  .metric .value.negative { color: var(--red); }
+  .news-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .news-item:last-child { border-bottom: none; }
+  .news-item .title { font-size: 0.95rem; font-weight: 500; margin-bottom: 4px; }
+  .news-item .title a { color: var(--text); text-decoration: none; }
+  .news-item .title a:hover { color: var(--accent); }
+  .news-item .meta { font-size: 0.8rem; color: var(--text-muted); }
+  .news-item .summary { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+  .loading { text-align: center; padding: 40px; color: var(--text-muted); }
+  .error { color: var(--red); padding: 12px; background: rgba(242,54,69,0.1); border-radius: 4px; margin-bottom: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.75rem; font-weight: 600; }
+  .badge.buy { background: rgba(8,153,129,0.2); color: var(--green); }
+  .badge.sell { background: rgba(242,54,69,0.2); color: var(--red); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; padding: 10px 8px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: rgba(41,98,255,0.05); }
+  .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .preset-stocks { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .preset-stocks .chip {
+    padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px;
+    cursor: pointer; font-size: 0.85rem; color: var(--text-muted); transition: all 0.2s; background: var(--surface);
+  }
+  .preset-stocks .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chart-container { width: 100%; height: 250px; margin: 12px 0; position: relative; }
+  .chart-container canvas { width: 100%; height: 100%; border-radius: 4px; }
+  .rank-card {
+    display: flex; align-items: center; gap: 16px; padding: 14px; border: 1px solid var(--border);
+    border-radius: 4px; margin-bottom: 8px; background: var(--bg);
+  }
+  .rank-card .rank { font-size: 1.2rem; font-weight: 700; color: var(--accent); min-width: 30px; }
+  .rank-card .name { flex: 1; font-weight: 600; }
+  .rank-card .stats { display: flex; gap: 16px; font-size: 0.85rem; color: var(--text-muted); }
+  .rank-card .stats span { white-space: nowrap; }
+  .rank-card .score { font-size: 1.1rem; font-weight: 700; color: var(--green); }
+  @media (max-width: 600px) {
+    .container { padding: 12px; }
+    header { flex-direction: column; gap: 4px; align-items: flex-start; }
+    .search-box { flex-direction: column; }
+    .search-box input { min-width: auto; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>FRIDAY Stock Dashboard</h1>
+    <span class="subtitle">Indian Markets — Backtest · Compare · Stock of the Day</span>
+  </div>
+</header>
+<div class="container">
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="quote">Quote</div>
+    <div class="tab" data-tab="news">News</div>
+    <div class="tab" data-tab="backtest">Backtest</div>
+    <div class="tab" data-tab="compare">Compare</div>
+    <div class="tab" data-tab="daily">Stock of Day</div>
+  </div>
+
+  <div class="tab-content active" id="tab-quote">
+    <div class="preset-stocks" id="preset-quote">
+      <span class="chip" data-ticker="RELIANCE">RELIANCE</span>
+      <span class="chip" data-ticker="TCS">TCS</span>
+      <span class="chip" data-ticker="HDFCBANK">HDFCBANK</span>
+      <span class="chip" data-ticker="INFY">INFY</span>
+      <span class="chip" data-ticker="ICICIBANK">ICICIBANK</span>
+      <span class="chip" data-ticker="BHARTIARTL">BHARTIARTL</span>
+      <span class="chip" data-ticker="SBIN">SBIN</span>
+      <span class="chip" data-ticker="^NSEI">NIFTY 50</span>
+      <span class="chip" data-ticker="^BSESN">SENSEX</span>
+    </div>
+    <div class="search-box">
+      <input type="text" id="quote-input" placeholder="Enter ticker or name" value="RELIANCE">
+      <button class="btn btn-primary" id="quote-btn">Get Quote</button>
+    </div>
+    <div id="quote-result"></div>
+  </div>
+
+  <div class="tab-content" id="tab-news">
+    <div class="search-box">
+      <input type="text" id="news-input" placeholder="Enter ticker or name" value="RELIANCE">
+      <button class="btn btn-primary" id="news-btn">Get News</button>
+    </div>
+    <div id="news-result"></div>
+  </div>
+
+  <div class="tab-content" id="tab-backtest">
+    <div class="search-box">
+      <input type="text" id="backtest-input" placeholder="Ticker" value="RELIANCE" style="flex:0.5">
+      <select class="strategy-select" id="strategy-select" style="flex:0.3"></select>
+      <input type="text" id="backtest-period" placeholder="Period" value="1y" class="small">
+      <input type="text" id="stop-loss" placeholder="SL%" class="small" title="Stop Loss %">
+      <input type="text" id="trailing-stop" placeholder="TS%" class="small" title="Trailing Stop %">
+      <button class="btn btn-primary" id="backtest-btn">Run</button>
+      <button class="btn btn-success" id="compare-btn">Compare All</button>
+    </div>
+    <div id="backtest-result"></div>
+  </div>
+
+  <div class="tab-content" id="tab-compare">
+    <div class="search-box">
+      <input type="text" id="compare-input" placeholder="Ticker" value="RELIANCE">
+      <input type="text" id="compare-period" placeholder="Period" value="1y" class="small">
+      <button class="btn btn-primary" id="compare-btn2">Compare</button>
+    </div>
+    <div id="compare-result"></div>
+  </div>
+
+  <div class="tab-content" id="tab-daily">
+    <div class="search-box">
+      <select id="daily-strategy" style="min-width:200px"></select>
+      <input type="text" id="daily-period" placeholder="Period" value="1y" class="small">
+      <span style="color:var(--text-muted);font-size:0.85rem">Move:</span>
+      <input type="text" id="move-min" placeholder="Min%" value="10" class="small" title="Min movement % in 1 month">
+      <input type="text" id="move-max" placeholder="Max%" value="30" class="small" title="Max movement % in 1 month">
+      <button class="btn btn-primary" id="daily-btn">Find</button>
+    </div>
+    <div id="daily-result"></div>
+  </div>
+</div>
+
+<script>
+const API = '';
+const COMPANY_NAMES = {
+  "reliance":"RELIANCE","reliance industries":"RELIANCE","ril":"RELIANCE",
+  "tcs":"TCS","tata consultancy":"TCS","tata consultancy services":"TCS",
+  "hdfc bank":"HDFCBANK","hdfcbank":"HDFCBANK",
+  "infosys":"INFY","infy":"INFY",
+  "icici bank":"ICICIBANK","icicibank":"ICICIBANK",
+  "airtel":"BHARTIARTL","bharti airtel":"BHARTIARTL","bhartiartl":"BHARTIARTL",
+  "sbi":"SBIN","state bank":"SBIN","state bank of india":"SBIN",
+  "itc":"ITC","hcl tech":"HCLTECH","hcl":"HCLTECH","wipro":"WIPRO",
+  "l&t":"LT","larsen":"LT","larsen & toubro":"LT",
+  "bajaj finance":"BAJFINANCE","bajajfin":"BAJFINANCE",
+  "maruti":"MARUTI","maruti suzuki":"MARUTI","tata motors":"TATAMOTORS","tatamotors":"TATAMOTORS",
+  "nifty":"^NSEI","nifty 50":"^NSEI","sensex":"^BSESN","bse":"^BSESN",
+  "kotak":"KOTAKBANK","kotak bank":"KOTAKBANK",
+  "axis bank":"AXISBANK","axisbank":"AXISBANK",
+  "hindustan unilever":"HINDUNILVR","hul":"HINDUNILVR",
+  "adani":"ADANIENT","adani enterprises":"ADANIENT",
+  "zomato":"ZOMATO","paytm":"PAYTM",
+};
+
+function resolveInput(input) {
+  const val = input.trim(); if (!val) return val;
+  const upper = val.toUpperCase();
+  if (/^[A-Z0-9^]{1,20}$/.test(upper)) return upper;
+  return COMPANY_NAMES[val.toLowerCase().replace(/\s+/g,' ').trim()] || upper;
+}
+
+document.querySelectorAll('input[type="text"]').forEach(inp => {
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { inp.value = resolveInput(inp.value);
+      const btn = inp.parentElement.querySelector('button'); if (btn) btn.click(); }
+  });
+  inp.addEventListener('blur', () => { inp.value = resolveInput(inp.value); });
+});
+
+const tabs = document.querySelectorAll('.tab');
+const contents = {
+  quote: document.getElementById('tab-quote'), news: document.getElementById('tab-news'),
+  backtest: document.getElementById('tab-backtest'), compare: document.getElementById('tab-compare'),
+  daily: document.getElementById('tab-daily'),
+};
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active')); tab.classList.add('active');
+    Object.values(contents).forEach(c => c.classList.remove('active'));
+    const t = contents[tab.dataset.tab]; if (t) t.classList.add('active');
+  });
+});
+
+function switchTab(tabId, ticker) {
+  tabs.forEach(t => t.classList.remove('active'));
+  Object.values(contents).forEach(c => c.classList.remove('active'));
+  const tab = document.querySelector(`.tab[data-tab="${tabId}"]`);
+  if (tab) tab.classList.add('active');
+  const content = contents[tabId];
+  if (content) content.classList.add('active');
+  if (ticker && tabId === 'news') {
+    document.getElementById('news-input').value = ticker;
+    document.getElementById('news-btn').click();
+  }
+}
+
+async function apiFetch(url) {
+  const res = await fetch(url);
+  if (!res.ok) { const err = await res.json().catch(()=>({error:res.statusText})); throw new Error(err.error||`HTTP ${res.status}`); }
+  return res.json();
+}
+
+function fmt(n) {
+  if (n===null||n===undefined) return '—';
+  if (typeof n==='number') {
+    if (Math.abs(n)>=1e12) return (n/1e12).toFixed(2)+'T';
+    if (Math.abs(n)>=1e9) return (n/1e9).toFixed(2)+'B';
+    if (Math.abs(n)>=1e6) return (n/1e6).toFixed(2)+'M';
+    if (Math.abs(n)>=1e3) return (n/1e3).toFixed(2)+'K';
+    return n.toFixed(2);
+  } return n;
+}
+
+function drawChart(canvasId, data, color, label) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !data || data.length<2) return;
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = canvas.width = rect.width || 600;
+  const H = canvas.height = 250;
+  const pad = {t:20,r:20,b:30,l:50};
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+
+  const vals = data.map(d=>d.value);
+  const min = Math.min(...vals), max = Math.max(...vals), range = max-min||1;
+  const dates = data.map(d=>d.date);
+
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle = '#2a2e39'; ctx.lineWidth = 1;
+  for (let i=0;i<=4;i++) {
+    const y = pad.t + ch*i/4;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle = '#787b86'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText((max - i*range/4).toFixed(0), pad.l-5, y+3);
+  }
+
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+  data.forEach((d,i) => {
+    const x = pad.l + i/(data.length-1)*cw;
+    const y = pad.t + ch - (d.value-min)/range*ch;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }); ctx.stroke();
+
+  ctx.fillStyle = color+'40';
+  ctx.lineTo(pad.l + cw, pad.t+ch); ctx.lineTo(pad.l, pad.t+ch); ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#787b86'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(data.length/6));
+  for (let i=0;i<data.length;i+=step) {
+    ctx.fillText(dates[i].slice(5), pad.l + i/(data.length-1)*cw, H-8);
+  }
+  ctx.fillStyle = '#fff'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(label, pad.l, 15);
+}
+
+document.querySelectorAll('.chip[data-ticker]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const t = chip.dataset.ticker, tab = document.querySelector('.tab.active').dataset.tab;
+    if (tab==='quote') { document.getElementById('quote-input').value=t; document.getElementById('quote-btn').click(); }
+    else if (tab==='news') { document.getElementById('news-input').value=t; document.getElementById('news-btn').click(); }
+  });
+});
+
+fetch(API+'/api/strategies').then(r=>r.json()).then(strategies => {
+  const render = sel => {
+    sel.innerHTML = '';
+    Object.entries(strategies).forEach(([k,v]) => {
+      const o = document.createElement('option'); o.value=k; o.textContent=k.replace(/_/g,' ')+' — '+v; sel.appendChild(o);
+    });
+  };
+  render(document.getElementById('strategy-select'));
+  render(document.getElementById('daily-strategy'));
+});
+
+document.getElementById('quote-btn').addEventListener('click', async () => {
+  const ticker = resolveInput(document.getElementById('quote-input').value);
+  if (!ticker) return; const c = document.getElementById('quote-result'); c.innerHTML = '<div class="loading">Loading</div>';
+  try {
+    const d = await apiFetch(API+`/api/quote?ticker=${ticker}`);
+    const chg=d.change||0, cls=chg>=0?'positive':'negative', sign=chg>=0?'+':'';
+    const ccy=d.currency==='INR'?'\u20B9':(d.currency?d.currency+' ':'');
+    c.innerHTML = `<div class="card"><h3>${d.symbol.replace('.NS','')} — ${d.company}</h3><div class="grid-4">`+
+      `<div class="metric"><div class="label">Price</div><div class="value">${ccy}${fmt(d.price)}</div></div>`+
+      `<div class="metric"><div class="label">Change</div><div class="value ${cls}">${sign}${ccy}${fmt(chg)} (${sign}${fmt(chg)}%)</div></div>`+
+      `<div class="metric"><div class="label">Prev Close</div><div class="value">${ccy}${fmt(d.prev_close)}</div></div>`+
+      `<div class="metric"><div class="label">Volume</div><div class="value">${fmt(d.volume)}</div></div></div>`+
+      `<div class="grid-4"><div class="metric"><div class="label">Open</div><div class="value">${ccy}${fmt(d.open)}</div></div>`+
+      `<div class="metric"><div class="label">High</div><div class="value">${ccy}${fmt(d.high)}</div></div>`+
+      `<div class="metric"><div class="label">Low</div><div class="value">${ccy}${fmt(d.low)}</div></div>`+
+      `<div class="metric"><div class="label">Market Cap</div><div class="value">${ccy}${fmt(d.market_cap)}</div></div></div>`+
+      `<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">`+
+      `<button class="btn btn-primary" onclick="runBacktest('${d.symbol}')">Backtest</button>`+
+      `<button class="btn btn-success" onclick="switchTab('news','${d.symbol}')">News</button></div></div>`;
+  } catch(e) { c.innerHTML = `<div class="error">${e.message}</div>`; }
+});
+
+document.getElementById('news-btn').addEventListener('click', async () => {
+  const ticker = resolveInput(document.getElementById('news-input').value);
+  if (!ticker) return; const c = document.getElementById('news-result'); c.innerHTML = '<div class="loading">Loading</div>';
+  try {
+    const res = await apiFetch(API+`/api/news?ticker=${ticker}&count=10`);
+    if (!res.news||!res.news.length) { c.innerHTML = '<div class="card">No news.</div>'; return; }
+    let html = `<div class="card"><h3>Latest News — ${ticker}</h3>`;
+    res.news.forEach(a => {
+      const title=a.title||'Untitled', link=a.link||'#', pub=a.publisher||'', date=a.pub_date?new Date(a.pub_date).toLocaleDateString():'';
+      const summary=a.summary?a.summary.replace(/<[^>]+>/g,'').substring(0,200):'';
+      html += `<div class="news-item"><div class="title"><a href="${link}" target="_blank">${title}</a></div>`+
+        `<div class="meta">${[pub,date].filter(Boolean).join(' · ')}</div>${summary?`<div class="summary">${summary}...</div>`:''}</div>`;
+    });
+    html += `<div style="margin-top:12px"><button class="btn btn-primary" onclick="runBacktest('${ticker}')">Backtest ${ticker}</button></div></div>`;
+    c.innerHTML = html;
+  } catch(e) { c.innerHTML = `<div class="error">${e.message}</div>`; }
+});
+
+function runBacktest(ticker) {
+  document.getElementById('backtest-input').value = ticker.replace('.NS','');
+  tabs.forEach(t=>t.classList.remove('active')); Object.values(contents).forEach(c=>c.classList.remove('active'));
+  document.querySelector('.tab[data-tab="backtest"]').classList.add('active');
+  document.getElementById('tab-backtest').classList.add('active');
+  document.getElementById('backtest-btn').click();
+}
+
+document.getElementById('backtest-btn').addEventListener('click', async () => {
+  const ticker = resolveInput(document.getElementById('backtest-input').value);
+  const strategy = document.getElementById('strategy-select').value;
+  const period = document.getElementById('backtest-period').value.trim()||'1y';
+  const sl = document.getElementById('stop-loss').value.trim();
+  const ts = document.getElementById('trailing-stop').value.trim();
+  if (!ticker) return;
+  const c = document.getElementById('backtest-result'); c.innerHTML = '<div class="loading">Running backtest</div>';
+  try {
+    let url = API+`/api/backtest?ticker=${ticker}&strategy=${strategy}&start=${period}`;
+    if (sl) url+=`&stop_loss=${sl}`; if (ts) url+=`&trailing_stop=${ts}`;
+    const res = await apiFetch(url);
+    if (res.error) { c.innerHTML = `<div class="error">${res.error}</div>`; return; }
+    const isInr = ticker.includes('.NS')||ticker==='^NSEI'||ticker==='^BSESN';
+    const ccy = isInr ? '\u20B9' : '$';
+    const label = `${ticker} - ${strategy.replace(/_/g,' ')}${sl?` SL:${sl}%`:''}${ts?` TS:${ts}%`:''}`;
+    c.innerHTML = `<div class="card"><h3>${label}</h3>`;
+    c.innerHTML += `<div class="result-grid">${[
+      {l:'Return',v:res.total_return_pct+'%',cls:res.total_return_pct>=0?'positive':'negative'},
+      {l:'Ann Return',v:res.annualized_return_pct+'%',cls:res.annualized_return_pct>=0?'positive':'negative'},
+      {l:'Max DD',v:res.max_drawdown_pct+'%',cls:'negative'},
+      {l:'Sharpe',v:res.sharpe_ratio,cls:res.sharpe_ratio>=1?'positive':''},
+      {l:'Win Rate',v:res.win_rate+'%',cls:res.win_rate>=50?'positive':'negative'},
+      {l:'Trades',v:res.num_trades,cls:''},
+      {l:'Profit Factor',v:res.profit_factor,cls:res.profit_factor>=1.5?'positive':''},
+      {l:'Avg Win',v:res.avg_win_pct+'%',cls:'positive'},
+    ].map(m=>`<div class="metric"><div class="label">${m.l}</div><div class="value ${m.cls}">${m.v}</div></div>`).join('')}</div>`;
+
+    if (res.equity_curve) {
+      const eid = 'ec'+Date.now();
+      c.innerHTML += `<div class="chart-container"><canvas id="${eid}"></canvas></div>`;
+      setTimeout(()=>drawChart(eid, res.equity_curve, '#2962ff', 'Equity'), 50);
+    }
+    if (res.drawdown_curve) {
+      const did = 'dd'+Date.now();
+      c.innerHTML += `<div class="chart-container" style="height:120px"><canvas id="${did}"></canvas></div>`;
+      setTimeout(()=>drawChart(did, res.drawdown_curve, '#f23645', 'Drawdown %'), 50);
+    }
+
+    if (res.trades&&res.trades.length) {
+      c.innerHTML += `<h3 style="margin:12px 0 8px;font-size:0.9rem;color:#fff;">Trades (${res.trades.length})</h3><table><thead><tr><th>Entry</th><th>Exit</th><th>Price</th><th>PnL</th><th>Reason</th></tr></thead><tbody>`;
+      res.trades.slice(-15).forEach(t => {
+        const pc=t.pnl>=0?'positive':'negative', s=t.pnl>=0?'+':'';
+        c.innerHTML += `<tr><td>${t.entry_date}</td><td>${t.exit_date}</td><td>${ccy}${t.entry_price}→${ccy}${t.exit_price}</td><td class="${pc}">${s}${ccy}${fmt(t.pnl)} (${s}${fmt(t.pnl_pct)}%)</td><td>${t.reason}</td></tr>`;
+      });
+      c.innerHTML += '</tbody></table>';
+    }
+    c.innerHTML += '</div>';
+  } catch(e) { c.innerHTML = `<div class="error">${e.message}</div>`; }
+});
+
+document.getElementById('compare-btn').addEventListener('click', () => {
+  const ticker = resolveInput(document.getElementById('backtest-input').value);
+  if (!ticker) return; document.getElementById('compare-input').value = ticker;
+  document.getElementById('compare-period').value = document.getElementById('backtest-period').value||'1y';
+  tabs.forEach(t=>t.classList.remove('active')); Object.values(contents).forEach(c=>c.classList.remove('active'));
+  document.querySelector('.tab[data-tab="compare"]').classList.add('active');
+  document.getElementById('tab-compare').classList.add('active');
+  document.getElementById('compare-btn2').click();
+});
+
+document.getElementById('compare-btn2').addEventListener('click', async () => {
+  const ticker = resolveInput(document.getElementById('compare-input').value);
+  const period = document.getElementById('compare-period').value.trim()||'1y';
+  if (!ticker) return; const c = document.getElementById('compare-result'); c.innerHTML = '<div class="loading">Comparing</div>';
+  try {
+    const res = await apiFetch(API+`/api/compare?ticker=${ticker}&start=${period}`);
+    if (res.error) { c.innerHTML = `<div class="error">${res.error}</div>`; return; }
+    const s = res.strategies;
+    let html = `<div class="card"><h3>Strategy Comparison — ${ticker}</h3>`;
+    html += '<table><thead><tr><th>Strategy</th><th>Return</th><th>Sharpe</th><th>Win%</th><th>Trades</th><th>PF</th><th>Max DD</th></tr></thead><tbody>';
+    Object.entries(s).forEach(([name, r]) => {
+      if (r.error) { html += `<tr><td>${name}</td><td colspan="6" class="error">${r.error}</td></tr>`; return; }
+      const rc = r.total_return_pct>=0?'positive':'negative';
+      html += `<tr><td><strong>${name.replace(/_/g,' ')}</strong></td><td class="${rc}">${r.total_return_pct}%</td><td>${r.sharpe_ratio}</td><td>${r.win_rate}%</td><td>${r.num_trades}</td><td>${r.profit_factor}</td><td class="negative">${r.max_drawdown_pct}%</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    c.innerHTML = html;
+  } catch(e) { c.innerHTML = `<div class="error">${e.message}</div>`; }
+});
+
+document.getElementById('daily-btn').addEventListener('click', async () => {
+  const strategy = document.getElementById('daily-strategy').value;
+  const period = document.getElementById('daily-period').value.trim()||'1y';
+  const moveMin = document.getElementById('move-min').value.trim()||'10';
+  const moveMax = document.getElementById('move-max').value.trim()||'30';
+  const c = document.getElementById('daily-result'); c.innerHTML = '<div class="loading">Scanning NIFTY 50 stocks (10-30% movers)...</div>';
+  try {
+    const res = await apiFetch(API+`/api/stock-of-day?strategy=${strategy}&start=${period}&movement_min=${moveMin}&movement_max=${moveMax}`);
+    if (res.error) { c.innerHTML = `<div class="error">${res.error}</div>`; return; }
+    if (!res.picks||!res.picks.length) { c.innerHTML = '<div class="card">No stocks found matching criteria.</div>'; return; }
+    let html = `<div class="card"><h3>Stock of the Day — ${strategy.replace(/_/g,' ')} (${res.movement_filter} 1m movers)</h3>`;
+    res.picks.forEach((p,i) => {
+      const rc = p.return>=0?'positive':'negative';
+      const mc = p.movement_1m>=0?'positive':'negative';
+      html += `<div class="rank-card"><div class="rank">#${i+1}</div>`+
+        `<div class="name">${p.ticker}</div>`+
+        `<div class="stats"><span>1m: <span class="${mc}">${p.movement_1m}%</span></span><span class="${rc}">BT: ${p.return}%</span><span>Sharpe ${p.sharpe}</span><span>Win ${p.win_rate}%</span></div>`+
+        `<div class="score">${p.score}</div></div>`;
+    });
+    html += '</div>';
+    c.innerHTML = html;
+  } catch(e) { c.innerHTML = `<div class="error">${e.message}</div>`; }
+});
+
+document.getElementById('quote-btn').click();
+</script>
+</body>
+</html>

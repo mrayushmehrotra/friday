@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FRIDAY Welcome Home</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --border: #2a2e39;
+    --text: #d1d4dc; --text-muted: #787b86; --accent: #2962ff;
+    --green: #089981; --red: #f23645; --yellow: #ff9800;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px;
+  }
+  header h1 { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  header .greeting { color: var(--text); font-size: 1rem; }
+  header .time { color: var(--text-muted); font-size: 0.85rem; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .full { grid-column: 1 / -1; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px;
+  }
+  .card h2 {
+    font-size: 0.9rem; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .todo-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem;
+  }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-item .check {
+    width: 16px; height: 16px; border: 2px solid var(--border);
+    border-radius: 3px; flex-shrink: 0; margin-top: 2px;
+  }
+  .todo-item .check.done { background: var(--green); border-color: var(--green); position: relative; }
+  .todo-item .check.done::after {
+    content: ''; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px;
+    border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
+  }
+  .todo-item .text { color: var(--text); line-height: 1.4; }
+  .todo-item .text.done-text { color: var(--text-muted); text-decoration: line-through; }
+  .news-item {
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-item .title { font-size: 0.9rem; font-weight: 500; }
+  .news-item .title a { color: var(--text); text-decoration: none; }
+  .news-item .title a:hover { color: var(--accent); }
+  .news-item .meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
+  .news-item .summary { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+  .cmd-bar {
+    display: flex; gap: 10px; align-items: center;
+  }
+  .cmd-bar input {
+    flex: 1; padding: 12px 16px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--bg); color: var(--text);
+    font-size: 0.95rem; outline: none;
+  }
+  .cmd-bar input:focus { border-color: var(--accent); }
+  .cmd-bar input::placeholder { color: var(--text-muted); }
+  .cmd-bar .btn {
+    padding: 12px 24px; border: none; border-radius: 8px;
+    background: var(--accent); color: #fff; font-size: 0.9rem;
+    font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .cmd-bar .btn:hover { opacity: 0.85; }
+  .quick-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .chip {
+    padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px;
+    cursor: pointer; font-size: 0.8rem; color: var(--text-muted);
+    background: var(--bg); transition: all 0.2s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .stock-ticker {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .stock-ticker:last-child { border-bottom: none; }
+  .stock-ticker .sym { font-weight: 600; font-size: 0.9rem; min-width: 70px; }
+  .stock-ticker .price { font-size: 0.9rem; }
+  .stock-ticker .chg { font-size: 0.85rem; font-weight: 500; }
+  .stock-ticker .chg.pos { color: var(--green); }
+  .stock-ticker .chg.neg { color: var(--red); }
+  .loading { text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.85rem; }
+  .error { color: var(--red); padding: 10px; font-size: 0.85rem; }
+  .empty { color: var(--text-muted); padding: 20px 0; text-align: center; font-size: 0.85rem; }
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+    header { flex-direction: column; gap: 4px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <h1>FRIDAY</h1>
+      <div class="greeting" id="greeting">Welcome home, sir.</div>
+    </div>
+    <div class="time" id="clock"></div>
+  </header>
+
+  <div class="card full cmd-bar">
+    <input type="text" id="cmd-input" placeholder="Type a command for Jarvis..." autofocus>
+    <button class="btn" id="cmd-btn">Send</button>
+  </div>
+  <div class="quick-chips">
+    <span class="chip" data-cmd="time">What's the time?</span>
+    <span class="chip" data-cmd="news">Stock news</span>
+    <span class="chip" data-cmd="todos">My todos</span>
+    <span class="chip" data-cmd="briefing">Daily briefing</span>
+    <span class="chip" data-cmd="stock price RELIANCE">RELIANCE price</span>
+    <span class="chip" data-cmd="stock price TCS">TCS price</span>
+    <span class="chip" data-cmd="nifty 50">Nifty 50</span>
+    <span class="chip" data-cmd="sensex">Sensex</span>
+  </div>
+  <div id="response" style="margin:8px 0;color:var(--accent);font-size:0.85rem;min-height:20px"></div>
+
+  <div class="grid">
+    <div class="card" id="todos-card">
+      <h2>Tasks</h2>
+      <div id="todos-list"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="card" id="stocks-card">
+      <h2>Market Watch</h2>
+      <div id="stocks-list"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="card full" id="news-card">
+      <h2>Stock News</h2>
+      <div id="news-list"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+const WATCHLIST = ['RELIANCE','TCS','HDFCBANK','INFY','ICICIBANK','SBIN','^NSEI','^BSESN'];
+
+function clock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleString('en-IN', {
+    weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+  });
+  const h = now.getHours();
+  let period = 'morning';
+  if (h >= 12 && h < 17) period = 'afternoon';
+  else if (h >= 17) period = 'evening';
+  document.getElementById('greeting').textContent = `Good ${period}, sir.`;
+}
+setInterval(clock, 10000); clock();
+
+async function fetchAPI(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+async function loadTodos() {
+  const el = document.getElementById('todos-list');
+  try {
+    const res = await fetchAPI(API + '/api/todos');
+    if (!res.todos || res.todos.length === 0) {
+      el.innerHTML = '<div class="empty">No tasks. Say "remember something" to add one.</div>';
+      return;
+    }
+    el.innerHTML = res.todos.map(t =>
+      `<div class="todo-item"><div class="check${t.done ? ' done' : ''}"></div><div class="text${t.done ? ' done-text' : ''}">${esc(t.text)}</div></div>`
+    ).join('');
+  } catch(e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+async function loadStocks() {
+  const el = document.getElementById('stocks-list');
+  try {
+    const html = [];
+    for (const t of WATCHLIST) {
+      try {
+        const d = await fetchAPI(API + `/api/quote?ticker=${t}`);
+        const chg = d.change||0, cls = chg >= 0 ? 'pos' : 'neg', sign = chg >= 0 ? '+' : '';
+        html.push(`<div class="stock-ticker"><span class="sym">${d.symbol.replace('.NS','')}</span><span class="price">₹${fmt(d.price)}</span><span class="chg ${cls}">${sign}${fmt(chg)} (${sign}${fmt(d.change_pct)}%)</span></div>`);
+      } catch(e) { html.push(`<div class="stock-ticker"><span class="sym">${t}</span><span class="error">error</span></div>`); }
+    }
+    el.innerHTML = html.join('');
+  } catch(e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+async function loadNews() {
+  const el = document.getElementById('news-list');
+  try {
+    const res = await fetchAPI(API + '/api/news?count=10');
+    if (!res.news || res.news.length === 0) {
+      el.innerHTML = '<div class="empty">No news available.</div>';
+      return;
+    }
+    el.innerHTML = res.news.map(a => {
+      const title = a.title||'Untitled', link = a.link||'#';
+      const pub = a.publisher||'', date = a.pub_date ? new Date(a.pub_date).toLocaleDateString() : '';
+      const summary = a.summary ? a.summary.replace(/<[^>]+>/g,'').substring(0,200) : '';
+      return `<div class="news-item"><div class="title"><a href="${link}" target="_blank">${esc(title)}</a></div>` +
+        `<div class="meta">${[pub,date].filter(Boolean).join(' · ')}</div>` +
+        (summary ? `<div class="summary">${esc(summary)}...</div>` : '') + '</div>';
+    }).join('');
+  } catch(e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
+}
+
+function fmt(n) {
+  if (n===null||n===undefined) return '—';
+  if (typeof n==='number') { if (Math.abs(n)>=1e12) return (n/1e12).toFixed(2)+'T';
+    if (Math.abs(n)>=1e9) return (n/1e9).toFixed(2)+'B';
+    if (Math.abs(n)>=1e6) return (n/1e6).toFixed(2)+'M';
+    if (Math.abs(n)>=1e3) return (n/1e3).toFixed(2)+'K'; return n.toFixed(2); } return n;
+}
+
+function esc(s) {
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+document.getElementById('cmd-btn').addEventListener('click', sendCommand);
+document.getElementById('cmd-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendCommand(); });
+
+async function sendCommand() {
+  const input = document.getElementById('cmd-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const resp = document.getElementById('response');
+  resp.textContent = 'Jarvis: ' + text;
+  input.value = '';
+  try {
+    await fetchAPI(API + `/api/command?text=${encodeURIComponent(text)}`);
+    // Refresh relevant sections
+    if (text.toLowerCase().includes('remember') || text.toLowerCase().includes('todo') || text.toLowerCase().includes('task')) {
+      loadTodos();
+    }
+  } catch(e) { resp.textContent = 'Error: ' + e.message; }
+}
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.getElementById('cmd-input').value = chip.dataset.cmd;
+    sendCommand();
+  });
+});
+
+loadTodos(); loadStocks(); loadNews();
+</script>
+</body>
+</html>
