@@ -375,9 +375,6 @@ def speak_daily_briefing() -> None:
     briefing = daily_briefing()
     if briefing:
         speak(briefing)
-    plan = _read_notes_plan()
-    if plan:
-        speak(plan)
     log_event("Daily briefing delivered")
 
 
@@ -595,17 +592,17 @@ def query_with_news(topic: str) -> str:
 
 
 def query_todos() -> str:
-    """Read the user's notes/todos directly and return a one-sentence summary."""
+    """Read the user's TODO.txt directly and return a one-sentence summary."""
     try:
-        notes_path = os.path.expanduser("~/notes.md")
-        if not os.path.exists(notes_path):
+        todo_path = os.path.join(os.path.dirname(__file__), "TODO.txt")
+        if not os.path.exists(todo_path):
             return "You have no tasks saved, sir."
-        with open(notes_path) as f:
-            notes_text = f.read().strip()
-        if not notes_text:
+        with open(todo_path) as f:
+            text = f.read().strip()
+        if not text:
             return "You have no tasks saved, sir."
         return _ollama_chat(
-            f"The user's notes say:\n{notes_text}\n\nSummarize what they need to do today in one sentence."
+            f"The user's TODO says:\n{text}\n\nSummarize what they need to do today in one sentence."
         )
     except Exception as e:
         log_event(f"Todos failed: {e}", "error")

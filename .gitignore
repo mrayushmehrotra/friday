@@ -10,4 +10,6 @@ __pycache__/
 .env
 .vscode/
 client_secret.json
+.cmd_queue
+.pnl_data.json
 

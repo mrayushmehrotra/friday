@@ -1,258 +1,860 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FRIDAY Welcome Home</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #0f1117; --surface: #1a1d27; --border: #2a2e39;
-    --text: #d1d4dc; --text-muted: #787b86; --accent: #2962ff;
-    --green: #089981; --red: #f23645; --yellow: #ff9800;
-  }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg); color: var(--text); min-height: 100vh;
-  }
-  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px;
-  }
-  header h1 { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
-  header .greeting { color: var(--text); font-size: 1rem; }
-  header .time { color: var(--text-muted); font-size: 0.85rem; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .full { grid-column: 1 / -1; }
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 20px;
-  }
-  .card h2 {
-    font-size: 0.9rem; font-weight: 600; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
-    padding-bottom: 8px; border-bottom: 1px solid var(--border);
-  }
-  .todo-item {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem;
-  }
-  .todo-item:last-child { border-bottom: none; }
-  .todo-item .check {
-    width: 16px; height: 16px; border: 2px solid var(--border);
-    border-radius: 3px; flex-shrink: 0; margin-top: 2px;
-  }
-  .todo-item .check.done { background: var(--green); border-color: var(--green); position: relative; }
-  .todo-item .check.done::after {
-    content: ''; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px;
-    border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
-  }
-  .todo-item .text { color: var(--text); line-height: 1.4; }
-  .todo-item .text.done-text { color: var(--text-muted); text-decoration: line-through; }
-  .news-item {
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
-  .news-item:last-child { border-bottom: none; }
-  .news-item .title { font-size: 0.9rem; font-weight: 500; }
-  .news-item .title a { color: var(--text); text-decoration: none; }
-  .news-item .title a:hover { color: var(--accent); }
-  .news-item .meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
-  .news-item .summary { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
-  .cmd-bar {
-    display: flex; gap: 10px; align-items: center;
-  }
-  .cmd-bar input {
-    flex: 1; padding: 12px 16px; border: 1px solid var(--border);
-    border-radius: 8px; background: var(--bg); color: var(--text);
-    font-size: 0.95rem; outline: none;
-  }
-  .cmd-bar input:focus { border-color: var(--accent); }
-  .cmd-bar input::placeholder { color: var(--text-muted); }
-  .cmd-bar .btn {
-    padding: 12px 24px; border: none; border-radius: 8px;
-    background: var(--accent); color: #fff; font-size: 0.9rem;
-    font-weight: 600; cursor: pointer; white-space: nowrap;
-  }
-  .cmd-bar .btn:hover { opacity: 0.85; }
-  .quick-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .chip {
-    padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px;
-    cursor: pointer; font-size: 0.8rem; color: var(--text-muted);
-    background: var(--bg); transition: all 0.2s;
-  }
-  .chip:hover { border-color: var(--accent); color: var(--text); }
-  .stock-ticker {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
-  .stock-ticker:last-child { border-bottom: none; }
-  .stock-ticker .sym { font-weight: 600; font-size: 0.9rem; min-width: 70px; }
-  .stock-ticker .price { font-size: 0.9rem; }
-  .stock-ticker .chg { font-size: 0.85rem; font-weight: 500; }
-  .stock-ticker .chg.pos { color: var(--green); }
-  .stock-ticker .chg.neg { color: var(--red); }
-  .loading { text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.85rem; }
-  .error { color: var(--red); padding: 10px; font-size: 0.85rem; }
-  .empty { color: var(--text-muted); padding: 20px 0; text-align: center; font-size: 0.85rem; }
-  @media (max-width: 700px) {
-    .grid { grid-template-columns: 1fr; }
-    header { flex-direction: column; gap: 4px; align-items: flex-start; }
-  }
-</style>
-</head>
-<body>
-<div class="container">
-  <header>
-    <div>
-      <h1>FRIDAY</h1>
-      <div class="greeting" id="greeting">Welcome home, sir.</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FRIDAY Welcome Home</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #0f1117;
+        --surface: #1a1d27;
+        --border: #2a2e39;
+        --text: #d1d4dc;
+        --text-muted: #787b86;
+        --accent: #2962ff;
+        --green: #089981;
+        --red: #f23645;
+        --yellow: #ff9800;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 0;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 24px;
+      }
+      header h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      header .greeting {
+        color: var(--text);
+        font-size: 1rem;
+      }
+      header .time {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .full {
+        grid-column: 1 / -1;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 20px;
+      }
+      .card h2 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+      .todo-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.9rem;
+      }
+      .todo-item:last-child {
+        border-bottom: none;
+      }
+      .todo-item .check {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--border);
+        border-radius: 3px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .todo-item .check.done {
+        background: var(--green);
+        border-color: var(--green);
+        position: relative;
+      }
+      .todo-item .check.done::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 1px;
+        width: 5px;
+        height: 9px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+      .todo-item .text {
+        color: var(--text);
+        line-height: 1.4;
+      }
+      .todo-item .text.done-text {
+        color: var(--text-muted);
+        text-decoration: line-through;
+      }
+      .news-item {
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .news-item:last-child {
+        border-bottom: none;
+      }
+      .news-item .title {
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+      .news-item .title a {
+        color: var(--text);
+        text-decoration: none;
+      }
+      .news-item .title a:hover {
+        color: var(--accent);
+      }
+      .news-item .meta {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 3px;
+      }
+      .news-item .summary {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+        line-height: 1.4;
+      }
+      .cmd-bar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .cmd-bar input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 0.95rem;
+        outline: none;
+      }
+      .cmd-bar input:focus {
+        border-color: var(--accent);
+      }
+      .cmd-bar input::placeholder {
+        color: var(--text-muted);
+      }
+      .cmd-bar .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .cmd-bar .btn:hover {
+        opacity: 0.85;
+      }
+      .quick-chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .chip {
+        padding: 6px 14px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        background: var(--bg);
+        transition: all 0.2s;
+      }
+      .chip:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+      .stock-ticker {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .stock-ticker:last-child {
+        border-bottom: none;
+      }
+      .stock-ticker .sym {
+        font-weight: 600;
+        font-size: 0.9rem;
+        min-width: 70px;
+      }
+      .stock-ticker .price {
+        font-size: 0.9rem;
+      }
+      .stock-ticker .chg {
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      .stock-ticker .chg.pos {
+        color: var(--green);
+      }
+      .stock-ticker .chg.neg {
+        color: var(--red);
+      }
+      .loading {
+        text-align: center;
+        padding: 30px;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+      .error {
+        color: var(--red);
+        padding: 10px;
+        font-size: 0.85rem;
+      }
+      .empty {
+        color: var(--text-muted);
+        padding: 20px 0;
+        text-align: center;
+        font-size: 0.85rem;
+      }
+      .pnl-form {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .pnl-form input {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 0.85rem;
+        outline: none;
+        width: 120px;
+      }
+      .pnl-form input:focus {
+        border-color: var(--accent);
+      }
+      .pnl-form input::placeholder {
+        color: var(--text-muted);
+      }
+      .pnl-chart-container {
+        width: 100%;
+        height: 150px;
+        margin-top: 8px;
+        position: relative;
+      }
+      .pnl-chart-container canvas {
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+      }
+      @media (max-width: 700px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        header {
+          flex-direction: column;
+          gap: 4px;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div>
+          <h1>FRIDAY</h1>
+          <div class="greeting" id="greeting">Welcome home, sir.</div>
+        </div>
+        <div class="time" id="clock"></div>
+      </header>
+
+      <div class="card full cmd-bar">
+        <input
+          type="text"
+          id="cmd-input"
+          placeholder="Type a command for Jarvis..."
+          autofocus
+        />
+        <button class="btn" id="cmd-btn">Send</button>
+      </div>
+      <div class="quick-chips">
+        <span class="chip" data-cmd="time">What's the time?</span>
+        <span class="chip" data-cmd="news">Stock news</span>
+        <span class="chip" data-cmd="todos">My todos</span>
+        <span class="chip" data-cmd="briefing">Daily briefing</span>
+        <span class="chip" data-cmd="stock price RELIANCE">RELIANCE price</span>
+        <span class="chip" data-cmd="stock price TCS">TCS price</span>
+        <span class="chip" data-cmd="nifty 50">Nifty 50</span>
+        <span class="chip" data-cmd="sensex">Sensex</span>
+        <span class="chip" data-cmd="open video uploader">Open uploader</span>
+        <span class="chip" data-cmd="open stock dashboard"
+          >Stock dashboard</span
+        >
+      </div>
+      <div
+        id="response"
+        style="
+          margin: 8px 0;
+          color: var(--accent);
+          font-size: 0.85rem;
+          min-height: 20px;
+        "
+      ></div>
+
+      <div class="grid">
+        <div class="card full" id="todo-card">
+          <h2>
+            TODO.txt
+            <span
+              style="
+                font-weight: 400;
+                font-size: 0.75rem;
+                color: var(--text-muted);
+              "
+              >(editable)</span
+            >
+          </h2>
+          <textarea
+            id="todo-editor"
+            style="
+              width: 100%;
+              height: 260px;
+              background: var(--bg);
+              color: var(--text);
+              border: 1px solid var(--border);
+              border-radius: 4px;
+              padding: 10px;
+              font-family: monospace;
+              font-size: 0.8rem;
+              resize: vertical;
+              outline: none;
+            "
+          ></textarea>
+          <div style="display: flex; gap: 8px; margin-top: 8px">
+            <button
+              id="todo-save-btn"
+              style="
+                padding: 6px 16px;
+                background: var(--accent);
+                color: #fff;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.8rem;
+              "
+            >
+              Save
+            </button>
+            <span
+              id="todo-status"
+              style="color: var(--green); font-size: 0.8rem; align-self: center"
+            ></span>
+          </div>
+        </div>
+        <div class="card" id="stocks-card">
+          <h2>Market Watch</h2>
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <input type="text" id="watch-input" placeholder="Add ticker (e.g. RELIANCE)" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-size:0.85rem;outline:none">
+            <button id="watch-add-btn" style="padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.8rem">Add</button>
+          </div>
+          <div id="stocks-list"><div class="loading">Loading...</div></div>
+        </div>
+        <div class="card" id="pnl-card">
+          <h2>P&L Tracker</h2>
+          <div class="pnl-form">
+            <input
+              type="number"
+              id="pnl-wallet"
+              placeholder="Wallet (₹)"
+              step="any"
+            />
+            <input
+              type="number"
+              id="pnl-pl"
+              placeholder="Today P&L (₹)"
+              step="any"
+            />
+            <button
+              class="btn"
+              style="
+                background: var(--accent);
+                color: #fff;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.85rem;
+              "
+              id="pnl-btn"
+            >
+              Save
+            </button>
+            <button
+              class="btn"
+              style="
+                background: var(--surface);
+                color: var(--text-muted);
+                padding: 8px 16px;
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.85rem;
+              "
+              id="pnl-reset"
+            >
+              Reset
+            </button>
+          </div>
+          <div
+            id="pnl-summary"
+            style="font-size: 0.85rem; margin-bottom: 8px"
+          ></div>
+          <div class="pnl-chart-container">
+            <canvas id="pnl-chart"></canvas>
+          </div>
+        </div>
+        <div class="card" id="servers-card">
+          <h2>Servers</h2>
+          <div id="servers-list"><div class="loading">Loading...</div></div>
+        </div>
+        <div class="card full" id="news-card">
+          <h2>Stock News</h2>
+          <div id="news-list"><div class="loading">Loading...</div></div>
+        </div>
+      </div>
     </div>
-    <div class="time" id="clock"></div>
-  </header>
 
-  <div class="card full cmd-bar">
-    <input type="text" id="cmd-input" placeholder="Type a command for Jarvis..." autofocus>
-    <button class="btn" id="cmd-btn">Send</button>
-  </div>
-  <div class="quick-chips">
-    <span class="chip" data-cmd="time">What's the time?</span>
-    <span class="chip" data-cmd="news">Stock news</span>
-    <span class="chip" data-cmd="todos">My todos</span>
-    <span class="chip" data-cmd="briefing">Daily briefing</span>
-    <span class="chip" data-cmd="stock price RELIANCE">RELIANCE price</span>
-    <span class="chip" data-cmd="stock price TCS">TCS price</span>
-    <span class="chip" data-cmd="nifty 50">Nifty 50</span>
-    <span class="chip" data-cmd="sensex">Sensex</span>
-  </div>
-  <div id="response" style="margin:8px 0;color:var(--accent);font-size:0.85rem;min-height:20px"></div>
+    <script>
+      const API = "";
+      const DEFAULT_WATCH = ["^NSEI","^BSESN","RELIANCE","TCS","HDFCBANK","INFY","SBIN"];
 
-  <div class="grid">
-    <div class="card" id="todos-card">
-      <h2>Tasks</h2>
-      <div id="todos-list"><div class="loading">Loading...</div></div>
-    </div>
-    <div class="card" id="stocks-card">
-      <h2>Market Watch</h2>
-      <div id="stocks-list"><div class="loading">Loading...</div></div>
-    </div>
-    <div class="card full" id="news-card">
-      <h2>Stock News</h2>
-      <div id="news-list"><div class="loading">Loading...</div></div>
-    </div>
-  </div>
-</div>
+      function getWatchlist() {
+        try { return JSON.parse(localStorage.getItem("friday_watch")) || DEFAULT_WATCH; }
+        catch(e) { return DEFAULT_WATCH; }
+      }
+      function setWatchlist(list) {
+        localStorage.setItem("friday_watch", JSON.stringify(list));
+      }
 
-<script>
-const API = '';
-const WATCHLIST = ['RELIANCE','TCS','HDFCBANK','INFY','ICICIBANK','SBIN','^NSEI','^BSESN'];
+      function clock() {
+        const now = new Date();
+        document.getElementById("clock").textContent = now.toLocaleString(
+          "en-IN",
+          {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            hour: "2-digit",
+            minute: "2-digit",
+          },
+        );
+        const h = now.getHours();
+        let period = "morning";
+        if (h >= 12 && h < 17) period = "afternoon";
+        else if (h >= 17) period = "evening";
+        document.getElementById("greeting").textContent =
+          `Good ${period}, sir.`;
+      }
+      setInterval(clock, 10000);
+      clock();
 
-function clock() {
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleString('en-IN', {
-    weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
-  });
-  const h = now.getHours();
-  let period = 'morning';
-  if (h >= 12 && h < 17) period = 'afternoon';
-  else if (h >= 17) period = 'evening';
-  document.getElementById('greeting').textContent = `Good ${period}, sir.`;
-}
-setInterval(clock, 10000); clock();
+      async function fetchAPI(url) {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      }
 
-async function fetchAPI(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
+      async function loadTodofile() {
+        const ta = document.getElementById("todo-editor");
+        try {
+          const res = await fetchAPI(API + "/api/todofile");
+          ta.value = res.content || "";
+        } catch (e) {
+          ta.value = "Error loading: " + e.message;
+        }
+      }
 
-async function loadTodos() {
-  const el = document.getElementById('todos-list');
-  try {
-    const res = await fetchAPI(API + '/api/todos');
-    if (!res.todos || res.todos.length === 0) {
-      el.innerHTML = '<div class="empty">No tasks. Say "remember something" to add one.</div>';
-      return;
-    }
-    el.innerHTML = res.todos.map(t =>
-      `<div class="todo-item"><div class="check${t.done ? ' done' : ''}"></div><div class="text${t.done ? ' done-text' : ''}">${esc(t.text)}</div></div>`
-    ).join('');
-  } catch(e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
-}
+      document
+        .getElementById("todo-save-btn")
+        .addEventListener("click", async () => {
+          const content = document.getElementById("todo-editor").value;
+          const status = document.getElementById("todo-status");
+          try {
+            await fetchAPI(
+              API + "/api/todofile?content=" + encodeURIComponent(content),
+            );
+            status.textContent = "Saved!";
+            setTimeout(() => (status.textContent = ""), 2000);
+          } catch (e) {
+            status.textContent = "Error: " + e.message;
+          }
+        });
 
-async function loadStocks() {
-  const el = document.getElementById('stocks-list');
-  try {
-    const html = [];
-    for (const t of WATCHLIST) {
-      try {
-        const d = await fetchAPI(API + `/api/quote?ticker=${t}`);
-        const chg = d.change||0, cls = chg >= 0 ? 'pos' : 'neg', sign = chg >= 0 ? '+' : '';
-        html.push(`<div class="stock-ticker"><span class="sym">${d.symbol.replace('.NS','')}</span><span class="price">₹${fmt(d.price)}</span><span class="chg ${cls}">${sign}${fmt(chg)} (${sign}${fmt(d.change_pct)}%)</span></div>`);
-      } catch(e) { html.push(`<div class="stock-ticker"><span class="sym">${t}</span><span class="error">error</span></div>`); }
-    }
-    el.innerHTML = html.join('');
-  } catch(e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
-}
+      async function loadStocks() {
+        const el = document.getElementById("stocks-list");
+        const list = getWatchlist();
+        if (!list.length) { el.innerHTML = '<div class="empty">No stocks. Add one above.</div>'; return; }
+        try {
+          const html = [];
+          for (const t of list) {
+            try {
+              const d = await fetchAPI(API + `/api/quote?ticker=${t}`);
+              const chg = d.change || 0,
+                cls = chg >= 0 ? "pos" : "neg",
+                sign = chg >= 0 ? "+" : "";
+              const sym = d.symbol.replace(".NS", "").replace("^", "");
+              html.push(
+                `<div class="stock-ticker"><span class="sym">${sym}</span><span class="price">₹${fmt(d.price)}</span><span class="chg ${cls}">${sign}${fmt(chg)} (${sign}${fmt(d.change_pct)}%)</span><span class="remove-stock" data-ticker="${t}" style="margin-left:auto;color:var(--text-muted);cursor:pointer;font-size:1.1rem">&times;</span></div>`,
+              );
+            } catch (e) {
+              html.push(
+                `<div class="stock-ticker"><span class="sym">${t}</span><span class="error">error</span><span class="remove-stock" data-ticker="${t}" style="margin-left:auto;color:var(--text-muted);cursor:pointer;font-size:1.1rem">&times;</span></div>`,
+              );
+            }
+          }
+          el.innerHTML = html.join("");
+          document.querySelectorAll(".remove-stock").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+              var t = btn.dataset.ticker;
+              var list2 = getWatchlist().filter(function(x) { return x !== t; });
+              setWatchlist(list2);
+              loadStocks();
+            });
+          });
+        } catch (e) {
+          el.innerHTML = `<div class="error">${e.message}</div>`;
+        }
+      }
 
-async function loadNews() {
-  const el = document.getElementById('news-list');
-  try {
-    const res = await fetchAPI(API + '/api/news?count=10');
-    if (!res.news || res.news.length === 0) {
-      el.innerHTML = '<div class="empty">No news available.</div>';
-      return;
-    }
-    el.innerHTML = res.news.map(a => {
-      const title = a.title||'Untitled', link = a.link||'#';
-      const pub = a.publisher||'', date = a.pub_date ? new Date(a.pub_date).toLocaleDateString() : '';
-      const summary = a.summary ? a.summary.replace(/<[^>]+>/g,'').substring(0,200) : '';
-      return `<div class="news-item"><div class="title"><a href="${link}" target="_blank">${esc(title)}</a></div>` +
-        `<div class="meta">${[pub,date].filter(Boolean).join(' · ')}</div>` +
-        (summary ? `<div class="summary">${esc(summary)}...</div>` : '') + '</div>';
-    }).join('');
-  } catch(e) { el.innerHTML = `<div class="error">${e.message}</div>`; }
-}
+      async function loadNews() {
+        const el = document.getElementById("news-list");
+        try {
+          const res = await fetchAPI(API + "/api/news?count=10");
+          if (!res.news || res.news.length === 0) {
+            el.innerHTML = '<div class="empty">No news available.</div>';
+            return;
+          }
+          el.innerHTML = res.news
+            .map((a) => {
+              const title = a.title || "Untitled",
+                link = a.link || "#";
+              const pub = a.publisher || "",
+                date = a.pub_date
+                  ? new Date(a.pub_date).toLocaleDateString()
+                  : "";
+              const summary = a.summary
+                ? a.summary.replace(/<[^>]+>/g, "").substring(0, 200)
+                : "";
+              return (
+                `<div class="news-item"><div class="title"><a href="${link}" target="_blank">${esc(title)}</a></div>` +
+                `<div class="meta">${[pub, date].filter(Boolean).join(" · ")}</div>` +
+                (summary
+                  ? `<div class="summary">${esc(summary)}...</div>`
+                  : "") +
+                "</div>"
+              );
+            })
+            .join("");
+        } catch (e) {
+          el.innerHTML = `<div class="error">${e.message}</div>`;
+        }
+      }
 
-function fmt(n) {
-  if (n===null||n===undefined) return '—';
-  if (typeof n==='number') { if (Math.abs(n)>=1e12) return (n/1e12).toFixed(2)+'T';
-    if (Math.abs(n)>=1e9) return (n/1e9).toFixed(2)+'B';
-    if (Math.abs(n)>=1e6) return (n/1e6).toFixed(2)+'M';
-    if (Math.abs(n)>=1e3) return (n/1e3).toFixed(2)+'K'; return n.toFixed(2); } return n;
-}
+      function fmt(n) {
+        if (n === null || n === undefined) return "—";
+        if (typeof n === "number") {
+          if (Math.abs(n) >= 1e12) return (n / 1e12).toFixed(2) + "T";
+          if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + "B";
+          if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + "M";
+          if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(2) + "K";
+          return n.toFixed(2);
+        }
+        return n;
+      }
 
-function esc(s) {
-  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
-}
+      function esc(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
 
-document.getElementById('cmd-btn').addEventListener('click', sendCommand);
-document.getElementById('cmd-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendCommand(); });
+      document.getElementById("cmd-btn").addEventListener("click", sendCommand);
+      document.getElementById("cmd-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendCommand();
+      });
 
-async function sendCommand() {
-  const input = document.getElementById('cmd-input');
-  const text = input.value.trim();
-  if (!text) return;
-  const resp = document.getElementById('response');
-  resp.textContent = 'Jarvis: ' + text;
-  input.value = '';
-  try {
-    await fetchAPI(API + `/api/command?text=${encodeURIComponent(text)}`);
-    // Refresh relevant sections
-    if (text.toLowerCase().includes('remember') || text.toLowerCase().includes('todo') || text.toLowerCase().includes('task')) {
-      loadTodos();
-    }
-  } catch(e) { resp.textContent = 'Error: ' + e.message; }
-}
+      async function sendCommand() {
+        const input = document.getElementById("cmd-input");
+        const text = input.value.trim();
+        if (!text) return;
+        const resp = document.getElementById("response");
+        resp.textContent = "Jarvis: " + text;
+        input.value = "";
+        try {
+          await fetchAPI(API + `/api/command?text=${encodeURIComponent(text)}`);
+          if (
+            text.toLowerCase().includes("remember") ||
+            text.toLowerCase().includes("todo") ||
+            text.toLowerCase().includes("task")
+          ) {
+            loadTodofile();
+          }
+        } catch (e) {
+          resp.textContent = "Error: " + e.message;
+        }
+      }
 
-document.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.getElementById('cmd-input').value = chip.dataset.cmd;
-    sendCommand();
-  });
-});
+      document.querySelectorAll(".chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          document.getElementById("cmd-input").value = chip.dataset.cmd;
+          sendCommand();
+        });
+      });
 
-loadTodos(); loadStocks(); loadNews();
-</script>
-</body>
+      function drawPnlChart(data) {
+        const canvas = document.getElementById("pnl-chart");
+        if (!canvas || data.length < 2) return;
+        const ctx = canvas.getContext("2d");
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const W = (canvas.width = rect.width || 600);
+        const H = (canvas.height = 150);
+        const pad = { t: 15, r: 15, b: 25, l: 55 };
+        const cw = W - pad.l - pad.r,
+          ch = H - pad.t - pad.b;
+
+        const vals = data.map((d) => d.wallet);
+        const min = Math.min(...vals),
+          max = Math.max(...vals),
+          range = max - min || 1;
+        const labels = data.map((d) => d.date.slice(5));
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.strokeStyle = "#2a2e39";
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 3; i++) {
+          const y = pad.t + (ch * i) / 3;
+          ctx.beginPath();
+          ctx.moveTo(pad.l, y);
+          ctx.lineTo(W - pad.r, y);
+          ctx.stroke();
+          ctx.fillStyle = "#787b86";
+          ctx.font = "9px sans-serif";
+          ctx.textAlign = "right";
+          ctx.fillText((max - (i * range) / 3).toFixed(0), pad.l - 4, y + 3);
+        }
+
+        ctx.strokeStyle = "#2962ff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        data.forEach((d, i) => {
+          const x = pad.l + (i / (data.length - 1)) * cw;
+          const y = pad.t + ch - ((d.wallet - min) / range) * ch;
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        ctx.fillStyle = "#2962ff20";
+        ctx.lineTo(pad.l + cw, pad.t + ch);
+        ctx.lineTo(pad.l, pad.t + ch);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#787b86";
+        ctx.font = "9px sans-serif";
+        ctx.textAlign = "center";
+        const step = Math.max(1, Math.floor(data.length / 5));
+        for (let i = 0; i < data.length; i += step) {
+          ctx.fillText(labels[i], pad.l + (i / (data.length - 1)) * cw, H - 5);
+        }
+        ctx.fillStyle = "#fff";
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("Wallet", pad.l, 12);
+      }
+
+      async function loadPnl() {
+        const summary = document.getElementById("pnl-summary");
+        try {
+          const res = await fetchAPI(API + "/api/pnl");
+          const entries = res.entries || [];
+          if (entries.length === 0) {
+            summary.innerHTML =
+              '<span style="color:var(--text-muted)">No entries yet.</span>';
+            return;
+          }
+          const last = entries[entries.length - 1];
+          const totalPl = entries.reduce((s, e) => s + e.pl, 0);
+          const cls = totalPl >= 0 ? "positive" : "negative";
+          const sign = totalPl >= 0 ? "+" : "";
+          summary.innerHTML = `<span>Wallet: \u20B9${fmt(last.wallet)}</span> &middot; <span class="${cls}">Total P&L: ${sign}\u20B9${fmt(totalPl)}</span> &middot; <span style="color:var(--text-muted)">${entries.length} entries</span>`;
+          setTimeout(() => drawPnlChart(entries), 50);
+        } catch (e) {
+          summary.innerHTML = `<span class="error">${e.message}</span>`;
+        }
+      }
+
+      document.getElementById("pnl-btn").addEventListener("click", async () => {
+        const wallet = document.getElementById("pnl-wallet").value;
+        const pl = document.getElementById("pnl-pl").value;
+        if (!wallet || pl === "") return;
+        try {
+          await fetchAPI(
+            API +
+              `/api/pnl?wallet=${encodeURIComponent(wallet)}&pl=${encodeURIComponent(pl)}`,
+          );
+          document.getElementById("pnl-wallet").value = "";
+          document.getElementById("pnl-pl").value = "";
+          loadPnl();
+        } catch (e) {
+          document.getElementById("pnl-summary").innerHTML =
+            `<span class="error">${e.message}</span>`;
+        }
+      });
+
+      document
+        .getElementById("pnl-reset")
+        .addEventListener("click", async () => {
+          if (!confirm("Reset all P&L data?")) return;
+          try {
+            await fetchAPI(API + "/api/pnl?reset=1");
+            loadPnl();
+          } catch (e) {
+            document.getElementById("pnl-summary").innerHTML =
+              `<span class="error">${e.message}</span>`;
+          }
+        });
+
+      async function loadServers() {
+        const el = document.getElementById("servers-list");
+        try {
+          const res = await fetchAPI(API + "/api/server?action=status");
+          const svr = res.servers || {};
+          const names = {
+            upload: "Upload",
+            stock: "Stock",
+            welcome: "Welcome",
+          };
+          el.innerHTML = Object.entries(names)
+            .map(([k, label]) => {
+              const on = svr[k];
+              return (
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.85rem">' +
+                "<span>" +
+                label +
+                " " +
+                (on
+                  ? '<span style="color:var(--green)">&#9679;</span>'
+                  : '<span style="color:var(--text-muted)">&#9675;</span>') +
+                "</span>" +
+                '<div style="display:flex;gap:6px">' +
+                '<button class="svr-btn" data-name="' +
+                k +
+                '" data-action="open" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);cursor:pointer;font-size:0.8rem">Open</button>' +
+                '<button class="svr-btn" data-name="' +
+                k +
+                '" data-action="close" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);cursor:pointer;font-size:0.8rem">Close</button>' +
+                "</div></div>"
+              );
+            })
+            .join("");
+          document.querySelectorAll(".svr-btn").forEach(function (btn) {
+            btn.addEventListener("click", async function () {
+              var name = btn.dataset.name;
+              var action = btn.dataset.action;
+              if (name === "welcome" && action === "close") {
+                if (
+                  confirm(
+                    "Close the welcome dashboard? This page will stop working.",
+                  )
+                ) {
+                  await fetchAPI(API + "/api/server?action=close&name=welcome");
+                  document.body.innerHTML =
+                    '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--text-muted)">Dashboard closed.</div>';
+                }
+                return;
+              }
+              try {
+                await fetchAPI(
+                  API + "/api/server?action=" + action + "&name=" + name,
+                );
+                if (action === "open" && name !== "welcome") {
+                  window.open(
+                    name === "upload"
+                      ? "http://localhost:3000"
+                      : "http://localhost:9090",
+                    "_blank",
+                  );
+                }
+                setTimeout(loadServers, 1000);
+              } catch (e) {
+                console.error(e);
+              }
+            });
+          });
+        } catch (e) {
+          el.innerHTML = '<div class="error">' + e.message + "</div>";
+        }
+      }
+
+      document.getElementById("watch-add-btn").addEventListener("click", function() {
+        var input = document.getElementById("watch-input");
+        var ticker = input.value.trim().toUpperCase();
+        if (!ticker) return;
+        var list = getWatchlist();
+        if (list.indexOf(ticker) === -1) list.push(ticker);
+        setWatchlist(list);
+        input.value = "";
+        loadStocks();
+      });
+      document.getElementById("watch-input").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") document.getElementById("watch-add-btn").click();
+      });
+
+      loadTodofile();
+      loadStocks();
+      loadNews();
+      loadPnl();
+      loadServers();
+    </script>
+  </body>
 </html>

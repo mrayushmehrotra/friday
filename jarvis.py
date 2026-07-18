@@ -118,12 +118,65 @@ class Jarvis:
             webbrowser.open_new_tab("https://github.com/mrayushmehrotra")
             speak("Opening Github.")
 
-        elif "news" in query or "finance" in query or "market" in query:
+        elif "stock" in query or "nse" in query or "share" in query:
+            from stock_tools import get_stock_data, get_stock_news as get_news
+            import re
+            tickers = re.findall(r"(?:price|of|for|news)\s+([A-Z]{1,5})(?:\s|$)", query, re.IGNORECASE)
+            if "price" in query or "quote" in query or "rate" in query:
+                ticker = tickers[0].upper() if tickers else ""
+                if not ticker:
+                    speak("Which stock, sir?")
+                else:
+                    data = get_stock_data(ticker)
+                    if data:
+                        sign = "+" if data["change"] and data["change"] >= 0 else ""
+                        speak(f"{data['company']} is at {data['price']}. {sign}{data['change']} ({sign}{data['change_pct']}%).")
+                    else:
+                        speak(f"Could not find data for {ticker}.")
+            elif "news" in query:
+                ticker = tickers[0].upper() if tickers else ""
+                if ticker:
+                    news = get_news(ticker, 3)
+                    if news:
+                        headlines = ". ".join(a["title"] for a in news if a["title"])
+                        speak(f"Top news for {ticker}: {headlines[:300]}")
+                    else:
+                        speak(f"No news found for {ticker}.")
+                else:
+                    answer = query_with_news("stock market nifty sensex stocks")
+                    speak(answer or "No market news available, sir.")
+            elif "dashboard" in query or "open" in query or "launch" in query:
+                devnull = subprocess.DEVNULL
+                if self._is_port_open(9090):
+                    speak("Stock dashboard is already running.")
+                else:
+                    subprocess.Popen(
+                        [sys.executable, "stock_dashboard.py"],
+                        cwd=os.path.dirname(__file__),
+                        stdout=devnull, stderr=devnull,
+                    )
+                    speak("Opening stock dashboard.")
+                webbrowser.open_new_tab("http://localhost:9090")
+            elif "backtest" in query or "strategy" in query:
+                ticker = tickers[0].upper() if tickers else "AAPL"
+                from backtest_tools import run as backtest, format_result
+                result = backtest(ticker=ticker, strategy="ma_crossover", start="6mo")
+                speak(f"Backtest for {ticker}: {result.total_return_pct}% return, {result.num_trades} trades, {result.win_rate}% win rate.")
+            else:
+                devnull = subprocess.DEVNULL
+                if not self._is_port_open(9090):
+                    subprocess.Popen(
+                        [sys.executable, "stock_dashboard.py"],
+                        cwd=os.path.dirname(__file__),
+                        stdout=devnull, stderr=devnull,
+                    )
+                webbrowser.open_new_tab("http://localhost:9090")
+                speak("Opening stock dashboard.")
+        elif ("news" in query or "finance" in query) and "dashboard" not in query:
             topic = query
             for kw in [
                 "news",
                 "finance",
-                "market",
                 "about",
                 "tell me about",
                 "what's",
@@ -169,7 +222,8 @@ class Jarvis:
             text = query.replace("remember", "", 1).strip()
             if text:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                with open(os.path.expanduser("~/notes.md"), "a") as f:
+                todo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "TODO.txt")
+                with open(todo_path, "a") as f:
                     f.write(f"[{timestamp}] {text}\n")
                 speak("I'll remember that, sir.")
             else:
@@ -405,59 +459,6 @@ class Jarvis:
                 args=(goal, duration),
                 daemon=True,
             ).start()
-        elif "stock" in query or "nse" in query or "share" in query:
-            from stock_tools import get_stock_data, get_stock_news as get_news
-            import re
-            tickers = re.findall(r"(?:price|of|for|news)\s+([A-Z]{1,5})(?:\s|$)", query, re.IGNORECASE)
-            if "price" in query or "quote" in query or "rate" in query:
-                ticker = tickers[0].upper() if tickers else ""
-                if not ticker:
-                    speak("Which stock, sir?")
-                else:
-                    data = get_stock_data(ticker)
-                    if data:
-                        sign = "+" if data["change"] and data["change"] >= 0 else ""
-                        speak(f"{data['company']} is at {data['price']}. {sign}{data['change']} ({sign}{data['change_pct']}%).")
-                    else:
-                        speak(f"Could not find data for {ticker}.")
-            elif "news" in query:
-                ticker = tickers[0].upper() if tickers else ""
-                if not ticker:
-                    speak("Which stock's news, sir?")
-                else:
-                    news = get_news(ticker, 3)
-                    if news:
-                        headlines = ". ".join(a["title"] for a in news if a["title"])
-                        speak(f"Top news for {ticker}: {headlines[:300]}")
-                    else:
-                        speak(f"No news found for {ticker}.")
-            elif "dashboard" in query or "open" in query or "launch" in query:
-                devnull = subprocess.DEVNULL
-                if self._is_port_open(9090):
-                    speak("Stock dashboard is already running.")
-                else:
-                    subprocess.Popen(
-                        [sys.executable, "stock_dashboard.py"],
-                        cwd=os.path.dirname(__file__),
-                        stdout=devnull, stderr=devnull,
-                    )
-                    speak("Opening stock dashboard.")
-                webbrowser.open_new_tab("http://localhost:9090")
-            elif "backtest" in query or "strategy" in query:
-                ticker = tickers[0].upper() if tickers else "AAPL"
-                from backtest_tools import run as backtest, format_result
-                result = backtest(ticker=ticker, strategy="ma_crossover", start="6mo")
-                speak(f"Backtest for {ticker}: {result.total_return_pct}% return, {result.num_trades} trades, {result.win_rate}% win rate.")
-            else:
-                devnull = subprocess.DEVNULL
-                if not self._is_port_open(9090):
-                    subprocess.Popen(
-                        [sys.executable, "stock_dashboard.py"],
-                        cwd=os.path.dirname(__file__),
-                        stdout=devnull, stderr=devnull,
-                    )
-                webbrowser.open_new_tab("http://localhost:9090")
-                speak("Opening stock dashboard.")
         else:
             if "quick" in query:
                 fast_model = os.environ.get(
@@ -566,18 +567,33 @@ class Jarvis:
 def main():
     print("Starting Jarvis...")
     bot = Jarvis()
+    cmd_queue = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".cmd_queue")
     try:
         import threading
+        import time
 
         threading.Thread(target=bot.wishMe, daemon=True).start()
+        last_cmd_ts = ""
         while True:
             query = takeCommand()
             if query != "none":
                 bot.execute_query(query)
-            else:
-                import time
-
-                time.sleep(0.2)
+            # Check typed commands from the welcome dashboard
+            try:
+                if os.path.exists(cmd_queue):
+                    with open(cmd_queue) as f:
+                        data = json.load(f)
+                    ts = data.get("ts", "")
+                    if ts and ts != last_cmd_ts:
+                        last_cmd_ts = ts
+                        cmd = data.get("command", "").strip()
+                        if cmd:
+                            print(f"Dashboard command: {cmd}")
+                            bot.execute_query(cmd)
+                            os.remove(cmd_queue)
+            except Exception:
+                pass
+            time.sleep(0.2)
     finally:
         bot._cleanup()
 

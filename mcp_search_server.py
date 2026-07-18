@@ -87,16 +87,16 @@ def news_search(topic: str) -> str:
 
 @mcp.tool()
 def read_notes() -> str:
-    """Read the user's notes/todos file."""
+    """Read the user's TODO.txt file."""
     try:
-        notes_path = os.path.expanduser("~/notes.md")
-        if not os.path.exists(notes_path):
-            return "No notes found."
-        with open(notes_path) as f:
+        todo_path = os.path.join(os.path.dirname(__file__), "TODO.txt")
+        if not os.path.exists(todo_path):
+            return "No TODO.txt found."
+        with open(todo_path) as f:
             content = f.read().strip()
-        return content or "No notes found."
+        return content or "No TODO.txt found."
     except Exception as e:
-        return f"Error reading notes: {e}"
+        return f"Error reading TODO.txt: {e}"
 
 
 @mcp.tool()

@@ -1,14 +1,7 @@
-make the jarvis-config webpage UI to add and remove commands from the jarvis,
-and jarvis will include or exclude them based on the user's preferences
-
+- [] for the friday, use nse data to identify swing trading stocks, ( which are giving 52 week high value or near to 52 week high)
+and that stocks should give at least 10-30% in the last 3 months or 6 months
 make the update todo command to in mcp, which can be used to input new text in the todo
 e.g. add in todo, create the design.md website whcih takes github repo and extracts all css from it then give you a design.md file => so it'll add this in the todo
-
-1. Replace raw HTTP \_query_llm() with ChatOllama from langchain-ollama. This would give you message templating, output parsers, streaming support, and callbacks without any HTTP boilerplate.
-2. Replace the if/elif chain with LangChain's intent classifier -- either via LLMChain with a structured output schema, or LangGraph for routing.
-3. Use StringOutputParser or PydanticOutputParser in the autonomous mode's generate_plan() -- currently it manually does find("[") + json.loads(), which is brittle.
-4. Standardize all LLM calls -- currently \_query_llm and \_ollama_chat use different endpoints, different options, and different model env var conventions. LangChain would unify this.
-5. Leverage LangSmith for observability/tracing across all LLM calls.
 
 --- Daily Work ---
 
