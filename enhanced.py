@@ -14,14 +14,14 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_ollama import ChatOllama
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, MessagesState, StateGraph
+
 from helpers import log_event, speak
 from memory import build_context
 from memory import store as store_memory
-
-from langgraph.graph import StateGraph, MessagesState, START, END
-from langgraph.checkpoint.memory import MemorySaver
-from langchain_ollama import ChatOllama
-from langchain_core.messages import HumanMessage, SystemMessage
 
 _JARVIS_THREAD = "jarvis_main"
 _checkpointer = MemorySaver()
@@ -30,7 +30,9 @@ _llm_graphs: dict[str, any] = {}
 
 def _build_llm_graph(model: str, temperature: float):
     base_url = os.environ.get("JARVIS_LLM_ENDPOINT", "http://localhost:11434")
-    base_url = base_url.replace("/api/generate", "").replace("/api/chat", "").rstrip("/")
+    base_url = (
+        base_url.replace("/api/generate", "").replace("/api/chat", "").rstrip("/")
+    )
 
     llm = ChatOllama(
         model=model,
@@ -59,8 +61,10 @@ def _get_llm_graph(model: str | None = None, temperature: float = 0.6):
         _llm_graphs[key] = _build_llm_graph(model_name, temperature)
     return _llm_graphs[key]
 
+
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
@@ -209,10 +213,7 @@ def _groq_stock_recommendations(articles: list[dict[str, str]]) -> str:
     if not articles:
         return ""
 
-    headlines = "\n\n".join(
-        f"{i+1}. {a['title']}"
-        for i, a in enumerate(articles[:15])
-    )
+    headlines = "\n\n".join(f"{i+1}. {a['title']}" for i, a in enumerate(articles[:15]))
 
     try:
         from groq import Groq
@@ -267,15 +268,16 @@ _YOUTUBE_TRACK_PATH = os.path.join(os.path.dirname(__file__), ".youtube_track.js
 
 def _youtube_channel_stats() -> str | None:
     try:
-        import requests
         import json
         import re
+
+        import requests
 
         headers = {"User-Agent": "Mozilla/5.0"}
         channel_url = f"https://www.youtube.com/{_YOUTUBE_CHANNEL_HANDLE}"
         resp = requests.get(channel_url, headers=headers, timeout=10)
 
-        sub_match = re.search(r'(\d+[\d,.]*)\s*subscriber', resp.text, re.IGNORECASE)
+        sub_match = re.search(r"(\d+[\d,.]*)\s*subscriber", resp.text, re.IGNORECASE)
         prev = {}
         if os.path.exists(_YOUTUBE_TRACK_PATH):
             try:
@@ -287,7 +289,11 @@ def _youtube_channel_stats() -> str | None:
         sub_text = "0"
         if sub_match:
             sub_text = sub_match.group(1).replace(",", "")
-            sub_count = int(float(sub_text.replace("K", "000").replace("M", "000000").split(".")[0]) if "K" in sub_text.upper() or "M" in sub_text.upper() else float(sub_text))
+            sub_count = int(
+                float(sub_text.replace("K", "000").replace("M", "000000").split(".")[0])
+                if "K" in sub_text.upper() or "M" in sub_text.upper()
+                else float(sub_text)
+            )
             if "K" in sub_text.upper():
                 sub_count = int(float(sub_text.replace("K", "")) * 1000)
             elif "M" in sub_text.upper():
@@ -296,10 +302,14 @@ def _youtube_channel_stats() -> str | None:
         # Latest video via RSS + InnerTube
         rss = requests.get(
             f"https://www.youtube.com/feeds/videos.xml?channel_id={_YOUTUBE_CHANNEL_ID}",
-            headers=headers, timeout=10
+            headers=headers,
+            timeout=10,
         )
         root = ET.fromstring(rss.content)
-        ns = {"atom": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015"}
+        ns = {
+            "atom": "http://www.w3.org/2005/Atom",
+            "yt": "http://www.youtube.com/xml/schemas/2015",
+        }
         entries = root.findall("atom:entry", ns)
         video_title = ""
         video_views = 0
@@ -307,23 +317,29 @@ def _youtube_channel_stats() -> str | None:
             video_id = entries[0].find("yt:videoId", ns).text
             video_title = entries[0].find("atom:title", ns).text or ""
             # Clean title for speech
-            video_title = re.sub(r'[^\w\s.,!?-]', '', video_title).strip()
+            video_title = re.sub(r"[^\w\s.,!?-]", "", video_title).strip()
 
             payload = {
                 "videoId": video_id,
                 "context": {
                     "client": {"clientName": "WEB", "clientVersion": "2.20231001.00.00"}
-                }
+                },
             }
             innertube = requests.post(
                 f"https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
-                json=payload, headers={"Content-Type": "application/json"}, timeout=10
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10,
             )
             if innertube.status_code == 200:
-                video_views = int(innertube.json().get("videoDetails", {}).get("viewCount", 0))
+                video_views = int(
+                    innertube.json().get("videoDetails", {}).get("viewCount", 0)
+                )
 
         parts = []
-        parts.append(f"Your channel {_YOUTUBE_CHANNEL_HANDLE} has {sub_text} subscribers")
+        parts.append(
+            f"Your channel {_YOUTUBE_CHANNEL_HANDLE} has {sub_text} subscribers"
+        )
         if video_title and video_views > 0:
             parts.append(f"your latest video has {video_views} views")
         elif video_title:
@@ -336,7 +352,10 @@ def _youtube_channel_stats() -> str | None:
             parts.append(f"you lost {abs(sub_change)} subscribers since last check")
 
         # Save current state
-        json.dump({"subs": sub_count, "views": video_views, "video_title": video_title}, open(_YOUTUBE_TRACK_PATH, "w"))
+        json.dump(
+            {"subs": sub_count, "views": video_views, "video_title": video_title},
+            open(_YOUTUBE_TRACK_PATH, "w"),
+        )
 
         return ". ".join(parts)
     except Exception as e:
@@ -380,7 +399,13 @@ def speak_daily_briefing() -> None:
 
 _NOTES_PATH = os.path.expanduser("~/.notes.md")
 _WEEKDAYS = [
-    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
 ]
 
 
@@ -398,7 +423,9 @@ def _read_notes_plan() -> str:
     in_today = False
     for line in lines:
         stripped = line.strip()
-        if stripped.startswith("### ") and stripped[4:].strip().lower().startswith(today):
+        if stripped.startswith("### ") and stripped[4:].strip().lower().startswith(
+            today
+        ):
             in_today = True
             continue
         if in_today:

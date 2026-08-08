@@ -9,7 +9,9 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+_STOCK_DIR = os.path.join(HERE, "assets", "stock_research")
 sys.path.insert(0, HERE)
+sys.path.insert(0, _STOCK_DIR)
 
 from stock_tools import get_stock_data, get_stock_news, _resolve_ticker
 
@@ -158,7 +160,7 @@ class WelcomeHandler(SimpleHTTPRequestHandler):
         PORT_MAP = {"upload": 3000, "stock": 9090, "welcome": 9091}
         CMD_MAP = {
             "upload": ["sh", "-c", "cd '{}' && bun run dev".format(os.path.join(HERE, "assets", "yt_upload_next"))],
-            "stock": [sys.executable, "stock_dashboard.py"],
+            "stock": [sys.executable, os.path.join(_STOCK_DIR, "stock_dashboard.py")],
         }
 
         if action == "status":

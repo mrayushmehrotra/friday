@@ -5,7 +5,7 @@ import chromadb
 from chromadb.config import Settings
 
 _CHROMA_DIR = os.path.join(os.path.dirname(__file__), ".chroma_db")
-_MAX_CONTEXT = 3
+_MAX_CONTEXT = 8
 
 
 def _get_collection():
