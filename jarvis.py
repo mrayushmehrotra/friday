@@ -9,6 +9,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
+import autonomous
 from enhanced import (
     _query_llm,
     clipboard_to_llm,
@@ -18,11 +19,12 @@ from enhanced import (
     query_with_search,
     speak_daily_briefing,
 )
-import autonomous
 from helpers import init_db, log_event, speak, stop_speech, takeCommand
 from memory import store as store_memory
 
-_STOCK_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "stock_research")
+_STOCK_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "assets", "stock_research"
+)
 sys.path.insert(0, _STOCK_DIR)
 
 
@@ -75,7 +77,9 @@ class Jarvis:
         try:
             self._welcome_proc = subprocess.Popen(
                 [sys.executable, "welcome_dashboard.py", "--port", "9091"],
-                cwd=base, stdout=devnull, stderr=devnull,
+                cwd=base,
+                stdout=devnull,
+                stderr=devnull,
             )
             return True
         except Exception as e:
@@ -92,7 +96,8 @@ class Jarvis:
         self._welcome_proc = None
         subprocess.run(
             ["sh", "-c", "lsof -ti tcp:9091 | xargs kill -9 2>/dev/null"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
 
     def _start_hand_control(self):
@@ -104,7 +109,9 @@ class Jarvis:
         try:
             self._hand_proc = subprocess.Popen(
                 [sys.executable, hand_path],
-                cwd=base, stdout=devnull, stderr=devnull,
+                cwd=base,
+                stdout=devnull,
+                stderr=devnull,
             )
             return True
         except Exception as e:
@@ -121,7 +128,8 @@ class Jarvis:
         self._hand_proc = None
         subprocess.run(
             ["sh", "-c", "pkill -f 'hand_tracker[.]py' 2>/dev/null"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
 
     def wishMe(self) -> None:
@@ -165,9 +173,14 @@ class Jarvis:
             speak("Opening Ind Money dashboard.")
 
         elif "stock" in query or "nse" in query or "share" in query:
-            from stock_tools import get_stock_data, get_stock_news as get_news
             import re
-            tickers = re.findall(r"(?:price|of|for|news)\s+([A-Z]{1,5})(?:\s|$)", query, re.IGNORECASE)
+
+            from stock_tools import get_stock_data
+            from stock_tools import get_stock_news as get_news
+
+            tickers = re.findall(
+                r"(?:price|of|for|news)\s+([A-Z]{1,5})(?:\s|$)", query, re.IGNORECASE
+            )
             if "price" in query or "quote" in query or "rate" in query:
                 ticker = tickers[0].upper() if tickers else ""
                 if not ticker:
@@ -176,7 +189,9 @@ class Jarvis:
                     data = get_stock_data(ticker)
                     if data:
                         sign = "+" if data["change"] and data["change"] >= 0 else ""
-                        speak(f"{data['company']} is at {data['price']}. {sign}{data['change']} ({sign}{data['change_pct']}%).")
+                        speak(
+                            f"{data['company']} is at {data['price']}. {sign}{data['change']} ({sign}{data['change_pct']}%)."
+                        )
                     else:
                         speak(f"Could not find data for {ticker}.")
             elif "news" in query:
@@ -197,24 +212,36 @@ class Jarvis:
                     speak("Stock dashboard is already running.")
                 else:
                     subprocess.Popen(
-                        [sys.executable, os.path.join(_STOCK_DIR, "stock_dashboard.py")],
+                        [
+                            sys.executable,
+                            os.path.join(_STOCK_DIR, "stock_dashboard.py"),
+                        ],
                         cwd=os.path.dirname(__file__),
-                        stdout=devnull, stderr=devnull,
+                        stdout=devnull,
+                        stderr=devnull,
                     )
                     speak("Opening stock dashboard.")
                 webbrowser.open_new_tab("http://localhost:9090")
             elif "backtest" in query or "strategy" in query:
                 ticker = tickers[0].upper() if tickers else "AAPL"
-                from backtest_tools import run as backtest, format_result
+                from backtest_tools import format_result
+                from backtest_tools import run as backtest
+
                 result = backtest(ticker=ticker, strategy="ma_crossover", start="6mo")
-                speak(f"Backtest for {ticker}: {result.total_return_pct}% return, {result.num_trades} trades, {result.win_rate}% win rate.")
+                speak(
+                    f"Backtest for {ticker}: {result.total_return_pct}% return, {result.num_trades} trades, {result.win_rate}% win rate."
+                )
             else:
                 devnull = subprocess.DEVNULL
                 if not self._is_port_open(9090):
                     subprocess.Popen(
-                        [sys.executable, os.path.join(_STOCK_DIR, "stock_dashboard.py")],
+                        [
+                            sys.executable,
+                            os.path.join(_STOCK_DIR, "stock_dashboard.py"),
+                        ],
                         cwd=os.path.dirname(__file__),
-                        stdout=devnull, stderr=devnull,
+                        stdout=devnull,
+                        stderr=devnull,
                     )
                 webbrowser.open_new_tab("http://localhost:9090")
                 speak("Opening stock dashboard.")
@@ -239,6 +266,10 @@ class Jarvis:
             path = os.path.join(os.path.dirname(__file__), "assets", "cheatsheet.html")
             webbrowser.open_new_tab("file://" + path)
             speak("Opening cheatsheet.")
+        elif "logout" in query or "log out" in query:
+            speak("logging out")
+            os.system("hyprctl dispatch exit")
+
         elif "open terminal" in query:
             if os.system("which kitty > /dev/null 2>&1") == 0:
                 os.system("kitty &")
@@ -268,7 +299,9 @@ class Jarvis:
             text = query.replace("remember", "", 1).strip()
             if text:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                todo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "TODO.txt")
+                todo_path = os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), "TODO.txt"
+                )
                 with open(todo_path, "a") as f:
                     f.write(f"[{timestamp}] {text}\n")
                 speak("I'll remember that, sir.")
@@ -327,7 +360,12 @@ class Jarvis:
         elif "restart" in query:
             speak("Restarting myself, sir.")
             subprocess.Popen(
-                ["sh", os.path.join(os.path.dirname(os.path.abspath(__file__)), "restart.sh")],
+                [
+                    "sh",
+                    os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)), "restart.sh"
+                    ),
+                ],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
@@ -407,9 +445,13 @@ class Jarvis:
                     store_memory(query, answer)
             else:
                 speak("What should I search for, sir?")
-        elif "open" in query and ("app" in query or "all" in query or "everything" in query):
+        elif "open" in query and (
+            "app" in query or "all" in query or "everything" in query
+        ):
             devnull = subprocess.DEVNULL
-            next_app = os.path.join(os.path.dirname(__file__), "assets", "yt_upload_next")
+            next_app = os.path.join(
+                os.path.dirname(__file__), "assets", "yt_upload_next"
+            )
             opened = []
 
             if self._is_port_open(3000):
@@ -417,7 +459,9 @@ class Jarvis:
             else:
                 subprocess.Popen(
                     ["bun", "run", "dev"],
-                    cwd=next_app, stdout=devnull, stderr=devnull,
+                    cwd=next_app,
+                    stdout=devnull,
+                    stderr=devnull,
                 )
                 opened.append("YouTube upload")
 
@@ -427,7 +471,8 @@ class Jarvis:
                 subprocess.Popen(
                     [sys.executable, os.path.join(_STOCK_DIR, "stock_dashboard.py")],
                     cwd=os.path.dirname(__file__),
-                    stdout=devnull, stderr=devnull,
+                    stdout=devnull,
+                    stderr=devnull,
                 )
                 opened.append("stock dashboard")
 
@@ -444,8 +489,12 @@ class Jarvis:
                     webbrowser.open_new_tab("http://localhost:9091")
             if not opened:
                 speak("All servers are already running, sir.")
-        elif "uploader" in query or ("upload" in query and ("youtube" in query or "video" in query)):
-            next_app = os.path.join(os.path.dirname(__file__), "assets", "yt_upload_next")
+        elif "uploader" in query or (
+            "upload" in query and ("youtube" in query or "video" in query)
+        ):
+            next_app = os.path.join(
+                os.path.dirname(__file__), "assets", "yt_upload_next"
+            )
             speak("Starting the upload dashboard, sir.")
             devnull = subprocess.DEVNULL
             subprocess.Popen(
@@ -461,20 +510,28 @@ class Jarvis:
                 speak("Opening the welcome dashboard, sir.")
             else:
                 speak("Failed to start the welcome dashboard, sir.")
-        elif "open" in query and "dashboard" in query and "stock" not in query and "welcome" not in query:
+        elif (
+            "open" in query
+            and "dashboard" in query
+            and "stock" not in query
+            and "welcome" not in query
+        ):
             devnull = subprocess.DEVNULL
             if not self._is_port_open(9090):
                 subprocess.Popen(
                     [sys.executable, os.path.join(_STOCK_DIR, "stock_dashboard.py")],
                     cwd=os.path.dirname(__file__),
-                    stdout=devnull, stderr=devnull,
+                    stdout=devnull,
+                    stderr=devnull,
                 )
             webbrowser.open_new_tab("http://localhost:9090")
             speak("Opening dashboard, sir.")
         elif "close" in query and "welcome" in query:
             speak("Shutting down welcome dashboard, sir.")
             self._close_welcome()
-        elif "close" in query and ("upload" in query or "server" in query or "youtube" in query):
+        elif "close" in query and (
+            "upload" in query or "server" in query or "youtube" in query
+        ):
             speak("Shutting down the upload server, sir.")
             subprocess.run(
                 ["sh", "-c", "lsof -ti tcp:3000 | xargs kill -9 2>/dev/null"],
@@ -488,19 +545,24 @@ class Jarvis:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-        elif "close" in query and ("all" in query or "everything" in query or "app" in query):
+        elif "close" in query and (
+            "all" in query or "everything" in query or "app" in query
+        ):
             speak("Closing all servers, sir.")
             subprocess.run(
                 ["sh", "-c", "lsof -ti tcp:3000 | xargs kill -9 2>/dev/null"],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
             subprocess.run(
                 ["sh", "-c", "lsof -ti tcp:9090 | xargs kill -9 2>/dev/null"],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
             subprocess.run(
                 ["sh", "-c", "lsof -ti tcp:9091 | xargs kill -9 2>/dev/null"],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
         elif any(
             kw in query
@@ -535,10 +597,9 @@ class Jarvis:
             if not goal:
                 goal = "general productivity work"
 
-            speak(
-                f"Entering autonomous mode for {duration} minutes. Goal: {goal}"
-            )
+            speak(f"Entering autonomous mode for {duration} minutes. Goal: {goal}")
             import threading
+
             threading.Thread(
                 target=autonomous.run_autonomous,
                 args=(goal, duration),
@@ -547,9 +608,7 @@ class Jarvis:
         else:
             _handled = False
             if "quick" in query:
-                fast_model = os.environ.get(
-                    "JARVIS_FAST_LLM_MODEL", "qwen2.5:0.5b"
-                )
+                fast_model = os.environ.get("JARVIS_FAST_LLM_MODEL", "qwen2.5:0.5b")
                 answer = _query_llm(
                     f"Answer concisely in one sentence: {query}",
                     model=fast_model,
@@ -558,9 +617,7 @@ class Jarvis:
                 answer = _query_llm(f"Answer concisely in one sentence: {query}")
 
             if not answer or len(answer) < 5:
-                answer = _query_llm(
-                    f"Answer in exactly one short sentence: {query}"
-                )
+                answer = _query_llm(f"Answer in exactly one short sentence: {query}")
 
             speak(answer or "I don't know how to do that, sir")
             if answer:

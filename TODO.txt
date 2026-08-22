@@ -1,4 +1,4 @@
-- [] for the friday, use nse data to identify swing trading stocks, ( which are giving 52 week high value or near to 52 week high)
+- [x] for the friday, use nse data to identify swing trading stocks, ( which are giving 52 week high value or near to 52 week high)
 and that stocks should give at least 10-30% in the last 3 months or 6 months
 make the update todo command to in mcp, which can be used to input new text in the todo
 e.g. add in todo, create the design.md website whcih takes github repo and extracts all css from it then give you a design.md file => so it'll add this in the todo
@@ -16,7 +16,7 @@ e.g. add in todo, create the design.md website whcih takes github repo and extra
 
 ## dsa (60 min)
 
-- [ ] solve 1-2 leetcode problems
+- [x] solve 1-2 leetcode problems
 - [ ] write solution without ai
 - [ ] optimize solution
 - [ ] review yesterday's problems
