@@ -1,3 +1,6 @@
+
+nifty 50 down near 24170 then it'll test the fvg in 4h T
+
 - [x] for the friday, use nse data to identify swing trading stocks, ( which are giving 52 week high value or near to 52 week high)
 and that stocks should give at least 10-30% in the last 3 months or 6 months
 make the update todo command to in mcp, which can be used to input new text in the todo

@@ -10,6 +10,7 @@ import urllib.request
 import webbrowser
 
 import autonomous
+from apps import find_app, open_app
 from enhanced import (
     _query_llm,
     clipboard_to_llm,
@@ -171,6 +172,10 @@ class Jarvis:
         elif "indmoney" in query or "ind money" in query:
             webbrowser.open_new_tab("https://www.indmoney.com/dashboard")
             speak("Opening Ind Money dashboard.")
+        elif "crypto pump" in query:
+            webbrowser.open_new_tab("https://trade.phantom.com/")
+            webbrowser.open_new_tab("https://trade.padre.gg/trenches")
+            speak("Opening crypto pump sites, sir.")
 
         elif "stock" in query or "nse" in query or "share" in query:
             import re
@@ -369,6 +374,28 @@ class Jarvis:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+        elif "switch to ultron" in query or "switch to hermes" in query:
+            speak("Switching to Ultron, sir.")
+            self._cleanup()
+            subprocess.run(
+                ["sh", "-c", "lsof -ti tcp:9090 | xargs kill -9 2>/dev/null"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            subprocess.run(
+                ["sh", "-c", "lsof -ti tcp:9091 | xargs kill -9 2>/dev/null"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            hermes_dir = os.path.expanduser("~/personal/ultron-hermes")
+            subprocess.Popen(
+                ["bash", "run.sh"],
+                cwd=hermes_dir,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            sys.exit()
         elif "evade" in query:
             speak("Shutting down the system, sir.")
             os.system("shutdown now")
@@ -607,6 +634,17 @@ class Jarvis:
             ).start()
         else:
             _handled = False
+            if any(v in query for v in ["open ", "open the", "launch", "start "]):
+                key, score = find_app(query)
+                if key:
+                    if open_app(query):
+                        speak(f"Opening {key}.")
+                        _handled = True
+                    else:
+                        speak(f"Could not find the program for {key}, sir.")
+                        _handled = True
+            if _handled:
+                return True
             if "quick" in query:
                 fast_model = os.environ.get("JARVIS_FAST_LLM_MODEL", "qwen2.5:0.5b")
                 answer = _query_llm(
