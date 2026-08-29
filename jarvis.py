@@ -175,6 +175,9 @@ class Jarvis:
         elif "crypto pump" in query:
             webbrowser.open_new_tab("https://trade.phantom.com/")
             webbrowser.open_new_tab("https://trade.padre.gg/trenches")
+            webbrowser.open_new_tab(
+                "https://axiom.trade/discover?chain=sol&pulseChains=sol,robinhood,bnb&trackerChains=sol,robinhood,bnb,eth"
+            )
             speak("Opening crypto pump sites, sir.")
 
         elif "stock" in query or "nse" in query or "share" in query:

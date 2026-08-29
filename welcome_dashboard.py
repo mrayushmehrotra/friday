@@ -16,6 +16,11 @@ sys.path.insert(0, _STOCK_DIR)
 from stock_tools import get_stock_data, get_stock_news, _resolve_ticker
 
 PORT = 9091
+CRYPTO_DIR = os.path.join(HERE, "assets", "crypto_pump_scanner")
+CRYPTO_PORT = 8321
+CRYPTO_PY = os.path.join(HERE, ".venv", "bin", "python")
+if not os.path.exists(CRYPTO_PY):
+    CRYPTO_PY = sys.executable
 TODO_PATH = os.path.join(os.path.dirname(__file__), "TODO.txt")
 CMD_QUEUE = os.path.join(os.path.dirname(__file__), ".cmd_queue")
 PNL_PATH = os.path.join(os.path.dirname(__file__), ".pnl_data.json")
@@ -157,10 +162,14 @@ class WelcomeHandler(SimpleHTTPRequestHandler):
     def _handle_server(self, params):
         action = self._get_param(params, "action", "")
         name = self._get_param(params, "name", "")
-        PORT_MAP = {"upload": 3000, "stock": 9090, "welcome": 9091}
-        CMD_MAP = {
-            "upload": ["sh", "-c", "cd '{}' && bun run dev".format(os.path.join(HERE, "assets", "yt_upload_next"))],
-            "stock": [sys.executable, os.path.join(_STOCK_DIR, "stock_dashboard.py")],
+        PORT_MAP = {"upload": 3000, "stock": 9090, "welcome": 9091, "crypto": CRYPTO_PORT}
+        START_CONF = {
+            "upload": {
+                "cwd": HERE,
+                "cmd": ["sh", "-c", "cd '{}' && bun run dev".format(os.path.join(HERE, "assets", "yt_upload_next"))],
+            },
+            "stock": {"cwd": _STOCK_DIR, "cmd": [sys.executable, "stock_dashboard.py"]},
+            "crypto": {"cwd": CRYPTO_DIR, "cmd": [CRYPTO_PY, "app.py"]},
         }
 
         if action == "status":
@@ -193,7 +202,13 @@ class WelcomeHandler(SimpleHTTPRequestHandler):
                 self._send_json({"status": "welcome is this page"})
                 return
             try:
-                subprocess.Popen(CMD_MAP[name], cwd=HERE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                conf = START_CONF[name]
+                subprocess.Popen(
+                    conf["cmd"],
+                    cwd=conf.get("cwd") or HERE,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
                 self._send_json({"status": f"starting {name}"})
             except Exception as e:
                 self._send_json({"error": str(e)}, 500)
