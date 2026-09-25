@@ -12,7 +12,7 @@ def _get_collection():
     client = chromadb.PersistentClient(
         path=_CHROMA_DIR, settings=Settings(anonymized_telemetry=False)
     )
-    return client.get_or_create_collection("jarvis_memory")
+    return client.get_or_create_collection("ultron_memory")
 
 
 def store(query: str, response: str):

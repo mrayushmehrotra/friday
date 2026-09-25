@@ -664,7 +664,7 @@
         <input
           type="text"
           id="cmd-input"
-          placeholder="Type a command for Jarvis..."
+          placeholder="Type a command for Ultron..."
           autofocus
         />
         <button class="btn" id="cmd-btn">Send</button>
@@ -965,7 +965,7 @@
         const input = document.getElementById("cmd-input");
         const text = input.value.trim();
         if (!text) return;
-        showResponse("Jarvis: " + text);
+        showResponse("Ultron: " + text);
         input.value = "";
         try {
           await fetchAPI(API + `/api/command?text=${encodeURIComponent(text)}`);

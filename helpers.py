@@ -28,7 +28,7 @@ os.environ["CT2_VERBOSE"] = "0"
 
 # Setup Logging
 logging.basicConfig(
-    filename="jarvis.log",
+    filename="ultron.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
@@ -47,7 +47,7 @@ def get_piper_voice():
     try:
         from piper import PiperVoice
 
-        voice_name = os.environ.get("PIPER_VOICE", "en_US-ryan-medium")
+        voice_name = os.environ.get("PIPER_VOICE", "en_US-danny-low")
         voice_dir = os.path.expanduser("~/.local/share/piper-voices")
         os.makedirs(voice_dir, exist_ok=True)
         model_path = os.path.join(voice_dir, f"{voice_name}.onnx")
@@ -172,14 +172,88 @@ def _mute_mic(mute: bool):
     )
 
 
+def _get_elevenlabs_config() -> tuple[str, str]:
+    key = os.environ.get("ELEVEN_LABS_API_KEY", "").strip()
+    voice_id = os.environ.get("ELEVEN_LABS_VOICE_ID", "").strip()
+
+    if not key or not voice_id:
+        env_file = os.path.join(os.path.dirname(__file__), ".env")
+        if os.path.exists(env_file):
+            with open(env_file, "r") as f:
+                for line in f:
+                    if line.startswith("ELEVEN_LABS_API_KEY=") and not key:
+                        key = line.split("=", 1)[1].strip().strip("\"'")
+                        os.environ["ELEVEN_LABS_API_KEY"] = key
+                    elif line.startswith("ELEVEN_LABS_VOICE_ID=") and not voice_id:
+                        voice_id = line.split("=", 1)[1].strip().strip("\"'")
+                        os.environ["ELEVEN_LABS_VOICE_ID"] = voice_id
+
+    if not voice_id:
+        voice_id = "bfOixIuatCxlBeO80Es3"
+        os.environ["ELEVEN_LABS_VOICE_ID"] = voice_id
+
+    return key, voice_id
+
+
+def _speak_elevenlabs(text: str) -> bool:
+    key, voice_id = _get_elevenlabs_config()
+    if not key:
+        return False
+    try:
+        import requests
+
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/bfOixIuatCxlBeO80Es3"
+        headers = {
+            "xi-api-key": key,
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "text": text,
+            "model_id": "eleven_turbo_v2",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.75,
+            },
+        }
+        resp = requests.post(url, json=payload, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            out_file = "/tmp/ultron_speech.mp3"
+            with open(out_file, "wb") as f:
+                f.write(resp.content)
+            subprocess.run(
+                ["mpv", "--no-terminal", out_file],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            try:
+                os.remove(out_file)
+            except Exception:
+                pass
+            return True
+        else:
+            log_event(
+                f"ElevenLabs error status {resp.status_code}: {resp.text[:100]}",
+                "warning",
+            )
+            return False
+    except Exception as e:
+        log_event(f"ElevenLabs TTS exception: {e}", "error")
+        return False
+
+
 def speak(audio, wait=False) -> None:
-    print(f"JARVIS: {audio}")
+    print(f"ULTRON: {audio}")
     log_event(f"Speak: {audio}")
 
     _mute_mic(True)
 
     def _worker(text):
         try:
+            # 1. Primary: ElevenLabs Voice TTS
+            if _speak_elevenlabs(text):
+                return
+
+            # 2. Fallback: Piper Local TTS
             try:
                 voice = get_piper_voice()
                 if voice:
@@ -201,6 +275,7 @@ def speak(audio, wait=False) -> None:
             except Exception as e:
                 log_event(f"Piper speech error: {e}", "error")
 
+            # 3. Fallback: Pyttsx3 system TTS
             engine = get_tts()
             if engine is None or _tts_type is None:
                 return
@@ -211,6 +286,7 @@ def speak(audio, wait=False) -> None:
         finally:
             _mute_mic(False)
             import time
+
             time.sleep(0.3)
 
     global _speech_thread
@@ -238,7 +314,7 @@ def takeCommand(timeout=None, phrase_limit=None) -> str:
     _recognizer.dynamic_energy_threshold = True
     _recognizer.dynamic_energy_adjustment_damping = 0.15
     _recognizer.dynamic_energy_ratio = 1.5
-    _recognizer.pause_threshold = 1.5
+    _recognizer.pause_threshold = 2.0
     _recognizer.phrase_threshold = 0.3
     _recognizer.non_speaking_duration = 1.0
 
@@ -250,7 +326,7 @@ def takeCommand(timeout=None, phrase_limit=None) -> str:
             if timeout is None:
                 _recognizer.adjust_for_ambient_noise(source, duration=0.5)
             audio_sr = _recognizer.listen(
-                source, timeout=timeout, phrase_time_limit=phrase_limit or 8
+                source, timeout=timeout, phrase_time_limit=phrase_limit or 20
             )
         except sr.WaitTimeoutError:
             return "none"
@@ -281,7 +357,7 @@ def _try_recognize(recognizer, audio_sr, verbose: bool) -> str:
         (
             "Faster Whisper",
             lambda: recognizer.recognize_faster_whisper(
-                audio_sr, model="base", language="en"
+                audio_sr, model="base", language="en", compute_type="int8"
             ),
         ),
     ]

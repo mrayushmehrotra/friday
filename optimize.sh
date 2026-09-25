@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ───────────────────────────────────────────────────────
-# Ollama + Jarvis performance tuner
+# Ollama + Ultron performance tuner
 # Run once:  bash optimize.sh
 # Reboot or restart ollama after.
 # ───────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ warn()  { echo -e "${YELLOW}[!]${NC} $1"; }
 err()   { echo -e "${RED}[✗]${NC} $1"; }
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Ollama & Jarvis Optimizer"
+echo "  Ollama & Ultron Optimizer"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # ── 1. Detect CPU cores ────────────────────────────────

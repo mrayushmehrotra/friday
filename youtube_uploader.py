@@ -15,7 +15,7 @@ from helpers import log_event, speak
 #  Paths
 # ---------------------------------------------------------------------------
 
-_CONFIG_DIR = os.path.expanduser("~/.jarvis")
+_CONFIG_DIR = os.path.expanduser("~/.ultron")
 _TOKEN_PATH = os.path.join(_CONFIG_DIR, "youtube_token.pickle")
 _CLIENT_SECRET_PATH = os.path.join(_CONFIG_DIR, "client_secret.json")
 os.makedirs(_CONFIG_DIR, exist_ok=True)
@@ -262,7 +262,7 @@ def _resolve_path(inp: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-#  Main entry — called from jarvis.py
+#  Main entry — called from ultron.py
 # ---------------------------------------------------------------------------
 
 
@@ -333,7 +333,7 @@ def run(query: str = ""):
     cmd = [
         "yad",
         "--form",
-        "--title=Jarvis — YouTube Uploader",
+        "--title=Ultron — YouTube Uploader",
         "--width=640",
         "--height=480",
         "--center",
@@ -398,7 +398,7 @@ def run(query: str = ""):
     progress_cmd = [
         "yad",
         "--progress",
-        "--title=Jarvis — Uploading",
+        "--title=Ultron — Uploading",
         "--text=Authenticating with YouTube...",
         "--percentage=0",
         "--auto-close",
@@ -456,7 +456,7 @@ def run(query: str = ""):
             [
                 "yad",
                 "--info",
-                "--title=Jarvis",
+                "--title=Ultron",
                 "--text",
                 f"Uploaded!\n\n{url}\n\nLink copied to clipboard.",
                 "--center",
@@ -471,7 +471,7 @@ def run(query: str = ""):
             [
                 "yad",
                 "--error",
-                "--title=Jarvis",
+                "--title=Ultron",
                 "--text",
                 "Upload failed. Check the logs.",
                 "--center",

@@ -1,6 +1,6 @@
 """
-Autonomous Agent — Jarvis takes over your PC for a set duration.
-Generates plans using the LLM and executes them with human-like
+Autonomous Agent — Ultron & Hermes Agent take over your PC for a set duration.
+Generates plans using Hermes LLM agent and executes them with human-like
 mouse / keyboard behavior, as if a real person were working.
 """
 
@@ -13,6 +13,7 @@ import webbrowser
 
 from enhanced import _query_llm
 from helpers import log_event, speak
+from hermes_agent import get_hermes_agent
 
 # ---------------------------------------------------------------------------
 #  Globals – can be set from outside (e.g. from the voice loop) to stop

@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("jarvis-tools")
+mcp = FastMCP("ultron-tools")
 
 
 @mcp.tool()

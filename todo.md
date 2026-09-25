@@ -1,10 +1,10 @@
-# FRIDAY / Jarvis — TODO
+# Ultron / Hermes Agent — TODO
 
-## Remote Access via ngrok + Expo App
+## Remote Access via ngrok + Mobile App
 
-- [ ] On Jarvis startup, start an ngrok tunnel (port for WebSocket connection) using stored auth token
+- [ ] On Ultron startup, start an ngrok tunnel (port for WebSocket connection) using stored auth token
 - [ ] Generate a QR code + shareable URL for the tunnel
 - [ ] Make both QR code and URL clickable/accessible to the user
-- [ ] Create an Expo mobile app that connects to the ngrok WebSocket socket
-- [ ] App should support voice commands to control Jarvis
+- [ ] Create a mobile app that connects to the ngrok WebSocket socket
+- [ ] App should support voice commands and Hermes task execution to control Ultron
 - [ ] App should be able to view/see the PC (screen stream)
