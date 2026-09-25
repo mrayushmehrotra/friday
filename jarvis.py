@@ -540,6 +540,27 @@ class Jarvis:
                 speak("Opening the welcome dashboard, sir.")
             else:
                 speak("Failed to start the welcome dashboard, sir.")
+        elif "trading" in query or (
+            "journal" in query and ("trade" in query or "order" in query)
+        ):
+            trading_py = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "trading_journal.py"
+            )
+            devnull = subprocess.DEVNULL
+            if not self._is_port_open(9092):
+                subprocess.Popen(
+                    [sys.executable, trading_py],
+                    cwd=os.path.dirname(__file__),
+                    stdout=devnull,
+                    stderr=devnull,
+                )
+                speak("Opening trading journal, sir.")
+            else:
+                speak("Trading journal is already running, sir.")
+            webbrowser.open_new_tab("http://localhost:9092")
+            webbrowser.open_new_tab(
+                "https://in.tradingview.com/chart/YPUNvVbd/?symbol=OANDA%3AXAUUSD"
+            )
         elif (
             "open" in query
             and "dashboard" in query
@@ -565,6 +586,13 @@ class Jarvis:
             speak("Shutting down the upload server, sir.")
             subprocess.run(
                 ["sh", "-c", "lsof -ti tcp:3000 | xargs kill -9 2>/dev/null"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        elif "close" in query and ("trading" in query or "journal" in query):
+            speak("Shutting down the trading journal, sir.")
+            subprocess.run(
+                ["sh", "-c", "lsof -ti tcp:9092 | xargs kill -9 2>/dev/null"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )

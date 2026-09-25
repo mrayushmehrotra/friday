@@ -170,6 +170,7 @@ class WelcomeHandler(SimpleHTTPRequestHandler):
             },
             "stock": {"cwd": _STOCK_DIR, "cmd": [sys.executable, "stock_dashboard.py"]},
             "crypto": {"cwd": CRYPTO_DIR, "cmd": [CRYPTO_PY, "app.py"]},
+            "trading": {"cwd": HERE, "cmd": [sys.executable, os.path.join(HERE, "trading_journal.py")]},
         }
 
         if action == "status":
