@@ -233,6 +233,47 @@
         background: rgba(242, 54, 69, 0.2);
         color: var(--red);
       }
+      .deal-pill {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 3px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .deal-pill.buy {
+        background: rgba(8, 153, 129, 0.15);
+        color: var(--green);
+        border: 1px solid rgba(8, 153, 129, 0.35);
+      }
+      .deal-pill.sell {
+        background: rgba(242, 54, 69, 0.15);
+        color: var(--red);
+        border: 1px solid rgba(242, 54, 69, 0.35);
+      }
+      .inst-row {
+        margin-bottom: 4px;
+        line-height: 1.45;
+        font-size: 0.82rem;
+      }
+      .inst-row:last-child {
+        margin-bottom: 0;
+      }
+      .deals-toggle-btn {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        padding: 4px 10px;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .deals-toggle-btn.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
       table {
         width: 100%;
         border-collapse: collapse;
@@ -277,6 +318,13 @@
       .preset-stocks .chip:hover {
         border-color: var(--accent);
         color: var(--text);
+      }
+      .preset-stocks .chip.active-inst-chip {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+        font-weight: 600;
+        box-shadow: 0 0 10px rgba(41, 98, 255, 0.4);
       }
       .chart-container {
         width: 100%;
@@ -409,6 +457,7 @@
       <div class="tabs" id="tabs">
         <div class="tab active" data-tab="quote">Quote</div>
         <div class="tab" data-tab="news">News</div>
+        <div class="tab" data-tab="institutions">Institutions</div>
         <div class="tab" data-tab="backtest">Backtest</div>
         <div class="tab" data-tab="compare">Compare</div>
         <div class="tab" data-tab="daily">Stock of Day</div>
@@ -573,6 +622,43 @@
           <button class="btn btn-primary" id="news-btn">Get News</button>
         </div>
         <div id="news-result"></div>
+      </div>
+
+      <div class="tab-content" id="tab-institutions">
+        <div class="card" style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+            <div>
+              <h3 style="margin:0;font-size:1.1rem;color:#fff;">Institutional Bulk &amp; Block Deals (Trendlyne)</h3>
+              <p style="margin:4px 0 0;font-size:0.8rem;color:var(--text-muted);">
+                Scrape &amp; analyze large institutional block/bulk deals from Trendlyne portfolios (e.g. Government of Singapore, Vanguard, LIC, BlackRock).
+              </p>
+            </div>
+          </div>
+          <div class="preset-stocks" style="margin-bottom:12px;">
+            <span class="chip active-inst-chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/53902/government-of-singapore/" onclick="selectInstPreset(this)">Government of Singapore</span>
+            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/597533/icici-group/" onclick="selectInstPreset(this)">ICICI Group</span>
+            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/597531/sbi-group/" onclick="selectInstPreset(this)">SBI Group</span>
+            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/superstar-shareholders/597532/latest/hdfc-group/" onclick="selectInstPreset(this)">HDFC Group</span>
+            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/53860/life-insurance-corporation-of-india/" onclick="selectInstPreset(this)">LIC of India</span>
+            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/53874/vanguard/" onclick="selectInstPreset(this)">Vanguard</span>
+            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/53896/blackrock/" onclick="selectInstPreset(this)">BlackRock</span>
+          </div>
+          <div class="search-box" style="margin-bottom:0;">
+            <input
+              type="text"
+              id="inst-url-input"
+              placeholder="Paste Trendlyne bulk/block deals URL"
+              value="https://trendlyne.com/portfolio/bulk-block-deals/53902/government-of-singapore/"
+              style="font-size:0.85rem;"
+              onkeydown="if(event.key==='Enter')fetchInstitutionalDeals()"
+            />
+            <button class="btn btn-primary" id="inst-fetch-btn" onclick="fetchInstitutionalDeals()">Fetch Deals</button>
+          </div>
+        </div>
+
+        <div id="institutional-deals-result">
+          <div class="loading">Loading institutional deals...</div>
+        </div>
       </div>
 
       <div class="tab-content" id="tab-backtest">
@@ -776,6 +862,7 @@
       const contents = {
         quote: document.getElementById("tab-quote"),
         news: document.getElementById("tab-news"),
+        institutions: document.getElementById("tab-institutions"),
         backtest: document.getElementById("tab-backtest"),
         compare: document.getElementById("tab-compare"),
         daily: document.getElementById("tab-daily"),
@@ -792,6 +879,11 @@
           if (tab.dataset.tab === "daily") {
             const activeSub = document.querySelector(".sub-tab.active");
             if (activeSub) activeSub.click();
+          }
+          if (tab.dataset.tab === "institutions") {
+            if (!window._instData) {
+              fetchInstitutionalDeals();
+            }
           }
         });
       });
@@ -824,6 +916,15 @@
         if (ticker && tabId === "news") {
           document.getElementById("news-input").value = ticker;
           document.getElementById("news-btn").click();
+        }
+        if (ticker && tabId === "quote") {
+          document.getElementById("quote-input").value = ticker;
+          document.getElementById("quote-btn").click();
+        }
+        if (tabId === "institutions") {
+          if (!window._instData) {
+            fetchInstitutionalDeals();
+          }
         }
       }
 
@@ -1327,69 +1428,355 @@
           nc.innerHTML = "";
         }
       }
-      async function loadLargeDeals() {
-        const el = document.getElementById("large-deals");
-        el.innerHTML = '<div class="loading">Loading large deals...</div>';
-        try {
-          const res = await apiFetch(API + "/api/large-deals");
-          if (res.error) {
-            el.innerHTML = '<div class="error">' + res.error + "</div>";
-            return;
-          }
-          let html =
-            '<div class="card"><h3>Large Deals — ' +
-            (res.as_on_date || "") +
-            "</h3>";
-          const bulk = res.BULK_DEALS_DATA || [];
-          const block = res.BLOCK_DEALS_DATA || [];
-          if (!bulk.length && !block.length) {
-            html += '<div class="empty">No deals today.</div></div>';
-            el.innerHTML = html;
-            return;
-          }
-          const renderDeals = (deals, label) => {
-            if (!deals.length) return "";
-            let h =
-              '<h4 style="margin:12px 0 8px;font-size:0.9rem;color:#fff;">' +
-              label +
-              " (" +
-              deals.length +
-              ")</h4><table><thead><tr><th>Symbol</th><th>Company</th><th>B/S</th><th>Client</th><th>Qty</th><th>Price</th></tr></thead><tbody>";
-            deals.forEach((d) => {
-              const cls = d.buySell === "BUY" ? "positive" : "negative";
-              h +=
-                "<tr><td><strong>" +
-                d.symbol +
-                '</strong></td><td style="white-space:normal;max-width:180px">' +
-                (d.name || "") +
-                '</td><td class="' +
-                cls +
-                '">' +
-                d.buySell +
-                "</td><td>" +
-                (d.clientName || "") +
-                "</td><td>" +
-                fmt(+d.qty) +
-                '</td><td>\u20B9' +
-                (+d.watp).toFixed(2) +
-                "</td></tr>";
+      function fmtINR(val) {
+        if (val === null || val === undefined || isNaN(val) || val === 0) return "₹0";
+        const abs = Math.abs(val);
+        const sign = val < 0 ? "-" : "";
+        if (abs >= 1e7) return sign + "₹" + (abs / 1e7).toFixed(2) + " Cr";
+        if (abs >= 1e5) return sign + "₹" + (abs / 1e5).toFixed(2) + " L";
+        if (abs >= 1e3) return sign + "₹" + (abs / 1e3).toFixed(2) + " K";
+        return sign + "₹" + abs.toFixed(2);
+      }
+
+      function groupDealsByStock(deals) {
+        const map = new Map();
+        deals.forEach((d) => {
+          const sym = (d.symbol || "").trim().toUpperCase();
+          if (!sym) return;
+          if (!map.has(sym)) {
+            map.set(sym, {
+              symbol: sym,
+              name: d.name || "",
+              category: d.category || "",
+              buy_count: 0,
+              sell_count: 0,
+              buy_qty: 0,
+              sell_qty: 0,
+              buy_val: 0,
+              sell_val: 0,
+              clients: {},
+              deals: [],
             });
-            h += "</tbody></table>";
-            return h;
-          };
-          html += renderDeals(bulk, "Bulk Deals");
-          html += renderDeals(block, "Block Deals");
-          if (res.news) {
-            html +=
-              '<h4 style="margin:16px 0 8px;font-size:0.9rem;color:#fff;">Related News</h4>';
-            Object.entries(res.news).forEach(([sym, articles]) => {
-              if (!articles || !articles.length) return;
-              html +=
-                '<div style="margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">';
-              html +=
-                '<strong style="font-size:0.95rem;color:var(--accent)">' +
-                sym +
-                "</strong>";
+          }
+          const item = map.get(sym);
+          if (!item.name && d.name) item.name = d.name;
+          const bs = (d.buySell || "").trim().toUpperCase();
+          const qty = parseFloat(d.qty) || 0;
+          const watp = parseFloat(d.watp) || 0;
+          const val = qty * watp;
+
+          if (bs === "BUY") {
+            item.buy_count++;
+            item.buy_qty += qty;
+            item.buy_val += val;
+          } else if (bs === "SELL") {
+            item.sell_count++;
+            item.sell_qty += qty;
+            item.sell_val += val;
+          }
+
+          const cName = (d.clientName || "Unknown").trim();
+          if (!item.clients[cName]) {
+            item.clients[cName] = { client: cName, buys: [], sells: [] };
+          }
+          const dealObj = { client: cName, buySell: bs, qty, watp, val, remarks: d.remarks || "", date: d.date || "" };
+          if (bs === "BUY") item.clients[cName].buys.push(dealObj);
+          else if (bs === "SELL") item.clients[cName].sells.push(dealObj);
+          item.deals.push(dealObj);
+        });
+
+        const list = Array.from(map.values()).map((item) => {
+          item.net_val = item.buy_val - item.sell_val;
+          item.net_qty = item.buy_qty - item.sell_qty;
+          item.total_val = item.buy_val + item.sell_val;
+          item.total_qty = item.buy_qty + item.sell_qty;
+          item.client_list = Object.values(item.clients);
+          return item;
+        });
+        list.sort((a, b) => b.total_val - a.total_val);
+        return list;
+      }
+
+      window._dealsViewMode = window._dealsViewMode || "grouped";
+      window._dealsFilterText = window._dealsFilterText || "";
+      window._lastLargeDealsData = null;
+
+      window.setDealsView = function(mode) {
+        window._dealsViewMode = mode;
+        renderLargeDealsView();
+      };
+
+      window.handleDealsFilter = function(text) {
+        window._dealsFilterText = text;
+        renderLargeDealsView();
+        const input = document.getElementById("deals-search-input");
+        if (input) {
+          input.focus();
+          const len = input.value.length;
+          input.setSelectionRange(len, len);
+        }
+      };
+
+      function renderGroupedDealsTable(groupedList, label, sectionKey) {
+        if (!groupedList.length) return "";
+        let h =
+          '<div style="margin:16px 0 8px;display:flex;align-items:center;justify-content:space-between;">' +
+          '<h4 style="margin:0;font-size:0.95rem;color:#fff;">' +
+          label +
+          ' <span style="color:var(--text-muted);font-weight:normal;font-size:0.85rem">(' +
+          groupedList.length +
+          " stocks)</span></h4></div>" +
+          '<div style="overflow-x:auto;"><table><thead><tr>' +
+          '<th style="min-width:140px">Stock</th>' +
+          '<th style="min-width:110px">Deals</th>' +
+          '<th style="min-width:130px">Total Qty (Buy / Sell)</th>' +
+          '<th style="min-width:180px">Total Value (Buy / Sell)</th>' +
+          '<th style="min-width:320px">Institution Deal Prices</th>' +
+          "</tr></thead><tbody>";
+
+        groupedList.forEach((s, idx) => {
+          const buyValFormatted = s.buy_val ? fmtINR(s.buy_val) : "₹0";
+          const sellValFormatted = s.sell_val ? fmtINR(s.sell_val) : "₹0";
+
+          // Deals count badge: e.g. 4 Buys / 2 Sells
+          const dealBadges = [];
+          if (s.buy_count > 0) {
+            dealBadges.push('<span class="badge buy">' + s.buy_count + " Buy" + (s.buy_count > 1 ? "s" : "") + "</span>");
+          }
+          if (s.sell_count > 0) {
+            dealBadges.push('<span class="badge sell">' + s.sell_count + " Sell" + (s.sell_count > 1 ? "s" : "") + "</span>");
+          }
+          const dealsCol = dealBadges.join(' <span style="color:var(--text-muted)">/</span> ');
+
+          // Total Qty: Buy Qty / Sell Qty
+          const buyQtyText = s.buy_qty ? '<span class="positive">' + fmt(s.buy_qty) + "</span>" : "0";
+          const sellQtyText = s.sell_qty ? '<span class="negative">' + fmt(s.sell_qty) + "</span>" : "0";
+          const qtyCol = buyQtyText + ' <span style="color:var(--text-muted)">/</span> ' + sellQtyText;
+          const qtyTooltip = "Buy Qty: " + Math.round(s.buy_qty).toLocaleString("en-IN") + " | Sell Qty: " + Math.round(s.sell_qty).toLocaleString("en-IN");
+
+          // Total Value: <buy total value>/<sell total value>
+          const buyValSpan = s.buy_val ? '<span class="positive">' + buyValFormatted + "</span>" : "₹0";
+          const sellValSpan = s.sell_val ? '<span class="negative">' + sellValFormatted + "</span>" : "₹0";
+          const valCol = buyValSpan + ' <span style="color:var(--text-muted)">/</span> ' + sellValSpan;
+          const valTooltip = "Buy Value: ₹" + Math.round(s.buy_val).toLocaleString("en-IN") + " | Sell Value: ₹" + Math.round(s.sell_val).toLocaleString("en-IN");
+
+          let netBadge = "";
+          if (s.net_val > 0) {
+            netBadge = '<div style="font-size:0.72rem;color:var(--green);font-weight:500;margin-top:2px;">Net: +' + fmtINR(s.net_val) + "</div>";
+          } else if (s.net_val < 0) {
+            netBadge = '<div style="font-size:0.72rem;color:var(--red);font-weight:500;margin-top:2px;">Net: -' + fmtINR(Math.abs(s.net_val)) + "</div>";
+          }
+
+          // Institution Deal Prices (preserving exact purchase/sale price of each institution)
+          const clientRows = (s.client_list || []).map((c) => {
+            const parts = [];
+            if (c.buys && c.buys.length) {
+              const buysStr = c.buys.map((b) => '<span class="deal-pill buy">BUY @ \u20B9' + b.watp.toFixed(2) + '</span> <span style="color:var(--text-muted);font-size:0.75rem">(' + fmt(b.qty) + ")</span>").join(", ");
+              parts.push(buysStr);
+            }
+            if (c.sells && c.sells.length) {
+              const sellsStr = c.sells.map((s) => '<span class="deal-pill sell">SELL @ \u20B9' + s.watp.toFixed(2) + '</span> <span style="color:var(--text-muted);font-size:0.75rem">(' + fmt(s.qty) + ")</span>").join(", ");
+              parts.push(sellsStr);
+            }
+            return '<div class="inst-row"><strong style="color:#eee;font-size:0.8rem;">' + c.client + ":</strong> " + parts.join(" &nbsp;&bull;&nbsp; ") + "</div>";
+          });
+
+          let clientColContent = "";
+          if (clientRows.length <= 3) {
+            clientColContent = clientRows.join("");
+          } else {
+            const visibleRows = clientRows.slice(0, 3).join("");
+            const hiddenRows = clientRows.slice(3).join("");
+            const containerId = "more-inst-" + sectionKey + "-" + idx;
+            clientColContent =
+              visibleRows +
+              '<div id="' + containerId + '" style="display:none;margin-top:4px;">' +
+              hiddenRows +
+              "</div>" +
+              '<a href="javascript:void(0)" onclick="' +
+              "const el = document.getElementById('" + containerId + "');" +
+              "const isHidden = el.style.display === 'none';" +
+              "el.style.display = isHidden ? 'block' : 'none';" +
+              "this.textContent = isHidden ? '\u25B2 Hide " + (clientRows.length - 3) + " institutions' : '\u25BC + " + (clientRows.length - 3) + " more institutions';" +
+              '" style="color:var(--accent);font-size:0.75rem;text-decoration:none;display:inline-block;margin-top:3px;font-weight:500;">' +
+              "\u25BC + " + (clientRows.length - 3) + " more institutions</a>";
+          }
+
+          h +=
+            "<tr>" +
+            "<td>" +
+            '<div style="display:flex;align-items:center;gap:6px;">' +
+            '<strong style="color:var(--accent);font-size:0.95rem;cursor:pointer;" onclick="switchTab(\'quote\',\'' + s.symbol + '\')" title="View Quote for ' + s.symbol + '">' + s.symbol + "</strong>" +
+            '<button class="btn btn-primary" style="padding:1px 6px;font-size:0.7rem;line-height:1.2;" onclick="switchTab(\'news\',\'' + s.symbol + '\')" title="Get News for ' + s.symbol + '">News</button>' +
+            "</div>" +
+            '<div style="font-size:0.75rem;color:var(--text-muted);white-space:normal;max-width:180px;margin-top:2px;">' + (s.name || "") + "</div>" +
+            "</td>" +
+            "<td>" +
+            "<div>" + dealsCol + "</div>" +
+            '<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">' + (s.buy_count + s.sell_count) + " deal" + ((s.buy_count + s.sell_count) > 1 ? "s" : "") + "</div>" +
+            "</td>" +
+            '<td title="' + qtyTooltip + '">' +
+            '<div style="font-size:0.85rem;">' + qtyCol + "</div>" +
+            (s.buy_qty > 0 && s.sell_qty > 0 ? '<div style="font-size:0.72rem;color:' + (s.net_qty >= 0 ? "var(--green)" : "var(--red)") + ';margin-top:2px;">Net: ' + (s.net_qty >= 0 ? "+" : "") + fmt(s.net_qty) + "</div>" : "") +
+            "</td>" +
+            '<td title="' + valTooltip + '">' +
+            '<div style="font-size:0.9rem;">' + valCol + "</div>" +
+            netBadge +
+            "</td>" +
+            '<td style="white-space:normal;max-width:420px;">' +
+            clientColContent +
+            "</td>" +
+            "</tr>";
+        });
+
+        h += "</tbody></table></div>";
+        return h;
+      }
+
+      function renderRawDealsTable(deals, label) {
+        if (!deals.length) return "";
+        let h =
+          '<div style="margin:16px 0 8px;">' +
+          '<h4 style="margin:0;font-size:0.95rem;color:#fff;">' +
+          label +
+          ' <span style="color:var(--text-muted);font-weight:normal;font-size:0.85rem">(' +
+          deals.length +
+          " deals)</span></h4></div>" +
+          '<div style="overflow-x:auto;"><table><thead><tr>' +
+          "<th>Symbol</th><th>Company</th><th>B/S</th><th>Client</th><th>Qty</th><th>Price</th><th>Value</th>" +
+          "</tr></thead><tbody>";
+
+        deals.forEach((d) => {
+          const cls = d.buySell === "BUY" ? "positive" : "negative";
+          const qty = parseFloat(d.qty) || 0;
+          const price = parseFloat(d.watp) || 0;
+          const val = qty * price;
+          h +=
+            "<tr>" +
+            '<td><strong style="color:var(--accent);cursor:pointer;" onclick="switchTab(\'quote\',\'' + d.symbol + '\')">' + d.symbol + "</strong></td>" +
+            '<td style="white-space:normal;max-width:180px;">' + (d.name || "") + "</td>" +
+            '<td><span class="badge ' + (d.buySell === "BUY" ? "buy" : "sell") + '">' + d.buySell + "</span></td>" +
+            '<td style="white-space:normal;max-width:240px;">' + (d.clientName || "") + "</td>" +
+            "<td>" + fmt(qty) + "</td>" +
+            "<td>\u20B9" + price.toFixed(2) + "</td>" +
+            '<td class="' + cls + '">' + fmtINR(val) + "</td>" +
+            "</tr>";
+        });
+
+        h += "</tbody></table></div>";
+        return h;
+      }
+
+      function renderLargeDealsView() {
+        const el = document.getElementById("large-deals");
+        const res = window._lastLargeDealsData;
+        if (!el || !res) return;
+
+        const bulk = res.BULK_DEALS_DATA || [];
+        const block = res.BLOCK_DEALS_DATA || [];
+        if (!bulk.length && !block.length) {
+          el.innerHTML = '<div class="card"><h3>Large Deals</h3><div class="empty">No deals today.</div></div>';
+          return;
+        }
+
+        const groupedBulk = res.GROUPED_BULK_DEALS_DATA || groupDealsByStock(bulk);
+        const groupedBlock = res.GROUPED_BLOCK_DEALS_DATA || groupDealsByStock(block);
+
+        // Calculate macro stats across all deals
+        let totalBuyVal = 0;
+        let totalSellVal = 0;
+        const allSymbolsSet = new Set();
+
+        [...bulk, ...block].forEach((d) => {
+          if (d.symbol) allSymbolsSet.add(d.symbol);
+          const q = parseFloat(d.qty) || 0;
+          const p = parseFloat(d.watp) || 0;
+          const v = q * p;
+          if ((d.buySell || "").toUpperCase() === "BUY") totalBuyVal += v;
+          else if ((d.buySell || "").toUpperCase() === "SELL") totalSellVal += v;
+        });
+
+        const totalDeals = bulk.length + block.length;
+        const totalUniqueSymbols = allSymbolsSet.size;
+        const netFlow = totalBuyVal - totalSellVal;
+
+        // Apply search filter if present
+        const filter = (window._dealsFilterText || "").toLowerCase().trim();
+
+        const filterGrouped = (list) => {
+          if (!filter) return list;
+          return list.filter((s) => {
+            if (s.symbol.toLowerCase().includes(filter)) return true;
+            if ((s.name || "").toLowerCase().includes(filter)) return true;
+            if ((s.client_list || []).some((c) => c.client.toLowerCase().includes(filter))) return true;
+            return false;
+          });
+        };
+
+        const filterRaw = (list) => {
+          if (!filter) return list;
+          return list.filter((d) => {
+            if ((d.symbol || "").toLowerCase().includes(filter)) return true;
+            if ((d.name || "").toLowerCase().includes(filter)) return true;
+            if ((d.clientName || "").toLowerCase().includes(filter)) return true;
+            return false;
+          });
+        };
+
+        let html = '<div class="card">';
+        html +=
+          '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">' +
+          "<div>" +
+          '<h3 style="margin:0;font-size:1.05rem;color:#fff;display:inline-block;">Large Deals \u2014 ' + (res.as_on_date || "Today") + "</h3>" +
+          '<span style="color:var(--text-muted);font-size:0.8rem;margin-left:8px;">(' + totalDeals + " deals across " + totalUniqueSymbols + " stocks)</span>" +
+          "</div>" +
+          '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+          '<input type="text" id="deals-search-input" placeholder="Filter symbol or institution..." value="' + (window._dealsFilterText || "").replace(/"/g, "&quot;") + '" oninput="handleDealsFilter(this.value)" style="padding:4px 10px;font-size:0.8rem;background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:3px;min-width:190px;" />' +
+          '<div style="display:inline-flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;">' +
+          '<button class="deals-toggle-btn ' + (window._dealsViewMode === "grouped" ? "active" : "") + '" onclick="setDealsView(\'grouped\')">Grouped by Stock</button>' +
+          '<button class="deals-toggle-btn ' + (window._dealsViewMode === "raw" ? "active" : "") + '" onclick="setDealsView(\'raw\')">All Deals</button>' +
+          '<button class="deals-toggle-btn" style="background:rgba(41,98,255,0.15);color:var(--accent);border-color:var(--accent);" onclick="switchTab(\'institutions\')">&#127963; Govt of Singapore &amp; Funds &rarr;</button>' +
+          "</div>" +
+          "</div>" +
+          "</div>";
+
+        // Macro Turnover Metrics
+        html +=
+          '<div class="result-grid" style="margin-bottom:14px;">' +
+          '<div class="metric"><div class="label">Stocks with Large Deals</div><div class="value">' + totalUniqueSymbols + "</div></div>" +
+          '<div class="metric"><div class="label">Total Buy Turnover</div><div class="value positive">' + fmtINR(totalBuyVal) + "</div></div>" +
+          '<div class="metric"><div class="label">Total Sell Turnover</div><div class="value negative">' + fmtINR(totalSellVal) + "</div></div>" +
+          '<div class="metric"><div class="label">Net Institutional Flow</div><div class="value ' + (netFlow >= 0 ? "positive" : "negative") + '">' + (netFlow >= 0 ? "+" : "") + fmtINR(netFlow) + "</div></div>" +
+          "</div>";
+
+        if (window._dealsViewMode === "grouped") {
+          const filteredGroupedBulk = filterGrouped(groupedBulk);
+          const filteredGroupedBlock = filterGrouped(groupedBlock);
+          if (!filteredGroupedBulk.length && !filteredGroupedBlock.length) {
+            html += '<div class="empty">No stocks match your filter "' + filter + '".</div>';
+          } else {
+            html += renderGroupedDealsTable(filteredGroupedBulk, "Bulk Deals", "bulk");
+            html += renderGroupedDealsTable(filteredGroupedBlock, "Block Deals", "block");
+          }
+        } else {
+          const filteredRawBulk = filterRaw(bulk);
+          const filteredRawBlock = filterRaw(block);
+          if (!filteredRawBulk.length && !filteredRawBlock.length) {
+            html += '<div class="empty">No deals match your filter "' + filter + '".</div>';
+          } else {
+            html += renderRawDealsTable(filteredRawBulk, "Bulk Deals");
+            html += renderRawDealsTable(filteredRawBlock, "Block Deals");
+          }
+        }
+
+        // Related News
+        if (res.news) {
+          const newsEntries = Object.entries(res.news).filter(([, articles]) => articles && articles.length);
+          if (newsEntries.length) {
+            html += '<h4 style="margin:20px 0 8px;font-size:0.9rem;color:#fff;">Related News for Large Deal Stocks</h4>';
+            newsEntries.forEach(([sym, articles]) => {
+              html += '<div style="margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">';
+              html += '<strong style="font-size:0.95rem;color:var(--accent);cursor:pointer;" onclick="switchTab(\'news\',\'' + sym + '\')">' + sym + "</strong>";
               articles.forEach((a) => {
                 const title = a.title || "";
                 const link = a.link || "#";
@@ -1403,11 +1790,309 @@
               html += "</div>";
             });
           }
-          html += "</div>";
-          el.innerHTML = html;
+        }
+
+        html += "</div>";
+        el.innerHTML = html;
+      }
+
+      async function loadLargeDeals() {
+        const el = document.getElementById("large-deals");
+        el.innerHTML = '<div class="loading">Loading large deals...</div>';
+        try {
+          const res = await apiFetch(API + "/api/large-deals");
+          if (res.error) {
+            el.innerHTML = '<div class="error">' + res.error + "</div>";
+            return;
+          }
+          window._lastLargeDealsData = res;
+          renderLargeDealsView();
         } catch (e) {
           el.innerHTML = '<div class="error">' + e.message + "</div>";
         }
+      }
+
+      window._instViewMode = window._instViewMode || "grouped";
+      window._instDealType = window._instDealType || "block";
+      window._instMonth = window._instMonth || "latest";
+      window._instFilterText = window._instFilterText || "";
+      window._instData = null;
+
+      window.selectInstPreset = function(chip) {
+        document.querySelectorAll("[data-inst-url]").forEach((c) => c.classList.remove("active-inst-chip"));
+        chip.classList.add("active-inst-chip");
+        const url = chip.getAttribute("data-inst-url");
+        const inp = document.getElementById("inst-url-input");
+        if (inp) inp.value = url;
+        fetchInstitutionalDeals(url);
+      };
+
+      window.setInstDealType = function(type) {
+        window._instDealType = type;
+        renderInstitutionalDeals();
+      };
+
+      window.setInstMonth = function(m) {
+        window._instMonth = m;
+        renderInstitutionalDeals();
+      };
+
+      window.setInstViewMode = function(mode) {
+        window._instViewMode = mode;
+        renderInstitutionalDeals();
+      };
+
+      window.handleInstFilter = function(text) {
+        window._instFilterText = text;
+        renderInstitutionalDeals();
+        const input = document.getElementById("inst-search-input");
+        if (input) {
+          input.focus();
+          const len = input.value.length;
+          input.setSelectionRange(len, len);
+        }
+      };
+
+      async function fetchInstitutionalDeals(customUrl) {
+        const el = document.getElementById("institutional-deals-result");
+        const urlInput = document.getElementById("inst-url-input");
+        const targetUrl = customUrl || (urlInput ? urlInput.value.trim() : "") || "https://trendlyne.com/portfolio/bulk-block-deals/53902/government-of-singapore/";
+        if (urlInput) urlInput.value = targetUrl;
+
+        // Synchronize active preset chip
+        document.querySelectorAll("[data-inst-url]").forEach((c) => {
+          const u = c.getAttribute("data-inst-url");
+          if (u === targetUrl || targetUrl.includes(u) || u.includes(targetUrl)) {
+            c.classList.add("active-inst-chip");
+          } else {
+            c.classList.remove("active-inst-chip");
+          }
+        });
+
+        el.innerHTML = '<div class="loading">Scraping block/bulk deals from Trendlyne (' + targetUrl + ')...</div>';
+        try {
+          const res = await apiFetch(API + "/api/institutional-deals?url=" + encodeURIComponent(targetUrl));
+          if (res.error) {
+            el.innerHTML = '<div class="error">' + res.error + "</div>";
+            return;
+          }
+          window._instData = res;
+          renderInstitutionalDeals();
+        } catch (e) {
+          el.innerHTML = '<div class="error">Scraping failed: ' + e.message + "</div>";
+        }
+      }
+
+      function renderInstitutionalDeals() {
+        const el = document.getElementById("institutional-deals-result");
+        const res = window._instData;
+        if (!el || !res) return;
+
+        const allDeals = res.deals || [];
+        if (!allDeals.length) {
+          el.innerHTML = '<div class="card"><div class="empty">No deals found for this institution.</div></div>';
+          return;
+        }
+
+        // 1. Filter by Deal Type
+        let deals = allDeals;
+        if (window._instDealType === "block") {
+          deals = allDeals.filter((d) => (d.deal_type || "").toLowerCase() === "block");
+        } else if (window._instDealType === "bulk") {
+          deals = allDeals.filter((d) => (d.deal_type || "").toLowerCase() === "bulk");
+        }
+
+        // 2. Filter by Month
+        const curMonth = res.current_month || "";
+        const latestMonth = res.latest_deal_month || "";
+        const curMonthDealsCount = deals.filter((d) => d.month_year === curMonth).length;
+        const latestMonthDealsCount = deals.filter((d) => d.month_year === latestMonth).length;
+
+        if (window._instMonth === "current") {
+          deals = deals.filter((d) => d.month_year === curMonth);
+        } else if (window._instMonth === "latest") {
+          deals = deals.filter((d) => d.month_year === latestMonth);
+        } else if (window._instMonth === "last3") {
+          const top3 = (res.available_months || []).slice(0, 3);
+          deals = deals.filter((d) => top3.includes(d.month_year));
+        }
+
+        // 3. Filter by search text
+        const filter = (window._instFilterText || "").toLowerCase().trim();
+        if (filter) {
+          deals = deals.filter((d) => {
+            if ((d.symbol || "").toLowerCase().includes(filter)) return true;
+            if ((d.name || "").toLowerCase().includes(filter)) return true;
+            if ((d.client || "").toLowerCase().includes(filter)) return true;
+            return false;
+          });
+        }
+
+        // Calculate metrics
+        let totalBuyVal = 0;
+        let totalSellVal = 0;
+        const symSet = new Set();
+        deals.forEach((d) => {
+          if (d.symbol) symSet.add(d.symbol);
+          const v = parseFloat(d.val) || 0;
+          if (d.buySell === "BUY") totalBuyVal += v;
+          else if (d.buySell === "SELL") totalSellVal += v;
+        });
+        const netFlow = totalBuyVal - totalSellVal;
+
+        let html = '<div class="card">';
+
+        // Header and Toolbar
+        html +=
+          '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">' +
+          "<div>" +
+          '<h3 style="margin:0;font-size:1.05rem;color:#fff;display:inline-block;">' + (res.institution || "Institutional Deals") + "</h3>" +
+          '<span style="color:var(--text-muted);font-size:0.8rem;margin-left:8px;">(' + deals.length + " deals shown across " + symSet.size + " stocks)</span>" +
+          (res.url ? '<div style="font-size:0.75rem;margin-top:3px;"><a href="' + (res.original_url || res.url) + '" target="_blank" style="color:var(--accent);text-decoration:none;">View on Trendlyne &rarr;</a>' + (res.original_url && res.original_url !== res.url ? ' <span style="color:var(--text-muted);">(resolved to deals page)</span>' : '') + '</div>' : '') +
+          "</div>" +
+          '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+          '<input type="text" id="inst-search-input" placeholder="Filter stock/ticker..." value="' + (window._instFilterText || "").replace(/"/g, "&quot;") + '" oninput="handleInstFilter(this.value)" style="padding:4px 10px;font-size:0.8rem;background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:3px;min-width:180px;" />' +
+          '<div style="display:inline-flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;">' +
+          '<button class="deals-toggle-btn ' + (window._instViewMode === "grouped" ? "active" : "") + '" onclick="setInstViewMode(\'grouped\')">Grouped by Stock</button>' +
+          '<button class="deals-toggle-btn ' + (window._instViewMode === "raw" ? "active" : "") + '" onclick="setInstViewMode(\'raw\')">All Deals</button>' +
+          "</div>" +
+          "</div>" +
+          "</div>";
+
+        // Filter Pills Row
+        html +=
+          '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;background:var(--bg);padding:8px 12px;border-radius:4px;border:1px solid var(--border);">' +
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+          '<span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Deal Type:</span>' +
+          '<button class="deals-toggle-btn ' + (window._instDealType === "block" ? "active" : "") + '" onclick="setInstDealType(\'block\')">Block Deals (' + res.total_block_count + ')</button>' +
+          '<button class="deals-toggle-btn ' + (window._instDealType === "bulk" ? "active" : "") + '" onclick="setInstDealType(\'bulk\')">Bulk Deals (' + res.total_bulk_count + ')</button>' +
+          '<button class="deals-toggle-btn ' + (window._instDealType === "all" ? "active" : "") + '" onclick="setInstDealType(\'all\')">All (' + res.total_deals_count + ')</button>' +
+          "</div>" +
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+          '<span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;">Timeframe:</span>' +
+          '<button class="deals-toggle-btn ' + (window._instMonth === "current" ? "active" : "") + '" onclick="setInstMonth(\'current\')">Current Month (' + curMonth + ')</button>' +
+          '<button class="deals-toggle-btn ' + (window._instMonth === "latest" ? "active" : "") + '" onclick="setInstMonth(\'latest\')">Latest Month (' + latestMonth + ')</button>' +
+          '<button class="deals-toggle-btn ' + (window._instMonth === "last3" ? "active" : "") + '" onclick="setInstMonth(\'last3\')">Last 3 Months</button>' +
+          '<button class="deals-toggle-btn ' + (window._instMonth === "all" ? "active" : "") + '" onclick="setInstMonth(\'all\')">All Time</button>' +
+          "</div>" +
+          "</div>";
+
+        // Current Month Notice
+        if (curMonthDealsCount === 0 && (window._instMonth === "current" || window._instMonth === "latest")) {
+          html +=
+            '<div style="background:rgba(255,152,0,0.1);border:1px solid rgba(255,152,0,0.3);padding:10px 14px;border-radius:4px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
+            '<div style="font-size:0.85rem;color:#ffb74d;">' +
+            '&#9432; <strong>Current Month (' + curMonth + '):</strong> No ' + window._instDealType + ' deals recorded on Trendlyne yet for ' + res.institution + '. ' +
+            (latestMonth ? 'The most recent ' + window._instDealType + ' deals occurred in <strong>' + latestMonth + '</strong>.' : '') +
+            "</div>" +
+            '<div style="display:flex;gap:6px;">' +
+            '<button class="btn btn-primary" style="font-size:0.75rem;padding:3px 10px;" onclick="setInstMonth(\'latest\')">View ' + latestMonth + ' (' + latestMonthDealsCount + ')</button>' +
+            '<button class="btn" style="font-size:0.75rem;padding:3px 10px;background:var(--bg);color:#fff;border:1px solid var(--border);" onclick="setInstMonth(\'all\')">View All Time</button>' +
+            "</div>" +
+            "</div>";
+        }
+
+        // Macro Turnover Metrics
+        html +=
+          '<div class="result-grid" style="margin-bottom:14px;">' +
+          '<div class="metric"><div class="label">Stocks Traded</div><div class="value">' + symSet.size + "</div></div>" +
+          '<div class="metric"><div class="label">Total Buy Turnover</div><div class="value positive">' + fmtINR(totalBuyVal) + "</div></div>" +
+          '<div class="metric"><div class="label">Total Sell Turnover</div><div class="value negative">' + fmtINR(totalSellVal) + "</div></div>" +
+          '<div class="metric"><div class="label">Net Institutional Flow</div><div class="value ' + (netFlow >= 0 ? "positive" : "negative") + '">' + (netFlow >= 0 ? "+" : "") + fmtINR(netFlow) + "</div></div>" +
+          "</div>";
+
+        if (!deals.length) {
+          html += '<div class="empty">No ' + window._instDealType + ' deals match your filters. Try selecting "All Time" or "Latest Month".</div>';
+        } else if (window._instViewMode === "grouped") {
+          const grouped = groupDealsByStock(deals);
+          html += '<div style="overflow-x:auto;"><table><thead><tr>' +
+            '<th style="min-width:140px">Stock</th>' +
+            '<th style="min-width:110px">Deals</th>' +
+            '<th style="min-width:130px">Total Qty (Buy / Sell)</th>' +
+            '<th style="min-width:180px">Total Value (Buy / Sell)</th>' +
+            '<th style="min-width:320px">Deal Details &amp; Prices</th>' +
+            "</tr></thead><tbody>";
+
+          grouped.forEach((s) => {
+            const buyValFormatted = s.buy_val ? fmtINR(s.buy_val) : "₹0";
+            const sellValFormatted = s.sell_val ? fmtINR(s.sell_val) : "₹0";
+
+            const dealBadges = [];
+            if (s.buy_count > 0) {
+              dealBadges.push('<span class="badge buy">' + s.buy_count + " Buy" + (s.buy_count > 1 ? "s" : "") + "</span>");
+            }
+            if (s.sell_count > 0) {
+              dealBadges.push('<span class="badge sell">' + s.sell_count + " Sell" + (s.sell_count > 1 ? "s" : "") + "</span>");
+            }
+            const dealsCol = dealBadges.join(' <span style="color:var(--text-muted)">/</span> ');
+
+            const buyQtyText = s.buy_qty ? '<span class="positive">' + fmt(s.buy_qty) + "</span>" : "0";
+            const sellQtyText = s.sell_qty ? '<span class="negative">' + fmt(s.sell_qty) + "</span>" : "0";
+            const qtyCol = buyQtyText + ' <span style="color:var(--text-muted)">/</span> ' + sellQtyText;
+
+            const buyValSpan = s.buy_val ? '<span class="positive">' + buyValFormatted + "</span>" : "₹0";
+            const sellValSpan = s.sell_val ? '<span class="negative">' + sellValFormatted + "</span>" : "₹0";
+            const valCol = buyValSpan + ' <span style="color:var(--text-muted)">/</span> ' + sellValSpan;
+
+            let netBadge = "";
+            if (s.net_val > 0) {
+              netBadge = '<div style="font-size:0.72rem;color:var(--green);font-weight:500;margin-top:2px;">Net: +' + fmtINR(s.net_val) + "</div>";
+            } else if (s.net_val < 0) {
+              netBadge = '<div style="font-size:0.72rem;color:var(--red);font-weight:500;margin-top:2px;">Net: -' + fmtINR(Math.abs(s.net_val)) + "</div>";
+            }
+
+            const dealHtmls = (s.deals || []).map((d) => {
+              const pillCls = d.buySell === "BUY" ? "buy" : "sell";
+              return (
+                '<div class="inst-row">' +
+                '<span class="deal-pill ' + pillCls + '">' + d.buySell + " @ \u20B9" + d.watp.toFixed(2) + "</span> " +
+                '<span style="color:var(--text-muted);font-size:0.75rem">(' + fmt(d.qty) + " shs &middot; " + fmtINR(d.val) + " &middot; " + (d.date || "") + ")</span>" +
+                "</div>"
+              );
+            });
+
+            html +=
+              "<tr>" +
+              "<td>" +
+              '<div style="display:flex;align-items:center;gap:6px;">' +
+              '<strong style="color:var(--accent);font-size:0.95rem;cursor:pointer;" onclick="switchTab(\'quote\',\'' + s.symbol + '\')">' + s.symbol + "</strong>" +
+              '<button class="btn btn-primary" style="padding:1px 6px;font-size:0.7rem;line-height:1.2;" onclick="switchTab(\'news\',\'' + s.symbol + '\')">News</button>' +
+              "</div>" +
+              '<div style="font-size:0.75rem;color:var(--text-muted);white-space:normal;max-width:180px;margin-top:2px;">' + (s.name || "") + "</div>" +
+              "</td>" +
+              "<td>" +
+              "<div>" + dealsCol + "</div>" +
+              '<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">' + (s.buy_count + s.sell_count) + " deal" + ((s.buy_count + s.sell_count) > 1 ? "s" : "") + "</div>" +
+              "</td>" +
+              "<td>" + qtyCol + "</td>" +
+              "<td>" + valCol + netBadge + "</td>" +
+              '<td style="white-space:normal;max-width:420px;">' + dealHtmls.join("") + "</td>" +
+              "</tr>";
+          });
+          html += "</tbody></table></div>";
+        } else {
+          html += '<div style="overflow-x:auto;"><table><thead><tr>' +
+            "<th>Stock</th><th>Deal Type</th><th>Action</th><th>Date</th><th>Quantity</th><th>Price</th><th>Value</th><th>Client</th>" +
+            "</tr></thead><tbody>";
+          deals.forEach((d) => {
+            const cls = d.buySell === "BUY" ? "positive" : "negative";
+            html +=
+              "<tr>" +
+              '<td><strong style="color:var(--accent);cursor:pointer;" onclick="switchTab(\'quote\',\'' + d.symbol + '\')">' + d.symbol + "</strong><br><span style=\"color:var(--text-muted);font-size:0.75rem\">" + (d.name || "") + "</span></td>" +
+              "<td>" + (d.deal_type || "") + "</td>" +
+              '<td><span class="badge ' + (d.buySell === "BUY" ? "buy" : "sell") + '">' + d.buySell + "</span></td>" +
+              "<td>" + (d.date || "") + "</td>" +
+              "<td>" + fmt(d.qty) + "</td>" +
+              "<td>\u20B9" + d.watp.toFixed(2) + "</td>" +
+              '<td class="' + cls + '">' + fmtINR(d.val) + "</td>" +
+              '<td style="white-space:normal;max-width:220px;font-size:0.8rem;">' + (d.client || "") + " (" + (d.exchange || "") + ")</td>" +
+              "</tr>";
+          });
+          html += "</tbody></table></div>";
+        }
+
+        html += "</div>";
+        el.innerHTML = html;
       }
 
       async function loadBullishNews() {

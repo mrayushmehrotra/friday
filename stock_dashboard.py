@@ -14,8 +14,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import datetime
+import re
 import urllib.request
 import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup
 
 def _fetch_headlines(max_items: int = 8) -> list[str]:
     try:
@@ -349,6 +351,78 @@ def _get_nse_session():
     return _NSE_SESSION.session
 
 
+def _aggregate_deals(deals):
+    by_sym = {}
+    for d in deals:
+        sym = (d.get("symbol") or "").strip().upper()
+        if not sym:
+            continue
+        if sym not in by_sym:
+            by_sym[sym] = {
+                "symbol": sym,
+                "name": d.get("name", ""),
+                "category": d.get("category", ""),
+                "buy_count": 0,
+                "sell_count": 0,
+                "buy_qty": 0.0,
+                "sell_qty": 0.0,
+                "buy_val": 0.0,
+                "sell_val": 0.0,
+                "clients": {},
+                "deals": [],
+            }
+        bs = (d.get("buySell") or "").strip().upper()
+        try:
+            qty = float(d.get("qty", 0))
+        except (ValueError, TypeError):
+            qty = 0.0
+        try:
+            watp = float(d.get("watp", 0))
+        except (ValueError, TypeError):
+            watp = 0.0
+        val = qty * watp
+
+        if bs == "BUY":
+            by_sym[sym]["buy_count"] += 1
+            by_sym[sym]["buy_qty"] += qty
+            by_sym[sym]["buy_val"] += val
+        elif bs == "SELL":
+            by_sym[sym]["sell_count"] += 1
+            by_sym[sym]["sell_qty"] += qty
+            by_sym[sym]["sell_val"] += val
+
+        client = (d.get("clientName") or "Unknown").strip()
+        if client not in by_sym[sym]["clients"]:
+            by_sym[sym]["clients"][client] = {"client": client, "buys": [], "sells": []}
+
+        deal_entry = {
+            "client": client,
+            "buySell": bs,
+            "qty": qty,
+            "watp": watp,
+            "val": val,
+            "remarks": d.get("remarks", ""),
+            "date": d.get("date", ""),
+        }
+        if bs == "BUY":
+            by_sym[sym]["clients"][client]["buys"].append(deal_entry)
+        elif bs == "SELL":
+            by_sym[sym]["clients"][client]["sells"].append(deal_entry)
+
+        by_sym[sym]["deals"].append(deal_entry)
+
+    out = []
+    for sym, item in by_sym.items():
+        item["net_val"] = item["buy_val"] - item["sell_val"]
+        item["net_qty"] = item["buy_qty"] - item["sell_qty"]
+        item["total_val"] = item["buy_val"] + item["sell_val"]
+        item["total_qty"] = item["buy_qty"] + item["sell_qty"]
+        item["client_list"] = list(item["clients"].values())
+        out.append(item)
+    out.sort(key=lambda x: x["total_val"], reverse=True)
+    return out
+
+
 def _fetch_large_deals():
     try:
         ses = _get_nse_session()
@@ -366,11 +440,176 @@ def _fetch_large_deals():
             for d in deals:
                 d["category"] = label
             out[key] = deals
+            out["GROUPED_" + key] = _aggregate_deals(deals)
         all_symbols = list({d["symbol"] for k in ("BULK_DEALS_DATA", "BLOCK_DEALS_DATA") for d in data.get(k, [])})
         out["symbols"] = all_symbols
         return out
     except Exception:
         return None
+
+
+def _scrape_trendlyne_deals(url: str = None):
+    if not url or not url.strip():
+        url = "https://trendlyne.com/portfolio/bulk-block-deals/53902/government-of-singapore/"
+    url = url.strip()
+    original_url = url
+
+    # Normalize superstar-shareholders URL to bulk-block-deals URL if provided
+    if "/portfolio/superstar-shareholders/" in url:
+        m = re.search(r"/portfolio/superstar-shareholders/(\d+)/(?:latest/)?([^/]+)/?", url)
+        if m:
+            inst_id, slug = m.group(1), m.group(2)
+            url = f"https://trendlyne.com/portfolio/bulk-block-deals/{inst_id}/{slug}/"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    try:
+        r = _requests.get(url, headers=headers, timeout=15)
+        if r.status_code != 200:
+            return {"error": f"Trendlyne returned HTTP status {r.status_code}"}
+
+        soup = BeautifulSoup(r.text, "html.parser")
+        table = soup.find("table", id="bbdealTable")
+        if not table:
+            # Check if there is a link to the bulk & block deals table on this page
+            bb_link = soup.find("a", href=re.compile(r"/portfolio/bulk-block-deals/\d+/"))
+            if bb_link and bb_link.get("href"):
+                next_url = bb_link["href"]
+                if not next_url.startswith("http"):
+                    next_url = "https://trendlyne.com" + next_url
+                res = _scrape_trendlyne_deals(next_url)
+                if isinstance(res, dict) and not res.get("error"):
+                    res["original_url"] = original_url
+                return res
+            return {"error": "Could not find bulk/block deals table on the provided Trendlyne page"}
+
+        h1 = soup.find("h1")
+        raw_name = h1.text.strip() if h1 else ""
+        title_text = soup.title.text.strip() if soup.title else ""
+        if not raw_name or "Latest Bulk and Block Deals" in raw_name:
+            if "Bulk and Block Deals" in title_text:
+                raw_name = title_text
+        inst_name = re.sub(r"['’]s Bulk and Block Deals.*", "", raw_name, flags=re.IGNORECASE).strip()
+        if not inst_name or inst_name == raw_name or "Latest Bulk and Block Deals" in inst_name:
+            slug_match = re.search(r"/bulk-block-deals/\d+/([^/]+)/?", url)
+            if slug_match:
+                inst_name = slug_match.group(1).replace("-", " ").title()
+            else:
+                inst_name = "Institution"
+
+        tbody = table.find("tbody")
+        if not tbody:
+            return {"error": "Deals table is empty"}
+
+        now = datetime.datetime.now()
+        cur_month_str = now.strftime("%b %Y")
+
+        deals = []
+        for row in tbody.find_all("tr"):
+            tds = row.find_all("td")
+            if len(tds) < 8:
+                continue
+            stock_a = tds[0].find("a")
+            stock_name = stock_a.text.strip() if stock_a else ""
+            stock_href = stock_a.get("href", "") if stock_a else ""
+            ticker_match = re.search(r"/equity/bulk-block-deals/([^/]+)/", stock_href)
+            ticker = ticker_match.group(1).upper() if ticker_match else stock_name.upper()
+
+            client = tds[1].text.strip()
+            exchange = tds[2].text.strip()
+            deal_type = tds[3].text.strip()
+            action_raw = tds[4].text.strip()
+            action = "BUY" if "purchase" in action_raw.lower() or "buy" in action_raw.lower() else "SELL"
+
+            date_str = tds[5].text.strip()
+            iso_date = ""
+            month_year = ""
+            try:
+                dt = datetime.datetime.strptime(date_str, "%d %b %Y")
+                iso_date = dt.strftime("%Y-%m-%d")
+                month_year = dt.strftime("%b %Y")
+            except Exception:
+                month_year = " ".join(date_str.split()[1:]) if len(date_str.split()) >= 3 else ""
+
+            price_str = tds[6].text.replace(",", "").replace("₹", "").strip()
+            try:
+                price = float(price_str)
+            except (ValueError, TypeError):
+                price = 0.0
+
+            qty_str = tds[7].text.replace(",", "").strip()
+            try:
+                qty = float(qty_str)
+            except (ValueError, TypeError):
+                qty = 0.0
+
+            pct_str = tds[8].text.strip() if len(tds) > 8 else ""
+            val = qty * price
+
+            deals.append({
+                "symbol": ticker,
+                "name": stock_name,
+                "client": client,
+                "clientName": client,
+                "exchange": exchange,
+                "deal_type": deal_type,
+                "buySell": action,
+                "date": date_str,
+                "iso_date": iso_date,
+                "month_year": month_year,
+                "watp": price,
+                "qty": qty,
+                "val": val,
+                "pct": pct_str,
+            })
+
+        seen_months = []
+        for d in deals:
+            m = d.get("month_year")
+            if m and m not in seen_months:
+                seen_months.append(m)
+
+        latest_month = seen_months[0] if seen_months else ""
+
+        block_deals = [d for d in deals if (d.get("deal_type") or "").strip().lower() == "block"]
+        bulk_deals = [d for d in deals if (d.get("deal_type") or "").strip().lower() == "bulk"]
+
+        seen_block_months = []
+        for d in block_deals:
+            m = d.get("month_year")
+            if m and m not in seen_block_months:
+                seen_block_months.append(m)
+        latest_block_month = seen_block_months[0] if seen_block_months else latest_month
+
+        cur_month_block = [d for d in block_deals if d.get("month_year") == cur_month_str]
+        latest_month_block = [d for d in block_deals if d.get("month_year") == latest_block_month]
+
+        return {
+            "institution": inst_name,
+            "url": url,
+            "original_url": original_url,
+            "current_month": cur_month_str,
+            "latest_deal_month": latest_month,
+            "latest_block_month": latest_block_month,
+            "available_months": seen_months,
+            "total_deals_count": len(deals),
+            "total_block_count": len(block_deals),
+            "total_bulk_count": len(bulk_deals),
+            "deals": deals,
+            "block_deals": block_deals,
+            "bulk_deals": bulk_deals,
+            "current_month_block_deals": cur_month_block,
+            "grouped_current_month_block": _aggregate_deals(cur_month_block),
+            "grouped_latest_month_block": _aggregate_deals(latest_month_block),
+            "grouped_block": _aggregate_deals(block_deals),
+            "grouped_bulk": _aggregate_deals(bulk_deals),
+            "grouped_all": _aggregate_deals(deals),
+        }
+    except Exception as e:
+        return {"error": f"Scraping failed: {str(e)}"}
 
 
 class DashboardHandler(SimpleHTTPRequestHandler):
@@ -400,6 +639,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._handle_large_deals()
         elif path == "/api/market-overview":
             self._handle_market_overview()
+        elif path == "/api/institutional-deals":
+            self._handle_institutional_deals(params)
         elif path == "/":
             self._serve_file("stock_dashboard.html")
         else:
@@ -597,6 +838,17 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     }
             headlines = _fetch_headlines(8)
             self._send_json({"indices": indices, "headlines": headlines})
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
+
+    def _handle_institutional_deals(self, params):
+        url = self._get_param(params, "url", "https://trendlyne.com/portfolio/bulk-block-deals/53902/government-of-singapore/")
+        try:
+            data = _scrape_trendlyne_deals(url)
+            if "error" in data:
+                self._send_json(data, 502)
+            else:
+                self._send_json(data)
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
 

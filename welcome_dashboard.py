@@ -5,7 +5,7 @@ import os
 import socket
 import subprocess
 import sys
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -74,7 +74,40 @@ class WelcomeHandler(SimpleHTTPRequestHandler):
         raw = self._get_param(params, "ticker", "").upper()
         ticker = _resolve_ticker(raw) if raw else "^NSEI"
         count = int(self._get_param(params, "count", "10"))
-        news = get_stock_news(ticker, count) if ticker else []
+        news = []
+        try:
+            news = get_stock_news(ticker, count) if ticker else []
+        except Exception:
+            news = []
+        if not news:
+            try:
+                import urllib.request
+                import xml.etree.ElementTree as ET
+                query = f"{raw}+stock+india" if raw else "indian+stock+market+nifty+sensex"
+                url = (
+                    f"https://news.google.com/rss/search?"
+                    f"q={query}&hl=en-IN&gl=IN&ceid=IN:en"
+                )
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=5) as r:
+                    root = ET.fromstring(r.read().decode())
+                for item in root.iter("item"):
+                    title_el = item.find("title")
+                    link_el = item.find("link")
+                    pub_el = item.find("pubDate")
+                    desc_el = item.find("description")
+                    if title_el is not None and title_el.text:
+                        news.append({
+                            "title": title_el.text,
+                            "link": link_el.text if link_el is not None else "#",
+                            "publisher": "Google News",
+                            "pub_date": pub_el.text if pub_el is not None else "",
+                            "summary": desc_el.text if desc_el is not None else "",
+                        })
+                    if len(news) >= count:
+                        break
+            except Exception:
+                pass
         self._send_json({"news": news, "count": len(news)})
 
     def _handle_quote(self, params):
@@ -190,14 +223,27 @@ class WelcomeHandler(SimpleHTTPRequestHandler):
             if name == "welcome":
                 self._send_json({"status": "welcome is this page"})
                 return
+            logfile = os.path.join(HERE, f"{name}.server.log")
             try:
-                subprocess.Popen(CMD_MAP[name], cwd=HERE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                handle = open(logfile, "ab")
+            except OSError:
+                handle = subprocess.DEVNULL
+            try:
+                subprocess.Popen(
+                    CMD_MAP[name], cwd=HERE,
+                    stdout=handle, stderr=subprocess.STDOUT,
+                )
                 self._send_json({"status": f"starting {name}"})
             except Exception as e:
                 self._send_json({"error": str(e)}, 500)
+            finally:
+                if handle is not subprocess.DEVNULL:
+                    handle.close()
         elif action == "close":
             import subprocess as sp
-            sp.run(["sh", "-c", f"lsof -ti tcp:{port} | xargs kill -9 2>/dev/null"], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+            sp.run(["fuser", "-k", "-n", "tcp", str(port)], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+            for script in ("stock_dashboard.py", "welcome_dashboard.py"):
+                sp.run(["pkill", "-f", script], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
             self._send_json({"status": f"closed {name}"})
         else:
             self._send_json({"error": "action must be open/close/status"}, 400)
@@ -211,7 +257,7 @@ def main():
     parser.add_argument("--port", type=int, default=PORT, help=f"Port (default: {PORT})")
     args = parser.parse_args()
 
-    server = HTTPServer(("0.0.0.0", args.port), WelcomeHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", args.port), WelcomeHandler)
     print(f"Welcome dashboard at http://localhost:{args.port}")
     try:
         server.serve_forever()

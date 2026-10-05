@@ -5,6 +5,7 @@ import random
 import socket
 import subprocess
 import sys
+import time
 import urllib.parse
 import urllib.request
 import webbrowser
@@ -29,6 +30,7 @@ class Jarvis:
         log_event("JARVIS initialized")
         self._music_proc = None
         self._welcome_proc = None
+        self._stock_proc = None
 
     def _kill_music(self):
         if self._music_proc and self._music_proc.poll() is None:
@@ -64,19 +66,7 @@ class Jarvis:
             )
 
     def _open_welcome(self):
-        devnull = subprocess.DEVNULL
-        base = os.path.dirname(os.path.abspath(__file__))
-        if self._is_port_open(9091):
-            return True
-        try:
-            self._welcome_proc = subprocess.Popen(
-                [sys.executable, "welcome_dashboard.py", "--port", "9091"],
-                cwd=base, stdout=devnull, stderr=devnull,
-            )
-            return True
-        except Exception as e:
-            log_event(f"Welcome dashboard failed: {e}", "error")
-            return False
+        return self._start_dashboard("welcome_dashboard.py", 9091)
 
     def _close_welcome(self):
         if self._welcome_proc and self._welcome_proc.poll() is None:
@@ -86,10 +76,7 @@ class Jarvis:
             except subprocess.TimeoutExpired:
                 self._welcome_proc.kill()
         self._welcome_proc = None
-        subprocess.run(
-            ["sh", "-c", "lsof -ti tcp:9091 | xargs kill -9 2>/dev/null"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
+        self._free_port(9091)
 
     def wishMe(self) -> None:
         if self._open_welcome():
@@ -101,12 +88,117 @@ class Jarvis:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             return s.connect_ex(("127.0.0.1", port)) == 0
 
+    def _dashboard_ready(self, port: int, path: str = "/", timeout: float = 2.0) -> bool:
+        """True only when the port actually serves HTTP, not just accepts TCP.
+
+        A crashed/zombie listener still satisfies _is_port_open, which used to make
+        Jarvis report "already running" and open the browser onto a dead page.
+        """
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}{path}", timeout=timeout) as r:
+                return r.status == 200
+        except Exception:
+            return False
+
+    def _free_port(self, port: int) -> bool:
+        """Release a port without lsof (not installed on this machine).
+
+        Uses fuser, falling back to pkill on the dashboard script name so a stale
+        process can actually be cleared by voice. Returns True if the port is free.
+        """
+        subprocess.run(
+            ["fuser", "-k", "-n", "tcp", str(port)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        script = {9090: "stock_dashboard.py", 9091: "welcome_dashboard.py"}.get(port)
+        if script:
+            subprocess.run(
+                ["pkill", "-f", script],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+        for _ in range(30):
+            if not self._is_port_open(port):
+                return True
+            time.sleep(0.1)
+        log_event(f"Port {port} still busy after kill attempts", "error")
+        return False
+
+    def _start_dashboard(self, script: str, port: int, wait: float = 60.0) -> bool:
+        """Start a dashboard server, log its output, and wait until it really serves.
+
+        stdout/stderr go to a log file instead of DEVNULL so crashes such as
+        "Address already in use" are visible instead of silently discarded.
+        """
+        base = os.path.dirname(os.path.abspath(__file__))
+        if self._dashboard_ready(port):
+            return True
+        self._free_port(port)
+        logfile = os.path.join(base, script.replace(".py", "") + ".server.log")
+        try:
+            handle = open(logfile, "ab")
+        except OSError as e:
+            log_event(f"Cannot open {logfile}: {e}", "error")
+            return False
+        try:
+            proc = subprocess.Popen(
+                [sys.executable, "-u", script, "--port", str(port)],
+                cwd=base, stdout=handle, stderr=subprocess.STDOUT,
+            )
+            if script == "welcome_dashboard.py":
+                self._welcome_proc = proc
+            else:
+                self._stock_proc = proc
+        except Exception as e:
+            log_event(f"Failed to launch {script}: {e}", "error")
+            return False
+        finally:
+            handle.close()
+
+        deadline = time.time() + wait
+        while time.time() < deadline:
+            if self._dashboard_ready(port, timeout=1.0):
+                return True
+            time.sleep(0.4)
+        log_event(
+            f"{script} did not become ready on :{port} within {wait:.0f}s (see {logfile})",
+            "error",
+        )
+        return False
+
+    def _open_stock_dashboard(self) -> bool:
+        """Launch the stock dashboard and only then open the browser."""
+        if self._start_dashboard("stock_dashboard.py", 9090):
+            webbrowser.open_new_tab("http://localhost:9090")
+            return True
+        log_event("Stock dashboard failed to start", "error")
+        speak("Could not start the stock dashboard, sir. Check stock_dashboard.server.log.")
+        return False
+
     def execute_query(self, query):
         stop_speech()
         for prefix in ["jarvis ", "jarvis", "jarvis's "]:
             if query.startswith(prefix):
                 query = query.removeprefix(prefix)
                 break
+        # Close commands must be handled before the topic branches below, since
+        # "close stock dashboard" also contains "stock" and "dashboard" and would
+        # otherwise be swallowed by the stock branch and reopen the dashboard.
+        if "close" in query or "shut" in query or "kill" in query or "stop" in query:
+            wants_welcome = "welcome" in query or "9091" in query
+            wants_stock = "stock" in query or "9090" in query or (
+                "dashboard" in query and not wants_welcome
+            )
+            if wants_stock:
+                speak("Shutting down the stock dashboard, sir.")
+                self._free_port(9090)
+                if wants_welcome:
+                    self._close_welcome()
+                return
+            if wants_welcome:
+                speak("Shutting down welcome dashboard, sir.")
+                self._close_welcome()
+                return
+
         # Handle hardcoded voice shortcuts first for speed
         if "time" in query:
             strTime = datetime.datetime.now().strftime("%H:%M:%S")
@@ -146,32 +238,22 @@ class Jarvis:
                     answer = query_with_news("stock market nifty sensex stocks")
                     speak(answer or "No market news available, sir.")
             elif "dashboard" in query or "open" in query or "launch" in query:
-                devnull = subprocess.DEVNULL
-                if self._is_port_open(9090):
-                    speak("Stock dashboard is already running.")
-                else:
-                    subprocess.Popen(
-                        [sys.executable, "stock_dashboard.py"],
-                        cwd=os.path.dirname(__file__),
-                        stdout=devnull, stderr=devnull,
-                    )
+                if self._dashboard_ready(9090):
+                    speak("Stock dashboard is already running, sir.")
+                    webbrowser.open_new_tab("http://localhost:9090")
+                elif self._open_stock_dashboard():
                     speak("Opening stock dashboard.")
-                webbrowser.open_new_tab("http://localhost:9090")
             elif "backtest" in query or "strategy" in query:
                 ticker = tickers[0].upper() if tickers else "AAPL"
                 from backtest_tools import run as backtest, format_result
                 result = backtest(ticker=ticker, strategy="ma_crossover", start="6mo")
                 speak(f"Backtest for {ticker}: {result.total_return_pct}% return, {result.num_trades} trades, {result.win_rate}% win rate.")
             else:
-                devnull = subprocess.DEVNULL
-                if not self._is_port_open(9090):
-                    subprocess.Popen(
-                        [sys.executable, "stock_dashboard.py"],
-                        cwd=os.path.dirname(__file__),
-                        stdout=devnull, stderr=devnull,
-                    )
-                webbrowser.open_new_tab("http://localhost:9090")
-                speak("Opening stock dashboard.")
+                if self._dashboard_ready(9090):
+                    speak("Stock dashboard is already running, sir.")
+                    webbrowser.open_new_tab("http://localhost:9090")
+                elif self._open_stock_dashboard():
+                    speak("Opening stock dashboard.")
         elif ("news" in query or "finance" in query) and "dashboard" not in query:
             topic = query
             for kw in [
@@ -346,14 +428,10 @@ class Jarvis:
                 )
                 opened.append("YouTube upload")
 
-            if self._is_port_open(9090):
+            if self._dashboard_ready(9090):
                 speak("Stock dashboard is already running.")
-            else:
-                subprocess.Popen(
-                    [sys.executable, "stock_dashboard.py"],
-                    cwd=os.path.dirname(__file__),
-                    stdout=devnull, stderr=devnull,
-                )
+                opened.append("stock dashboard")
+            elif self._start_dashboard("stock_dashboard.py", 9090):
                 opened.append("stock dashboard")
 
             if self._open_welcome():
@@ -392,31 +470,19 @@ class Jarvis:
         elif "close" in query and ("upload" in query or "server" in query or "youtube" in query):
             speak("Shutting down the upload server, sir.")
             subprocess.run(
-                ["sh", "-c", "lsof -ti tcp:3000 | xargs kill -9 2>/dev/null"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        elif "close" in query and ("stock" in query or "dashboard" in query):
-            speak("Shutting down the stock dashboard, sir.")
-            subprocess.run(
-                ["sh", "-c", "lsof -ti tcp:9090 | xargs kill -9 2>/dev/null"],
+                ["fuser", "-k", "-n", "tcp", "3000"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
         elif "close" in query and ("all" in query or "everything" in query or "app" in query):
             speak("Closing all servers, sir.")
-            subprocess.run(
-                ["sh", "-c", "lsof -ti tcp:3000 | xargs kill -9 2>/dev/null"],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            )
-            subprocess.run(
-                ["sh", "-c", "lsof -ti tcp:9090 | xargs kill -9 2>/dev/null"],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            )
-            subprocess.run(
-                ["sh", "-c", "lsof -ti tcp:9091 | xargs kill -9 2>/dev/null"],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            )
+            for port in (3000, 9090, 9091):
+                subprocess.run(
+                    ["fuser", "-k", "-n", "tcp", str(port)],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+            self._free_port(9090)
+            self._free_port(9091)
         elif any(
             kw in query
             for kw in [
@@ -554,7 +620,7 @@ class Jarvis:
             return "Search failed, sir."
 
     def _cleanup(self):
-        for attr in ("_server_proc", "_welcome_proc"):
+        for attr in ("_stock_proc", "_welcome_proc"):
             proc = getattr(self, attr, None)
             if proc and proc.poll() is None:
                 proc.terminate()

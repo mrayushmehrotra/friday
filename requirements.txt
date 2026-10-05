@@ -14,4 +14,7 @@ langchain-ollama>=0.2.0
 langchain-core>=0.3.0
 yfinance
 gs-quant
+pandas
+vaderSentiment
+faster-whisper
 
