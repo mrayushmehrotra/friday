@@ -1405,7 +1405,7 @@
           const sl = document.getElementById("stop-loss").value.trim();
           const ts = document.getElementById("trailing-stop").value.trim();
           const risk = document.getElementById("risk-pct").value.trim();
-          const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
+          const apiKey = getIndmoneyKey();
           if (!ticker) return;
           const c = document.getElementById("backtest-result");
           c.innerHTML = '<div class="loading">Running backtest...</div>';
@@ -1519,7 +1519,7 @@
           const sl = document.getElementById("stop-loss").value.trim();
           const ts = document.getElementById("trailing-stop").value.trim();
           const risk = document.getElementById("risk-pct").value.trim();
-          const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
+          const apiKey = getIndmoneyKey();
           if (!ticker) return;
 
           const stratSel = document.getElementById("strategy-select");
@@ -1651,7 +1651,7 @@
           const interval =
             document.getElementById("compare-interval").value || "1d";
           const risk = document.getElementById("compare-risk").value.trim();
-          const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
+          const apiKey = getIndmoneyKey();
           if (!ticker) return;
           const c = document.getElementById("compare-result");
           c.innerHTML = '<div class="loading">Comparing ICT strategies...</div>';
@@ -1779,13 +1779,14 @@
         const rawTicker = (inp.value || "").trim();
         if (!rawTicker) return;
         const ticker = resolveInput(rawTicker);
-        const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
+        const apiKey = getIndmoneyKey();
         const c = document.getElementById("swing-result");
         const clearBtn = document.getElementById("swing-clear-btn");
         if (clearBtn) clearBtn.style.display = "inline-block";
 
         const label = _currentSwingCheck === "ema_range" ? "4h 9/20 EMA alignment" : "Minervini VCP contraction + Vol Divergence + SMC";
-        c.innerHTML = `<div class="loading">Deep analyzing ${ticker} for ${label}...</div>`;
+        const routeLabel = apiKey ? "⚡ INDmoney API" : "🌐 Yahoo Finance";
+        c.innerHTML = `<div class="loading">Deep analyzing ${ticker} via ${routeLabel} for ${label}...</div>`;
 
         try {
           let url = API + `/api/stock-of-day?mode=swing&check=${_currentSwingCheck}&ticker=${encodeURIComponent(ticker)}`;
@@ -1840,12 +1841,16 @@
                   ? "this candle"
                   : p.bars_since_cross + " bars ago";
             const cc = p.change_pct > 0 ? "positive" : "negative";
+            const srcPill = (p.data_source === "INDstocks API" || p.data_source === "INDmoney API")
+              ? `<span class="deal-pill" style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.35); font-weight:600;">⚡ INDmoney</span>`
+              : `<span class="deal-pill" style="background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid rgba(148,163,184,0.25); font-weight:500;">🌐 Yahoo</span>`;
             return (
               `<span class="positive">EMA9 ${p.ema9} &gt; EMA20 ${p.ema20}</span>` +
               `<span>Gap ${p.ema_gap_pct}%</span>` +
               `<span>Cross ${crossAge}</span>` +
               `<span>₹${p.price}</span>` +
               `<span class="${cc}">${p.change_pct}%</span>` +
+              `${srcPill}` +
               `<button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem; margin-left:8px;" onclick="runSupertrendBacktest('${p.ticker}', '4h')">⚡ Super Trend</button>` +
               `<button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem; margin-left:4px;" onclick="switchTab('quote', '${p.ticker}')">Quote</button>`
             );
@@ -1884,6 +1889,9 @@
                 <span style="font-size:1.25rem; font-weight:700; letter-spacing:0.5px;">${p.ticker}</span>
                 <span class="badge" style="${badgeStyle}">${p.status.replace(/_/g, " ")}</span>
                 ${p.vcp_type ? `<span class="deal-pill" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3); font-weight:600;">${p.vcp_type} Base</span>` : ""}
+                ${(p.data_source === "INDstocks API" || p.data_source === "INDmoney API")
+                  ? `<span class="deal-pill" style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.35); font-weight:600;">⚡ INDmoney API</span>`
+                  : `<span class="deal-pill" style="background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid rgba(148,163,184,0.25); font-weight:500;">🌐 Yahoo Finance</span>`}
               </div>
               <div style="margin-top:4px; font-size:0.85rem; color:var(--text-muted);">
                 ₹${Number(p.price).toFixed(2)}
@@ -1985,6 +1993,9 @@
           const scanned = res.scanned || 0;
           const total = res.total || "…";
           const pct = res.total ? Math.round((scanned / res.total) * 100) : 0;
+          const routeBadge = res.api_key_active
+            ? `<span class="deal-pill" style="background:rgba(34,197,94,0.2); color:#4ade80; border:1px solid rgba(34,197,94,0.4); font-weight:600;">⚡ INDmoney Fast Route</span>`
+            : `<span class="deal-pill" style="background:rgba(148,163,184,0.2); color:#94a3b8; border:1px solid rgba(148,163,184,0.3); font-weight:500;">🌐 Yahoo Finance Route</span>`;
           liveBarHtml = `
             <div id="swing-live-scan-bar" style="background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:10px 14px; margin-bottom:12px; box-shadow:0 0 12px rgba(56,189,248,0.1);">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
@@ -1992,6 +2003,7 @@
                   <span class="deal-pill" style="background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid rgba(56,189,248,0.4); font-weight:700;">
                     ⚡ LIVE SCAN IN PROGRESS
                   </span>
+                  ${routeBadge}
                   <span style="font-size:0.82rem; color:var(--text); font-weight:600;">
                     Scanned <strong>${scanned}/${total}</strong> stocks (${pct}%)
                   </span>
@@ -2073,7 +2085,8 @@
       async function loadSwing(force) {
         const c = document.getElementById("swing-result");
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-        const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
+        const apiKey = getIndmoneyKey();
+        const routeLabel = apiKey ? "⚡ INDmoney API Route" : "🌐 Yahoo Finance Route";
         const modeLabel = _currentSwingCheck === "combined"
           ? "Combined 9/20 EMA + Minervini VCP setups"
           : _currentSwingCheck === "vcp"
@@ -2105,6 +2118,11 @@
               c.innerHTML = `<div class="loading">
                 <div style="font-size:1rem; font-weight:600; color:var(--text); margin-bottom:6px;">
                   ⚡ Scanning ${modeLabel} in progress...
+                </div>
+                <div style="font-size:0.8rem; margin-bottom:8px;">
+                  <span class="deal-pill" style="background:${apiKey ? 'rgba(34,197,94,0.15)' : 'rgba(148,163,184,0.15)'}; color:${apiKey ? '#4ade80' : '#94a3b8'}; border:1px solid ${apiKey ? 'rgba(34,197,94,0.35)' : 'rgba(148,163,184,0.25)'}; font-weight:600;">
+                    ${routeLabel}
+                  </span>
                 </div>
                 <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">
                   Scanned <strong>${scanned}/${total}</strong> stocks (${pct}%) · Discovered: <strong>0</strong> candidates so far...

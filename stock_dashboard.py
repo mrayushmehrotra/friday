@@ -558,28 +558,29 @@ def _run_vcp_scan(mode="combined", api_key=None):
 def _start_swing_scan(check="combined", refresh=False, api_key=None):
     """Start a background universe scan for the requested check mode unless fresh results exist."""
     check = check if check in _SWING_STATES else "combined"
+    clean_key = (api_key or "").strip() or None
     with _SWING_LOCK:
         st = _SWING_STATES[check]
-        last_key = st.get("api_key")
-        key_changed = (api_key is not None and api_key.strip() != (last_key or "").strip())
+        last_key = (st.get("api_key") or "").strip() or None
+        key_changed = (clean_key != last_key)
         fresh = (
             st["results"] is not None
             and st["finished"]
             and (time.time() - st["finished"]) < _SWING_TTL
-            and not key_changed
         )
-        if (fresh and not refresh) or st["running"]:
-            return False
-        st.update(running=True, started=time.time(), error=None, api_key=api_key)
-        if refresh or key_changed:
-            st["results"] = []
-            st["breakouts"] = []
-            st["quiet_accumulations"] = []
+        if not key_changed:
+            if (fresh and not refresh) or st["running"]:
+                return False
+
+        st.update(running=True, started=time.time(), error=None, api_key=clean_key)
+        st["results"] = []
+        st["breakouts"] = []
+        st["quiet_accumulations"] = []
 
     if check == "ema_range":
         threading.Thread(target=_run_ema_scan, daemon=True).start()
     else:
-        threading.Thread(target=_run_vcp_scan, args=(check, api_key), daemon=True).start()
+        threading.Thread(target=_run_vcp_scan, args=(check, clean_key), daemon=True).start()
     return True
 
 
@@ -592,7 +593,7 @@ def _swing_picks(check="combined", refresh=False, api_key=None):
     age = (time.time() - st["finished"]) if st["finished"] else None
     return {
         "check": check,
-        "api_key_active": bool(st.get("api_key")),
+        "api_key_active": bool((api_key and api_key.strip()) or st.get("api_key")),
         "scanning": st["running"],
         "scanned": st["scanned"],
         "total": st["total"],
