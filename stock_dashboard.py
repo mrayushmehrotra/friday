@@ -3,7 +3,9 @@ import json
 import os
 import sys
 import threading
+import time
 from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServer
+from typing import Optional
 from urllib.parse import urlparse, parse_qs
 
 import numpy as np
@@ -39,8 +41,24 @@ def _fetch_headlines(max_items: int = 8) -> list[str]:
     except Exception:
         return []
 
+from dataclasses import asdict
 from stock_tools import get_stock_data, get_stock_news, _resolve_ticker
 from concurrent.futures import ThreadPoolExecutor, as_completed, wait
+
+try:
+    from vcp_scanner import (
+        DEFAULT_SWING_UNIVERSE,
+        VCPResult,
+        analyze_vcp_stock,
+        fetch_stock_candles,
+        scan_universe_vcp,
+    )
+except ImportError:
+    DEFAULT_SWING_UNIVERSE = None
+    VCPResult = None
+    analyze_vcp_stock = None
+    fetch_stock_candles = None
+    scan_universe_vcp = None
 
 import requests as _requests
 
@@ -75,6 +93,7 @@ from backtest_tools import (
     run as run_backtest,
     compare_strategies,
     stock_of_the_day,
+    clamp_start,
     STRATEGY_MAP,
     example_strategies,
     format_result_json,
@@ -83,6 +102,17 @@ from backtest_tools import (
 PORT = 9090
 
 INDIAN_INDICES = {"^NSEI", "^BSESN", "^NSEBANK"}
+
+
+def _movement_label(movement_min: Optional[float], movement_max: Optional[float]) -> str:
+    """Human-readable 1-month movement filter, for the UI header."""
+    if movement_min is not None and movement_max is not None:
+        return f"{movement_min:g}% to {movement_max:g}%"
+    if movement_min is not None:
+        return f"≥ {movement_min:g}%"
+    if movement_max is not None:
+        return f"≤ {movement_max:g}%"
+    return "any"
 
 
 def _safe(val, default=0.0):
@@ -278,62 +308,300 @@ def _midterm_picks(strategy, start, movement_min, movement_max, top_n=10):
     )
 
 
-def _scan_swing(t):
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Swing trading scan — Supports:
+# 1. Check 1: 9/20 EMA bullish cross on 4h timeframe (all NSE EQ symbols).
+# 2. Check 2: Mark Minervini VCP + Relative Volume Divergence + SMC filters.
+# 3. Combined Filter: Simultaneous qualification on BOTH 4h 9/20 EMA & VCP (₹2,000 allocation rule).
+#
+# Background thread caching ensures fast dashboard responses and live progress.
+# Single stocks can also be analyzed immediately via ticker=... parameter.
+# ---------------------------------------------------------------------------
+
+_SWING_TTL = 900  # seconds a completed scan is served before a refresh starts
+_SWING_LOCK = threading.Lock()
+_SWING_STATES: Dict[str, Dict[str, Any]] = {
+    "combined": {
+        "running": False,
+        "started": 0.0,
+        "finished": 0.0,
+        "scanned": 0,
+        "total": 0,
+        "results": None,
+        "breakouts": [],
+        "quiet_accumulations": [],
+        "error": None,
+    },
+    "vcp": {
+        "running": False,
+        "started": 0.0,
+        "finished": 0.0,
+        "scanned": 0,
+        "total": 0,
+        "results": None,
+        "breakouts": [],
+        "quiet_accumulations": [],
+        "error": None,
+    },
+    "ema_range": {
+        "running": False,
+        "started": 0.0,
+        "finished": 0.0,
+        "scanned": 0,
+        "total": 0,
+        "results": None,
+        "breakouts": [],
+        "quiet_accumulations": [],
+        "error": None,
+    },
+}
+_SWING_STATE = _SWING_STATES["ema_range"]  # legacy fallback alias
+
+
+def _flatten_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
+    if isinstance(df.columns, pd.MultiIndex):
+        df = df.copy()
+        df.columns = df.columns.get_level_values(0)
+    return df
+
+
+def _resample_4h(df: pd.DataFrame) -> pd.DataFrame:
+    """Collapse 1h OHLCV bars into 4h bars."""
+    df = _flatten_ohlcv(df)
+    agg = {k: v for k, v in {
+        "Open": "first", "High": "max", "Low": "min",
+        "Close": "last", "Volume": "sum",
+    }.items() if k in df.columns}
+    if "Close" not in agg or df.empty:
+        return pd.DataFrame()
+    return df.resample("4h").agg(agg).dropna(subset=["Close"])
+
+
+def _swing_signal_from_4h(df4h: pd.DataFrame, ticker: str):
+    """Return a pick when EMA9 > EMA20 on the latest 4h bar ("crossed and still above")."""
     try:
-        sd = get_stock_data(t + ".NS")
-        if not sd or sd.get("price") is None or sd["price"] < 20:
+        if df4h is None or df4h.empty or len(df4h) < 25:
             return None
-        price = sd["price"]
-        df = yf.download(t + ".NS", period="6mo", progress=False)
-        if df.empty or len(df) < 60:
+        close = df4h["Close"].astype(float)
+        last = float(close.iloc[-1])
+        if not np.isfinite(last):
             return None
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-        close = df["Close"]
-        avg_6mo = float(close.mean())
-        gain_pct = (price / avg_6mo - 1) * 100
 
-        high = df["High"]
-        low = df["Low"]
-        volume = df["Volume"]
-        tr = pd.concat([high - low, (high - close.shift()).abs(), (low - close.shift()).abs()], axis=1).max(axis=1)
-        atr = float(_safe(tr.rolling(14).mean().iloc[-1]))
-        atr_pct = (atr / float(close.iloc[-1])) * 100 if float(close.iloc[-1]) > 0 else 0
+        ema9 = close.ewm(span=9, adjust=False).mean()
+        ema20 = close.ewm(span=20, adjust=False).mean()
+        e9 = float(ema9.iloc[-1])
+        e20 = float(ema20.iloc[-1])
+        if not (np.isfinite(e9) and np.isfinite(e20)) or e20 == 0:
+            return None
+        if not (e9 > e20):  # bullish alignment required
+            return None
 
-        vol_ratio = float(volume.iloc[-1]) / float(_safe(volume.tail(20).mean(), 1))
+        diff = ema9 - ema20
+        cross_idx = None
+        for i in range(len(diff) - 1, 0, -1):
+            if float(diff.iloc[i]) > 0 and float(diff.iloc[i - 1]) <= 0:
+                cross_idx = i
+                break
+        bars_since = (len(diff) - 1 - cross_idx) if cross_idx is not None else None
+        cross_date = ""
+        if cross_idx is not None:
+            try:
+                cross_date = df4h.index[cross_idx].strftime("%Y-%m-%d")
+            except Exception:
+                cross_date = ""
 
-        delta = close.diff()
-        gain = delta.where(delta > 0, 0).rolling(14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
-        rs = gain / loss
-        rsi_series = 100 - (100 / (1 + rs))
-        current_rsi = float(rsi_series.iloc[-1]) if not pd.isna(rsi_series.iloc[-1]) else 50
+        gap_pct = (e9 / e20 - 1) * 100
+        prev = float(close.iloc[-2]) if len(close) >= 2 else last
+        change_pct = ((last / prev - 1) * 100) if prev else 0.0
 
-        dist_from_ideal = abs(gain_pct - 35)
-        swing_score = max(0, 100 - dist_from_ideal * 2.5)
-        vol_score = _safe(min(vol_ratio / 2, 1)) * 10
-        atr_bonus = _safe(min(atr_pct / 3, 1)) * 10
-        rsi_ok = 10 if 30 <= current_rsi <= 80 else 0
-
-        score = round(swing_score + vol_score + atr_bonus + rsi_ok, 1)
+        recency = 20.0 if bars_since is None else max(0.0, 60.0 - bars_since * 2.0)
+        sep_score = min(abs(gap_pct) * 20.0, 40.0)
+        score = round(recency + sep_score, 1)
 
         return {
-            "ticker": t,
-            "price": round(price, 2),
-            "avg_6mo": round(avg_6mo, 2),
-            "gain_pct": round(gain_pct, 2),
-            "atr_pct": round(atr_pct, 2),
-            "rsi": round(current_rsi, 1),
-            "vol_ratio": round(vol_ratio, 2),
-            "score": score if not (isinstance(score, float) and np.isnan(score)) else 0,
-            "change_pct": _safe(sd.get("change_pct")),
+            "ticker": ticker.replace(".NS", "").replace(".BO", ""),
+            "price": round(last, 2),
+            "ema9": round(e9, 2),
+            "ema20": round(e20, 2),
+            "ema_gap_pct": round(gap_pct, 2),
+            "bars_since_cross": bars_since,
+            "cross_date": cross_date,
+            "change_pct": round(change_pct, 2),
+            "score": score,
         }
     except Exception:
         return None
 
 
-def _swing_picks(top_n=15):
-    return _run_scan(_scan_swing, top_n, timeout_sec=120, tickers=NIFTY_50)
+def _run_ema_scan():
+    tickers = [s + ".NS" for s in ALL_EQ_SYMBOLS]
+    total = len(tickers)
+    chunk_size = 80
+    results = []
+    with _SWING_LOCK:
+        _SWING_STATES["ema_range"].update(
+            total=total,
+            scanned=0,
+            results=[],
+            breakouts=[],
+            quiet_accumulations=[],
+            error=None,
+            running=True,
+        )
+    try:
+        for i in range(0, total, chunk_size):
+            chunk = tickers[i:i + chunk_size]
+            try:
+                data = yf.download(
+                    chunk, period="6mo", interval="1h",
+                    group_by="ticker", threads=True, progress=False,
+                )
+            except Exception:
+                data = None
+            if data is not None and not data.empty:
+                for t in chunk:
+                    try:
+                        if isinstance(data.columns, pd.MultiIndex):
+                            if t not in data.columns.get_level_values(0):
+                                continue
+                            sub = data[t]
+                        else:
+                            sub = data
+                        pick = _swing_signal_from_4h(_resample_4h(sub), t)
+                        if pick:
+                            results.append(pick)
+                    except Exception:
+                        continue
+            with _SWING_LOCK:
+                _SWING_STATES["ema_range"]["scanned"] = min(i + chunk_size, total)
+                _SWING_STATES["ema_range"]["results"] = sorted(
+                    list(results),
+                    key=lambda p: (
+                        p["bars_since_cross"] if p["bars_since_cross"] is not None else 10 ** 6,
+                        -p["ema_gap_pct"],
+                    ),
+                )
+        with _SWING_LOCK:
+            _SWING_STATES["ema_range"].update(running=False, finished=time.time())
+    except Exception as e:
+        with _SWING_LOCK:
+            _SWING_STATES["ema_range"].update(error=str(e), running=False, finished=time.time())
+
+
+def _run_vcp_scan(mode="combined", api_key=None):
+    if scan_universe_vcp is None:
+        with _SWING_LOCK:
+            _SWING_STATES[mode].update(error="VCP scanner module not loaded", running=False, finished=time.time())
+        return
+
+    try:
+        from backtest_tools import NIFTY50
+        base_u = list(dict.fromkeys(NIFTY50 + (DEFAULT_SWING_UNIVERSE or [])))
+    except Exception:
+        base_u = DEFAULT_SWING_UNIVERSE or NIFTY_50[:50]
+    tickers = [s + ".NS" if not s.endswith(".NS") and not s.endswith(".BO") else s for s in base_u]
+    total = len(tickers)
+
+    # Initialize with empty list so partial results stream immediately to user
+    with _SWING_LOCK:
+        _SWING_STATES[mode].update(
+            total=total,
+            scanned=0,
+            results=[],
+            breakouts=[],
+            quiet_accumulations=[],
+            error=None,
+            running=True,
+        )
+
+    def _prog(scanned, tot):
+        with _SWING_LOCK:
+            _SWING_STATES[mode]["scanned"] = scanned
+
+    def _on_match(item):
+        with _SWING_LOCK:
+            st = _SWING_STATES[mode]
+            if st["results"] is None:
+                st["results"] = []
+            if not any(x.get("ticker") == item.get("ticker") for x in st["results"]):
+                st["results"].append(item)
+                st["results"].sort(key=lambda x: -x["score"])
+                if item.get("status") == "CONFIRMED_BREAKOUT":
+                    st["breakouts"].append(item)
+                    st["breakouts"].sort(key=lambda x: -x["score"])
+                elif item.get("status") in ("PRE_BREAKOUT_ACCUMULATION", "COILING_AT_RESISTANCE"):
+                    st["quiet_accumulations"].append(item)
+                    st["quiet_accumulations"].sort(key=lambda x: -x["score"])
+
+    try:
+        scan_res = scan_universe_vcp(
+            tickers=tickers,
+            mode=mode,
+            api_key=api_key,
+            progress_cb=_prog,
+            on_match_cb=_on_match,
+        )
+        with _SWING_LOCK:
+            _SWING_STATES[mode].update(
+                results=scan_res.get("picks", []),
+                breakouts=scan_res.get("breakouts", []),
+                quiet_accumulations=scan_res.get("quiet_accumulations", []),
+                running=False,
+                finished=time.time(),
+            )
+    except Exception as e:
+        with _SWING_LOCK:
+            _SWING_STATES[mode].update(error=str(e), running=False, finished=time.time())
+
+
+def _start_swing_scan(check="combined", refresh=False, api_key=None):
+    """Start a background universe scan for the requested check mode unless fresh results exist."""
+    check = check if check in _SWING_STATES else "combined"
+    with _SWING_LOCK:
+        st = _SWING_STATES[check]
+        last_key = st.get("api_key")
+        key_changed = (api_key is not None and api_key.strip() != (last_key or "").strip())
+        fresh = (
+            st["results"] is not None
+            and st["finished"]
+            and (time.time() - st["finished"]) < _SWING_TTL
+            and not key_changed
+        )
+        if (fresh and not refresh) or st["running"]:
+            return False
+        st.update(running=True, started=time.time(), error=None, api_key=api_key)
+        if refresh or key_changed:
+            st["results"] = []
+            st["breakouts"] = []
+            st["quiet_accumulations"] = []
+
+    if check == "ema_range":
+        threading.Thread(target=_run_ema_scan, daemon=True).start()
+    else:
+        threading.Thread(target=_run_vcp_scan, args=(check, api_key), daemon=True).start()
+    return True
+
+
+def _swing_picks(check="combined", refresh=False, api_key=None):
+    """Return the current swing state: cached picks, or live scan progress."""
+    check = check if check in _SWING_STATES else "combined"
+    _start_swing_scan(check=check, refresh=refresh, api_key=api_key)
+    with _SWING_LOCK:
+        st = dict(_SWING_STATES[check])
+    age = (time.time() - st["finished"]) if st["finished"] else None
+    return {
+        "check": check,
+        "api_key_active": bool(st.get("api_key")),
+        "scanning": st["running"],
+        "scanned": st["scanned"],
+        "total": st["total"],
+        "error": st["error"],
+        "picks": st["results"] or [],
+        "breakouts": st.get("breakouts", []),
+        "quiet_accumulations": st.get("quiet_accumulations", []),
+        "cache_age_sec": round(age) if age is not None else None,
+    }
 
 
 _NSE_SESSION = threading.local()
@@ -704,10 +972,13 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
     def _handle_backtest(self, params):
         ticker = self._get_param(params, "ticker", "").upper()
-        strategy = self._get_param(params, "strategy", "ma_crossover")
+        strategy = self._get_param(params, "strategy", "ict_fair_value_gap")
         start = self._get_param(params, "start", "1y")
+        interval = self._get_param(params, "interval", "1d")
         stop_loss = self._get_float(params, "stop_loss")
         trailing_stop = self._get_float(params, "trailing_stop")
+        risk = self._get_float(params, "risk")
+        api_key = self._get_param(params, "api_key", "").strip() or None
 
         if not ticker:
             self._send_json({"error": "Missing ticker parameter"}, 400)
@@ -717,40 +988,72 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 {"error": f"Unknown strategy. Choose: {', '.join(STRATEGY_MAP.keys())}"}, 400
             )
             return
+        start, interval, clamped = self._clamp_range(start, interval)
 
         try:
             resolved = _resolve_ticker(ticker)
             result = run_backtest(
                 ticker=resolved, strategy=strategy, start=start,
+                interval=interval,
                 stop_loss_pct=stop_loss, trailing_stop_pct=trailing_stop,
+                api_key=api_key, risk_pct=risk,
             )
             data = format_result_json(result)
             data["strategy"] = strategy
             data["ticker"] = ticker
             data["resolved"] = resolved
+            data["interval"] = interval
+            data["risk_pct"] = risk
+            if clamped:
+                data["range_note"] = (
+                    f"Range capped to {start} — {interval} bars are only "
+                    "retained for a short window by the data provider."
+                )
             self._send_json(data)
+        except ValueError as e:
+            self._send_json({"error": str(e)}, 400)
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
 
     def _handle_compare(self, params):
         ticker = self._get_param(params, "ticker", "").upper()
         start = self._get_param(params, "start", "1y")
+        interval = self._get_param(params, "interval", "1d")
         stop_loss = self._get_float(params, "stop_loss")
         trailing_stop = self._get_float(params, "trailing_stop")
+        risk = self._get_float(params, "risk")
+        api_key = self._get_param(params, "api_key", "").strip() or None
 
         if not ticker:
             self._send_json({"error": "Missing ticker parameter"}, 400)
             return
+        start, interval, clamped = self._clamp_range(start, interval)
 
         try:
             resolved = _resolve_ticker(ticker)
             results = compare_strategies(
-                ticker=resolved, start=start,
+                ticker=resolved, start=start, interval=interval,
                 stop_loss_pct=stop_loss, trailing_stop_pct=trailing_stop,
+                api_key=api_key, risk_pct=risk,
             )
-            self._send_json({"ticker": ticker, "resolved": resolved, "strategies": results})
+            payload = {"ticker": ticker, "resolved": resolved, "strategies": results}
+            if clamped:
+                payload["range_note"] = f"Range capped to {start} for {interval} bars."
+            self._send_json(payload)
+        except ValueError as e:
+            self._send_json({"error": str(e)}, 400)
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
+
+    @classmethod
+    def _clamp_range(cls, start: str, interval: str):
+        """Cap the history window for intraday intervals.
+
+        Returns ``(start, interval, clamped)`` — the flag drives a note in the
+        response so the user knows why the range is shorter than they asked.
+        """
+        start, clamped = clamp_start(start, interval)
+        return start, interval, clamped
 
     def _handle_stock_of_day(self, params):
         mode = self._get_param(params, "mode", "midterm")
@@ -760,20 +1063,71 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 picks = _intraday_picks()
                 self._send_json({"mode": "intraday", "picks": picks})
             elif mode == "swing":
-                picks = _swing_picks()
-                self._send_json({"mode": "swing", "picks": picks})
+                check = self._get_param(params, "check", "combined").strip().lower()
+                if check not in ("combined", "vcp", "ema_range"):
+                    check = "combined"
+                refresh = self._get_param(params, "refresh", "") in ("1", "true", "yes", "on")
+                api_key = self._get_param(params, "api_key", "").strip() or None
+                ticker = self._get_param(params, "ticker", "").strip()
+
+                if ticker:
+                    ticker_clean = ticker.upper().replace(".NS", "").replace(".BO", "")
+                    if check == "ema_range":
+                        try:
+                            df_4h = None
+                            src = "Yahoo Finance"
+                            if api_key and fetch_stock_candles is not None:
+                                df_4h, src = fetch_stock_candles(f"{ticker_clean}.NS", period="6mo", interval="4h", api_key=api_key)
+                            if df_4h is None:
+                                df_1h = yf.download(f"{ticker_clean}.NS", period="6mo", interval="1h", progress=False)
+                                df_4h = _resample_4h(df_1h)
+                                src = "Yahoo Finance"
+                            pick = _swing_signal_from_4h(df_4h, ticker_clean)
+                            if pick:
+                                pick["data_source"] = src
+                                self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "pick": pick})
+                            else:
+                                self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "error": f"{ticker_clean} is not currently in a bullish 4h 9/20 EMA alignment (EMA9 <= EMA20)."})
+                        except Exception as ex:
+                            self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "error": str(ex)})
+                        return
+
+                    if analyze_vcp_stock is not None:
+                        res = analyze_vcp_stock(ticker_clean, api_key=api_key)
+                        if res is not None:
+                            d = asdict(res)
+                            if check == "combined" and not (res.ema_bullish_4h and len(res.contractions) >= 2):
+                                d["combined_warning"] = "Stock has VCP structure but does not pass 4h 9/20 EMA bullish alignment simultaneously, or has fewer than 2 contractions."
+                            self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "pick": d})
+                            return
+                        else:
+                            self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "error": f"No valid VCP contraction setup detected for {ticker_clean} (requires >= 2 pullbacks with contracting depth & Stage 2 trend)."})
+                            return
+                    else:
+                        self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "error": "VCP scanner not loaded."})
+                        return
+
+                state = _swing_picks(check=check, refresh=refresh, api_key=api_key)
+                self._send_json({"mode": "swing", **state})
             elif mode == "options":
                 self._send_json({"mode": "options", "picks": [], "info": "Deprecated — use swing mode instead"})
             else:
-                strategy = self._get_param(params, "strategy", "sma_50_trend")
+                strategy = self._get_param(params, "strategy", "ict_fair_value_gap")
                 start = self._get_param(params, "start", "1y")
-                movement_min = self._get_float(params, "movement_min", 10)
-                movement_max = self._get_float(params, "movement_max", 30)
+                movement_min = self._get_float(params, "movement_min")
+                movement_max = self._get_float(params, "movement_max")
+                api_key = self._get_param(params, "api_key", "").strip() or None
                 top = stock_of_the_day(
                     start=start, strategy=strategy,
                     movement_min=movement_min, movement_max=movement_max,
+                    api_key=api_key,
                 )
-                self._send_json({"mode": "midterm", "strategy": strategy, "movement_filter": f"{movement_min}%-{movement_max}%", "picks": top})
+                self._send_json({
+                    "mode": "midterm",
+                    "strategy": strategy,
+                    "movement_filter": _movement_label(movement_min, movement_max),
+                    "picks": top,
+                })
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
 

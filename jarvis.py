@@ -246,7 +246,7 @@ class Jarvis:
             elif "backtest" in query or "strategy" in query:
                 ticker = tickers[0].upper() if tickers else "AAPL"
                 from backtest_tools import run as backtest, format_result
-                result = backtest(ticker=ticker, strategy="ma_crossover", start="6mo")
+                result = backtest(ticker=ticker, strategy="ict_fair_value_gap", start="6mo")
                 speak(f"Backtest for {ticker}: {result.total_return_pct}% return, {result.num_trades} trades, {result.win_rate}% win rate.")
             else:
                 if self._dashboard_ready(9090):

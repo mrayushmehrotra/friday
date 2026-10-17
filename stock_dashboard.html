@@ -662,25 +662,57 @@
       </div>
 
       <div class="tab-content" id="tab-backtest">
+        <!-- INDmoney API Integration Bar -->
+        <div class="api-key-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 280px;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: #38bdf8; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              INDmoney API Key:
+            </span>
+            <input
+              type="password"
+              id="indmoney-api-key"
+              placeholder="Paste INDstocks / INDmoney access token (per assets/indstocks-api-docs.md)"
+              style="flex: 1; padding: 6px 12px; font-size: 0.82rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; color: #f1f5f9; outline: none;"
+            />
+            <button
+              type="button"
+              id="toggle-ind-key"
+              class="btn btn-secondary"
+              style="padding: 6px 12px; font-size: 0.78rem; white-space: nowrap; height: auto;"
+            >Show</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span id="api-status-badge" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; background: rgba(148, 163, 184, 0.15); color: #94a3b8; font-weight: 500;">
+              No Token (Fallback to Yahoo Finance)
+            </span>
+          </div>
+        </div>
+
         <div class="search-box">
           <input
             type="text"
             id="backtest-input"
             placeholder="Ticker"
             value="RELIANCE"
-            style="flex: 0.5"
+            style="flex: 0.4"
           />
           <select
             class="strategy-select"
             id="strategy-select"
-            style="flex: 0.3"
+            style="flex: 0.6"
           ></select>
           <select id="backtest-period" style="width: 100px">
-            <option value="1d">1 Day</option>
-            <option value="1mo">1 Month</option>
+            <option value="3mo">3 Months</option>
             <option value="6mo">6 Months</option>
             <option value="1y" selected>1 Year</option>
+            <option value="2y">2 Years</option>
             <option value="5y">5 Years</option>
+          </select>
+          <select id="backtest-interval" style="width: 92px" title="Bar interval">
+            <option value="1d" selected>Daily</option>
+            <option value="4h">4-hour</option>
+            <option value="15m">15-min</option>
           </select>
           <input
             type="text"
@@ -696,7 +728,15 @@
             class="small"
             title="Trailing Stop %"
           />
+          <input
+            type="text"
+            id="risk-pct"
+            placeholder="Risk%"
+            class="small"
+            title="Risk per trade as % of equity, sized off the ICT stop"
+          />
           <button class="btn btn-primary" id="backtest-btn">Run</button>
+          <button class="btn btn-secondary" id="supertrend-dual-btn" title="Backtest Super Trend on both Daily & 4-Hour timeframes simultaneously" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border: none; color: #fff; font-weight: 600; white-space: nowrap;">⚡ Super Trend (1D &amp; 4H)</button>
           <button class="btn btn-success" id="compare-btn">Compare All</button>
         </div>
         <div id="backtest-result"></div>
@@ -711,12 +751,24 @@
             value="RELIANCE"
           />
           <select id="compare-period" style="width: 100px">
-            <option value="1d">1 Day</option>
-            <option value="1mo">1 Month</option>
+            <option value="3mo">3 Months</option>
             <option value="6mo">6 Months</option>
             <option value="1y" selected>1 Year</option>
+            <option value="2y">2 Years</option>
             <option value="5y">5 Years</option>
           </select>
+          <select id="compare-interval" style="width: 92px" title="Bar interval">
+            <option value="1d" selected>Daily</option>
+            <option value="4h">4-hour</option>
+            <option value="15m">15-min</option>
+          </select>
+          <input
+            type="text"
+            id="compare-risk"
+            placeholder="Risk%"
+            class="small"
+            title="Risk per trade as % of equity, sized off the ICT stop"
+          />
           <button class="btn btn-primary" id="compare-btn2">Compare</button>
         </div>
         <div id="compare-result"></div>
@@ -739,10 +791,11 @@
           <div class="search-box">
             <select id="daily-strategy" style="min-width: 200px"></select>
             <select id="daily-period" style="width: 100px">
-              <option value="1d">1 Day</option>
               <option value="1mo">1 Month</option>
+              <option value="3mo">3 Months</option>
               <option value="6mo">6 Months</option>
               <option value="1y" selected>1 Year</option>
+              <option value="2y">2 Years</option>
               <option value="5y">5 Years</option>
             </select>
             <span style="color: var(--text-muted); font-size: 0.85rem"
@@ -770,6 +823,89 @@
         </div>
 
         <div class="sub-content" id="sub-swing">
+          <!-- INDmoney API Integration Bar for Swing Trading -->
+          <div class="api-key-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 280px;">
+              <span style="font-size: 0.85rem; font-weight: 600; color: #38bdf8; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                INDmoney API Key:
+              </span>
+              <input
+                type="password"
+                id="swing-indmoney-api-key"
+                placeholder="Paste INDstocks / INDmoney access token for 5x faster data..."
+                style="flex: 1; padding: 6px 12px; font-size: 0.82rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; color: #f1f5f9; outline: none;"
+              />
+              <button
+                type="button"
+                id="toggle-swing-ind-key"
+                class="btn btn-secondary"
+                style="padding: 6px 12px; font-size: 0.78rem; white-space: nowrap; height: auto;"
+              >Show</button>
+              <button
+                type="button"
+                id="apply-swing-ind-key"
+                class="btn btn-primary"
+                style="padding: 6px 14px; font-size: 0.78rem; white-space: nowrap; height: auto;"
+              >⚡ Apply & Fast Rescan</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="swing-api-status-badge" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; font-weight: 600; background: rgba(148, 163, 184, 0.15); color: #94a3b8;">
+                ○ Yahoo Finance Route (No Token)
+              </span>
+            </div>
+          </div>
+
+          <!-- Check Selection Tabs -->
+          <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 16px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:0.85rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Strategy Check:</span>
+              <button class="btn btn-primary swing-check-btn active" data-check="combined" style="padding:6px 14px; font-size:0.82rem; border-radius:20px;">
+                ⚡ Combined Filter (9/20 EMA + VCP)
+              </button>
+              <button class="btn btn-secondary swing-check-btn" data-check="vcp" style="padding:6px 14px; font-size:0.82rem; border-radius:20px;">
+                🎯 Minervini VCP + Vol Divergence
+              </button>
+              <button class="btn btn-secondary swing-check-btn" data-check="ema_range" style="padding:6px 14px; font-size:0.82rem; border-radius:20px;">
+                📈 Check 1: 9-20 EMA Range (4h)
+              </button>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="btn btn-secondary" id="swing-refresh" style="padding:6px 14px; font-size:0.82rem;">↻ Rescan</button>
+            </div>
+          </div>
+
+          <!-- Quick Stock Lookup & Filter Bar -->
+          <div class="search-box" style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+            <input
+              type="text"
+              id="swing-ticker-input"
+              placeholder="Analyze specific stock (e.g. TRENT, RELIANCE, TCS)..."
+              style="flex:1; min-width:220px; font-size:0.85rem;"
+              onkeydown="if(event.key==='Enter')analyzeSwingStock()"
+            />
+            <button class="btn btn-primary" id="swing-analyze-btn" onclick="analyzeSwingStock()" style="padding:8px 16px; font-size:0.85rem;">
+              Analyze Stock
+            </button>
+            <button class="btn btn-secondary" id="swing-clear-btn" onclick="clearSwingStock()" style="padding:8px 12px; font-size:0.85rem; display:none;">
+              Show All
+            </button>
+
+            <!-- Status Filter Pills (For VCP & Combined) -->
+            <div id="swing-status-pills" style="display:flex; gap:6px; align-items:center; margin-left:auto;">
+              <span class="chip active" data-status="all" onclick="filterSwingStatus('all', this)" style="font-size:0.78rem; padding:4px 10px;">All Setups</span>
+              <span class="chip" data-status="breakouts" onclick="filterSwingStatus('breakouts', this)" style="font-size:0.78rem; padding:4px 10px; color:#10b981; border-color:rgba(168,85,247,0.3);">Confirmed Breakouts</span>
+              <span class="chip" data-status="accumulations" onclick="filterSwingStatus('accumulations', this)" style="font-size:0.78rem; padding:4px 10px; color:#a855f7; border-color:rgba(168,85,247,0.3);">Quiet Accumulation</span>
+            </div>
+          </div>
+
+          <!-- Strategy Rule Header / Banner -->
+          <div id="swing-info-banner" style="background:rgba(41,98,255,0.08); border:1px solid rgba(41,98,255,0.25); border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:0.82rem; line-height:1.45; color:var(--text);">
+            <strong style="color:var(--accent);">Combined Filter (₹2,000 Allocation Rule):</strong>
+            Selects stocks qualifying on <em>both</em> the 4h 9/20 EMA bullish alignment and Mark Minervini's VCP pattern simultaneously. Passing only one is not enough. Position size: ₹2,000 allocation per trade. Swing hold expectation: 3–5 days minimum.
+          </div>
+
+          <!-- Main Result Container -->
           <div id="swing-result">
             <div class="loading">Scanning for swing candidates...</div>
           </div>
@@ -1028,20 +1164,124 @@
         });
       });
 
+      // INDmoney API Key storage and status badge management across tabs
+      const indKeyInput = document.getElementById("indmoney-api-key");
+      const indBadge = document.getElementById("api-status-badge");
+      const toggleIndBtn = document.getElementById("toggle-ind-key");
+
+      const swingIndKeyInput = document.getElementById("swing-indmoney-api-key");
+      const swingIndBadge = document.getElementById("swing-api-status-badge");
+      const toggleSwingIndBtn = document.getElementById("toggle-swing-ind-key");
+      const applySwingIndBtn = document.getElementById("apply-swing-ind-key");
+
+      function getIndmoneyKey() {
+        const k1 = swingIndKeyInput?.value?.trim() || "";
+        const k2 = indKeyInput?.value?.trim() || "";
+        const stored = localStorage.getItem("indmoney_api_key") || "";
+        return (k1 || k2 || stored).trim();
+      }
+
+      function syncIndKeys(key) {
+        const val = (key || "").trim();
+        localStorage.setItem("indmoney_api_key", val);
+        if (indKeyInput && indKeyInput.value !== val) indKeyInput.value = val;
+        if (swingIndKeyInput && swingIndKeyInput.value !== val) swingIndKeyInput.value = val;
+        updateIndBadges(val);
+      }
+
+      function updateIndBadges(key) {
+        const hasKey = Boolean(key && key.trim());
+        if (indBadge) {
+          if (hasKey) {
+            indBadge.textContent = "Live INDstocks Token Connected";
+            indBadge.style.background = "rgba(34, 197, 94, 0.2)";
+            indBadge.style.color = "#4ade80";
+          } else {
+            indBadge.textContent = "No Token (Fallback to Yahoo Finance)";
+            indBadge.style.background = "rgba(148, 163, 184, 0.15)";
+            indBadge.style.color = "#94a3b8";
+          }
+        }
+        if (swingIndBadge) {
+          if (hasKey) {
+            swingIndBadge.textContent = "⚡ Fast Mode: INDmoney API Active";
+            swingIndBadge.style.background = "rgba(34, 197, 94, 0.2)";
+            swingIndBadge.style.color = "#4ade80";
+            swingIndBadge.style.border = "1px solid rgba(34, 197, 94, 0.35)";
+          } else {
+            swingIndBadge.textContent = "○ Yahoo Finance Route (No Token)";
+            swingIndBadge.style.background = "rgba(148, 163, 184, 0.15)";
+            swingIndBadge.style.color = "#94a3b8";
+            swingIndBadge.style.border = "1px solid rgba(148, 163, 184, 0.25)";
+          }
+        }
+      }
+
+      const initialKey = localStorage.getItem("indmoney_api_key") || "";
+      syncIndKeys(initialKey);
+
+      if (indKeyInput) {
+        indKeyInput.addEventListener("input", (e) => syncIndKeys(e.target.value));
+        if (toggleIndBtn) {
+          toggleIndBtn.addEventListener("click", () => {
+            indKeyInput.type = indKeyInput.type === "password" ? "text" : "password";
+            toggleIndBtn.textContent = indKeyInput.type === "password" ? "Show" : "Hide";
+          });
+        }
+      }
+
+      if (swingIndKeyInput) {
+        swingIndKeyInput.addEventListener("input", (e) => syncIndKeys(e.target.value));
+        if (toggleSwingIndBtn) {
+          toggleSwingIndBtn.addEventListener("click", () => {
+            swingIndKeyInput.type = swingIndKeyInput.type === "password" ? "text" : "password";
+            toggleSwingIndBtn.textContent = swingIndKeyInput.type === "password" ? "Show" : "Hide";
+          });
+        }
+        if (applySwingIndBtn) {
+          applySwingIndBtn.addEventListener("click", () => {
+            syncIndKeys(swingIndKeyInput.value);
+            loadSwing(true);
+          });
+        }
+      }
+
       fetch(API + "/api/strategies")
         .then((r) => r.json())
         .then((strategies) => {
           const render = (sel) => {
+            if (!sel) return;
             sel.innerHTML = "";
             Object.entries(strategies).forEach(([k, v]) => {
               const o = document.createElement("option");
               o.value = k;
-              o.textContent = k.replace(/_/g, " ") + " — " + v;
+              o.textContent = v;
               sel.appendChild(o);
             });
           };
           render(document.getElementById("strategy-select"));
           render(document.getElementById("daily-strategy"));
+
+          // the 18 SMMA setup is designed for 4-hour candles — switch the bar
+          // interval over when it is picked (and only switch back to daily if
+          // the user is still on 4h)
+          const stratSel = document.getElementById("strategy-select");
+          const ivSel = document.getElementById("backtest-interval");
+          const cmIvSel = document.getElementById("compare-interval");
+          stratSel.addEventListener("change", () => {
+            if (stratSel.value === "smma_18_breakout") {
+              ivSel.value = "4h";
+              cmIvSel.value = "4h";
+            } else if (stratSel.value === "super_trend") {
+              if (ivSel.value !== "1d" && ivSel.value !== "4h") {
+                ivSel.value = "1d";
+                cmIvSel.value = "1d";
+              }
+            } else if (ivSel.value === "4h") {
+              ivSel.value = "1d";
+              cmIvSel.value = "1d";
+            }
+          });
         });
 
       document
@@ -1135,6 +1375,23 @@
         document.getElementById("backtest-btn").click();
       }
 
+      function runSupertrendBacktest(ticker, interval = "1d") {
+        const inp = document.getElementById("backtest-input");
+        if (inp) inp.value = ticker.replace(".NS", "").replace(".BO", "");
+        const strat = document.getElementById("strategy-select");
+        if (strat) strat.value = "supertrend";
+        const iv = document.getElementById("backtest-interval");
+        if (iv) iv.value = interval;
+        tabs.forEach((t) => t.classList.remove("active"));
+        Object.values(contents).forEach((c) => c.classList.remove("active"));
+        const tab = document.querySelector('.tab[data-tab="backtest"]');
+        if (tab) tab.classList.add("active");
+        const cnt = document.getElementById("tab-backtest");
+        if (cnt) cnt.classList.add("active");
+        const btn = document.getElementById("backtest-btn");
+        if (btn) btn.click();
+      }
+
       document
         .getElementById("backtest-btn")
         .addEventListener("click", async () => {
@@ -1143,17 +1400,23 @@
           );
           const strategy = document.getElementById("strategy-select").value;
           const period = document.getElementById("backtest-period").value;
+          const interval =
+            document.getElementById("backtest-interval").value || "1d";
           const sl = document.getElementById("stop-loss").value.trim();
           const ts = document.getElementById("trailing-stop").value.trim();
+          const risk = document.getElementById("risk-pct").value.trim();
+          const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
           if (!ticker) return;
           const c = document.getElementById("backtest-result");
-          c.innerHTML = '<div class="loading">Running backtest</div>';
+          c.innerHTML = '<div class="loading">Running backtest...</div>';
           try {
             let url =
               API +
-              `/api/backtest?ticker=${ticker}&strategy=${strategy}&start=${period}`;
+              `/api/backtest?ticker=${ticker}&strategy=${strategy}&start=${period}&interval=${interval}`;
             if (sl) url += `&stop_loss=${sl}`;
             if (ts) url += `&trailing_stop=${ts}`;
+            if (risk) url += `&risk=${risk}`;
+            if (apiKey) url += `&api_key=${encodeURIComponent(apiKey)}`;
             const res = await apiFetch(url);
             if (res.error) {
               c.innerHTML = `<div class="error">${res.error}</div>`;
@@ -1164,8 +1427,10 @@
               ticker === "^NSEI" ||
               ticker === "^BSESN";
             const ccy = isInr ? "\u20B9" : "$";
-            const label = `${ticker} - ${strategy.replace(/_/g, " ")}${sl ? ` SL:${sl}%` : ""}${ts ? ` TS:${ts}%` : ""}`;
-            c.innerHTML = `<div class="card"><h3>${label}</h3>`;
+            const ivLabel = interval === "1d" ? "Daily" : interval;
+            const label = `${ticker} - ${strategy.replace(/_/g, " ")} [${ivLabel}]${sl ? ` SL:${sl}%` : ""}${ts ? ` TS:${ts}%` : ""}${risk ? ` Risk:${risk}%` : ""}`;
+            const sourceBadge = `<span style="font-size:0.75rem;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.15);color:#38bdf8;font-weight:600;border:1px solid rgba(56,189,248,0.3);">${res.data_source || "Yahoo Finance"}</span>`;
+            c.innerHTML = `<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;"><h3 style="margin:0">${label}</h3>${sourceBadge}</div>`;
             c.innerHTML += `<div class="result-grid">${[
               {
                 l: "Return",
@@ -1220,20 +1485,136 @@
               );
             }
 
+            if (res.range_note) {
+              c.innerHTML += `<div style="font-size:0.78rem;color:#fbbf24;margin-bottom:8px;">⚠ ${res.range_note}</div>`;
+            }
             if (res.trades && res.trades.length) {
-              c.innerHTML += `<h3 style="margin:12px 0 8px;font-size:0.9rem;color:#fff;">Trades (${res.trades.length})</h3><table><thead><tr><th>Entry</th><th>Exit</th><th>Price</th><th>PnL</th><th>Reason</th></tr></thead><tbody>`;
+              const stratTitle = strategy === "super_trend" ? "Super Trend" : (strategy.startsWith("ict_") ? "ICT" : "Strategy");
+              c.innerHTML += `<h3 style="margin:12px 0 8px;font-size:0.9rem;color:#fff;">${stratTitle} Trades (${res.trades.length})</h3><table><thead><tr><th>Entry</th><th>Exit</th><th>Side</th><th>Price</th><th>PnL</th><th>Reason</th></tr></thead><tbody>`;
               res.trades.slice(-15).forEach((t) => {
                 const pc = t.pnl >= 0 ? "positive" : "negative",
                   s = t.pnl >= 0 ? "+" : "",
                   ed = t.entry_date.slice(5),
                   ex = t.exit_date.slice(5),
                   ep = (+t.entry_price).toFixed(2),
-                  xp = (+t.exit_price).toFixed(2);
-                c.innerHTML += `<tr><td>${ed}</td><td>${ex}</td><td>₹${ep}→₹${xp}</td><td class="${pc}">${s}₹${fmt(t.pnl)} (${s}${fmt(t.pnl_pct)}%)</td><td style="white-space:normal;max-width:180px">${t.reason}</td></tr>`;
+                  xp = (+t.exit_price).toFixed(2),
+                  side = (t.side || "LONG").toUpperCase(),
+                  sc = side === "SHORT" ? "negative" : "positive";
+                c.innerHTML += `<tr><td>${ed}</td><td>${ex}</td><td class="${sc}" style="font-weight:600">${side}</td><td>₹${ep}→₹${xp}</td><td class="${pc}">${s}₹${fmt(t.pnl)} (${s}${fmt(t.pnl_pct)}%)</td><td style="white-space:normal;max-width:200px">${t.reason}</td></tr>`;
               });
               c.innerHTML += "</tbody></table>";
             }
             c.innerHTML += "</div>";
+          } catch (e) {
+            c.innerHTML = `<div class="error">${e.message}</div>`;
+          }
+        });
+
+      document
+        .getElementById("supertrend-dual-btn")
+        ?.addEventListener("click", async () => {
+          const rawTicker = document.getElementById("backtest-input").value;
+          const ticker = resolveInput(rawTicker);
+          const period = document.getElementById("backtest-period").value;
+          const sl = document.getElementById("stop-loss").value.trim();
+          const ts = document.getElementById("trailing-stop").value.trim();
+          const risk = document.getElementById("risk-pct").value.trim();
+          const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
+          if (!ticker) return;
+
+          const stratSel = document.getElementById("strategy-select");
+          if (stratSel) stratSel.value = "super_trend";
+
+          const c = document.getElementById("backtest-result");
+          c.innerHTML = '<div class="loading">Running Super Trend Backtest on Daily and 4-Hour timeframes...</div>';
+
+          try {
+            let baseDailyUrl = API + `/api/backtest?ticker=${ticker}&strategy=super_trend&start=${period}&interval=1d`;
+            let base4hUrl = API + `/api/backtest?ticker=${ticker}&strategy=super_trend&start=${period}&interval=4h`;
+            if (sl) { baseDailyUrl += `&stop_loss=${sl}`; base4hUrl += `&stop_loss=${sl}`; }
+            if (ts) { baseDailyUrl += `&trailing_stop=${ts}`; base4hUrl += `&trailing_stop=${ts}`; }
+            if (risk) { baseDailyUrl += `&risk=${risk}`; base4hUrl += `&risk=${risk}`; }
+            if (apiKey) {
+              baseDailyUrl += `&api_key=${encodeURIComponent(apiKey)}`;
+              base4hUrl += `&api_key=${encodeURIComponent(apiKey)}`;
+            }
+
+            const [resDaily, res4h] = await Promise.all([
+              apiFetch(baseDailyUrl),
+              apiFetch(base4hUrl),
+            ]);
+
+            if (resDaily.error && res4h.error) {
+              c.innerHTML = `<div class="error">Daily: ${resDaily.error}<br>4-Hour: ${res4h.error}</div>`;
+              return;
+            }
+
+            const renderCard = (res, ivTitle, eid) => {
+              if (res.error) {
+                return `<div class="card"><h3 style="color:#f87171;">Super Trend [${ivTitle}] — Error</h3><div class="error">${res.error}</div></div>`;
+              }
+              const sourceBadge = `<span style="font-size:0.75rem;padding:3px 10px;border-radius:12px;background:rgba(56,189,248,0.15);color:#38bdf8;font-weight:600;border:1px solid rgba(56,189,248,0.3);">${res.data_source || "Yahoo Finance"}</span>`;
+              let h = `<div class="card" style="margin-bottom:16px;">`;
+              h += `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">`;
+              h += `<h3 style="margin:0;display:flex;align-items:center;gap:8px;"><span>${ticker.replace('.NS', '')}</span> <span style="font-size:0.85rem;color:#818cf8;font-weight:500;">Super Trend [${ivTitle}]</span></h3>${sourceBadge}</div>`;
+
+              h += `<div class="result-grid">${[
+                { l: "Return", v: res.total_return_pct + "%", cls: res.total_return_pct >= 0 ? "positive" : "negative" },
+                { l: "Ann Return", v: res.annualized_return_pct + "%", cls: res.annualized_return_pct >= 0 ? "positive" : "negative" },
+                { l: "Max DD", v: res.max_drawdown_pct + "%", cls: "negative" },
+                { l: "Sharpe", v: res.sharpe_ratio, cls: res.sharpe_ratio >= 1 ? "positive" : "" },
+                { l: "Win Rate", v: res.win_rate + "%", cls: res.win_rate >= 50 ? "positive" : "negative" },
+                { l: "Trades", v: res.num_trades, cls: "" },
+                { l: "Profit Factor", v: res.profit_factor, cls: res.profit_factor >= 1.5 ? "positive" : "" },
+                { l: "Avg Win", v: res.avg_win_pct + "%", cls: "positive" },
+              ].map(m => `<div class="metric"><div class="label">${m.l}</div><div class="value ${m.cls}">${m.v}</div></div>`).join("")}</div>`;
+
+              if (res.equity_curve) {
+                h += `<div class="chart-container"><canvas id="${eid}"></canvas></div>`;
+              }
+              if (res.range_note) {
+                h += `<div style="font-size:0.78rem;color:#fbbf24;margin-top:8px;">⚠ ${res.range_note}</div>`;
+              }
+              if (res.trades && res.trades.length) {
+                h += `<h4 style="margin:14px 0 8px;font-size:0.85rem;color:#cbd5e1;">Super Trend Trades (${res.trades.length}) — Long Only (Equity)</h4><table><thead><tr><th>Entry</th><th>Exit</th><th>Side</th><th>Price</th><th>PnL</th><th>Signal Reason</th></tr></thead><tbody>`;
+                res.trades.slice(-10).forEach(t => {
+                  const pc = t.pnl >= 0 ? "positive" : "negative", s = t.pnl >= 0 ? "+" : "";
+                  const ed = t.entry_date.slice(5), ex = t.exit_date.slice(5);
+                  const ep = (+t.entry_price).toFixed(2), xp = (+t.exit_price).toFixed(2);
+                  h += `<tr><td>${ed}</td><td>${ex}</td><td class="positive" style="font-weight:600">LONG</td><td>₹${ep}→₹${xp}</td><td class="${pc}">${s}₹${fmt(t.pnl)} (${s}${fmt(t.pnl_pct)}%)</td><td style="white-space:normal;max-width:240px">${t.reason}</td></tr>`;
+                });
+                h += `</tbody></table>`;
+              }
+              h += `</div>`;
+              return h;
+            };
+
+            const tNow = Date.now();
+            const eidDaily = "st_ec_d_" + tNow;
+            const eid4h = "st_ec_4h_" + tNow;
+
+            let fullHtml = `
+              <div style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+                <h3 style="margin:0 0 6px;color:#a5b4fc;font-size:1.05rem;display:flex;align-items:center;gap:8px;">
+                  ⚡ Super Trend Strategy — Dual Timeframe (Daily vs 4-Hour)
+                </h3>
+                <div style="font-size:0.82rem;color:#94a3b8;line-height:1.4;">
+                  Testing <strong style="color:#f1f5f9">${ticker.replace('.NS', '')}</strong> equity stock with INDmoney / INDstocks integration.
+                  Rules: <span style="color:#4ade80;font-weight:600;">BUY</span> when Super Trend flips positive &bull; <span style="color:#f87171;font-weight:600;">SELL</span> when Super Trend flips negative. Long-only delivery execution.
+                </div>
+              </div>
+            `;
+
+            fullHtml += renderCard(resDaily, "Daily", eidDaily);
+            fullHtml += renderCard(res4h, "4-Hour", eid4h);
+            c.innerHTML = fullHtml;
+
+            if (resDaily.equity_curve) {
+              setTimeout(() => drawChart(eidDaily, resDaily.equity_curve, "#10b981", "Daily Super Trend Equity"), 60);
+            }
+            if (res4h.equity_curve) {
+              setTimeout(() => drawChart(eid4h, res4h.equity_curve, "#8b5cf6", "4-Hour Super Trend Equity"), 60);
+            }
           } catch (e) {
             c.innerHTML = `<div class="error">${e.message}</div>`;
           }
@@ -1247,6 +1628,10 @@
         document.getElementById("compare-input").value = ticker;
         document.getElementById("compare-period").value =
           document.getElementById("backtest-period").value;
+        document.getElementById("compare-interval").value =
+          document.getElementById("backtest-interval").value;
+        document.getElementById("compare-risk").value =
+          document.getElementById("risk-pct").value;
         tabs.forEach((t) => t.classList.remove("active"));
         Object.values(contents).forEach((c) => c.classList.remove("active"));
         document
@@ -1263,19 +1648,30 @@
             document.getElementById("compare-input").value,
           );
           const period = document.getElementById("compare-period").value;
+          const interval =
+            document.getElementById("compare-interval").value || "1d";
+          const risk = document.getElementById("compare-risk").value.trim();
+          const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
           if (!ticker) return;
           const c = document.getElementById("compare-result");
-          c.innerHTML = '<div class="loading">Comparing</div>';
+          c.innerHTML = '<div class="loading">Comparing ICT strategies...</div>';
           try {
-            const res = await apiFetch(
-              API + `/api/compare?ticker=${ticker}&start=${period}`,
-            );
+            let url =
+              API +
+              `/api/compare?ticker=${ticker}&start=${period}&interval=${interval}`;
+            if (risk) url += `&risk=${risk}`;
+            if (apiKey) url += `&api_key=${encodeURIComponent(apiKey)}`;
+            const res = await apiFetch(url);
             if (res.error) {
               c.innerHTML = `<div class="error">${res.error}</div>`;
               return;
             }
             const s = res.strategies;
-            let html = `<div class="card"><h3>Strategy Comparison — ${ticker}</h3>`;
+            const ivLabel = interval === "1d" ? "Daily" : interval;
+            let html = `<div class="card"><h3>ICT Strategy Comparison — ${ticker} [${ivLabel}]</h3>`;
+            if (res.range_note) {
+              html += `<div style="font-size:0.78rem;color:#fbbf24;margin-bottom:8px;">⚠ ${res.range_note}</div>`;
+            }
             html +=
               "<table><thead><tr><th>Strategy</th><th>Return</th><th>Sharpe</th><th>Win%</th><th>Trades</th><th>PF</th><th>Max DD</th></tr></thead><tbody>";
             Object.entries(s).forEach(([name, r]) => {
@@ -1340,20 +1736,406 @@
         }
       }
 
-      async function loadSwing() {
+      let _currentSwingCheck = "combined"; // "combined", "vcp", "ema_range"
+      let _currentSwingStatusFilter = "all"; // "all", "breakouts", "accumulations"
+      let _lastSwingData = null;
+
+      document.querySelectorAll(".swing-check-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".swing-check-btn").forEach((b) => {
+            b.classList.remove("btn-primary", "active");
+            b.classList.add("btn-secondary");
+          });
+          btn.classList.remove("btn-secondary");
+          btn.classList.add("btn-primary", "active");
+          _currentSwingCheck = btn.dataset.check;
+
+          const banner = document.getElementById("swing-info-banner");
+          const statusPills = document.getElementById("swing-status-pills");
+          if (_currentSwingCheck === "combined") {
+            banner.innerHTML = `<strong style="color:var(--accent);">Combined Filter (₹2,000 Allocation Rule):</strong> Selects stocks qualifying on <em>both</em> the 4h 9/20 EMA bullish alignment and Mark Minervini's VCP pattern simultaneously. Passing only one is not enough. Position size: ₹2,000 allocation per trade. Swing hold expectation: 3–5 days minimum.`;
+            if (statusPills) statusPills.style.display = "flex";
+          } else if (_currentSwingCheck === "vcp") {
+            banner.innerHTML = `<strong style="color:var(--accent);">Mark Minervini VCP + Vol Divergence + SMC:</strong> Detects contracting pullbacks (D1 &gt; D2 &gt; D3, tightness &le; 12%), supply dry-up, late-stage relative volume divergence (compression score), and smart money order block confluence.`;
+            if (statusPills) statusPills.style.display = "flex";
+          } else {
+            banner.innerHTML = `<strong style="color:var(--accent);">Check 1: 9-20 EMA Range (4h):</strong> Scans all NSE equity stocks for 9/20 EMA bullish crosses (crossed and still above) on 4-hour timeframe.`;
+            if (statusPills) statusPills.style.display = "none";
+          }
+
+          loadSwing();
+        });
+      });
+
+      function filterSwingStatus(status, el) {
+        _currentSwingStatusFilter = status;
+        document.querySelectorAll("#swing-status-pills .chip").forEach((c) => c.classList.remove("active"));
+        if (el) el.classList.add("active");
+        renderCurrentSwingResults();
+      }
+
+      async function analyzeSwingStock() {
+        const inp = document.getElementById("swing-ticker-input");
+        const rawTicker = (inp.value || "").trim();
+        if (!rawTicker) return;
+        const ticker = resolveInput(rawTicker);
+        const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
         const c = document.getElementById("swing-result");
-        c.innerHTML = '<div class="loading">Scanning for swing candidates...</div>';
+        const clearBtn = document.getElementById("swing-clear-btn");
+        if (clearBtn) clearBtn.style.display = "inline-block";
+
+        const label = _currentSwingCheck === "ema_range" ? "4h 9/20 EMA alignment" : "Minervini VCP contraction + Vol Divergence + SMC";
+        c.innerHTML = `<div class="loading">Deep analyzing ${ticker} for ${label}...</div>`;
+
         try {
-          const res = await apiFetch(API + "/api/stock-of-day?mode=swing");
-          if (res.error) { c.innerHTML = `<div class="error">${res.error}</div>`; return; }
-          renderPicks(c, "Swing Trading — Stocks 30-40% above 6mo Avg", res.picks, (p) =>
-            `<span class="${p.gain_pct>0?'positive':'negative'}">+${p.gain_pct}% vs 6mo avg</span>` +
-            `<span>ATR ${p.atr_pct}%</span>` +
-            `<span>RSI ${p.rsi}</span>` +
-            `<span>Vol ${p.vol_ratio.toFixed(1)}x</span>` +
-            `<span class="${p.change_pct>0?'positive':'negative'}">${p.change_pct}%</span>`
+          let url = API + `/api/stock-of-day?mode=swing&check=${_currentSwingCheck}&ticker=${encodeURIComponent(ticker)}`;
+          if (apiKey) url += `&api_key=${encodeURIComponent(apiKey)}`;
+          const res = await apiFetch(url);
+          if (res.error) {
+            c.innerHTML = `<div class="card"><div class="error">${res.error}</div></div>`;
+            return;
+          }
+          if (res.pick) {
+            if (_currentSwingCheck === "ema_range") {
+              renderEmaPicks(c, `Swing Analysis: ${ticker}`, [res.pick]);
+            } else {
+              let html = `<div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;">VCP Setup: ${ticker}</h3>
+                <span style="font-size:0.8rem; color:var(--text-muted);">Single Stock Deep Dive</span>
+              </div>`;
+              if (res.pick.combined_warning) {
+                html += `<div style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px 14px; margin-bottom:12px; font-size:0.82rem; color:#f59e0b;">
+                  ⚠️ <strong>Combined Filter Notice:</strong> ${res.pick.combined_warning}
+                </div>`;
+              }
+              html += renderVCPCard(res.pick, 1);
+              c.innerHTML = html;
+            }
+          } else {
+            c.innerHTML = `<div class="card">No setup details returned for ${ticker}.</div>`;
+          }
+        } catch (e) {
+          c.innerHTML = `<div class="error">${e.message}</div>`;
+        }
+      }
+
+      function clearSwingStock() {
+        const inp = document.getElementById("swing-ticker-input");
+        if (inp) inp.value = "";
+        const clearBtn = document.getElementById("swing-clear-btn");
+        if (clearBtn) clearBtn.style.display = "none";
+        renderCurrentSwingResults();
+      }
+
+      function renderEmaPicks(container, title, picks) {
+        renderPicks(
+          container,
+          title,
+          picks,
+          (p) => {
+            const crossAge =
+              p.bars_since_cross === null || p.bars_since_cross === undefined
+                ? "≥6mo ago"
+                : p.bars_since_cross === 0
+                  ? "this candle"
+                  : p.bars_since_cross + " bars ago";
+            const cc = p.change_pct > 0 ? "positive" : "negative";
+            return (
+              `<span class="positive">EMA9 ${p.ema9} &gt; EMA20 ${p.ema20}</span>` +
+              `<span>Gap ${p.ema_gap_pct}%</span>` +
+              `<span>Cross ${crossAge}</span>` +
+              `<span>₹${p.price}</span>` +
+              `<span class="${cc}">${p.change_pct}%</span>` +
+              `<button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem; margin-left:8px;" onclick="runSupertrendBacktest('${p.ticker}', '4h')">⚡ Super Trend</button>` +
+              `<button class="btn btn-secondary" style="padding:2px 8px; font-size:0.75rem; margin-left:4px;" onclick="switchTab('quote', '${p.ticker}')">Quote</button>`
+            );
+          }
+        );
+      }
+
+      function renderVCPCard(p, rank) {
+        let badgeStyle = "background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);";
+        let borderColor = "#38bdf8";
+        if (p.status === "CONFIRMED_BREAKOUT") {
+          badgeStyle = "background:rgba(16,185,129,0.15); color:#10b981; border:1px solid rgba(16,185,129,0.3); box-shadow:0 0 10px rgba(16,185,129,0.25);";
+          borderColor = "#10b981";
+        } else if (p.status === "PRE_BREAKOUT_ACCUMULATION") {
+          badgeStyle = "background:rgba(168,85,247,0.15); color:#a855f7; border:1px solid rgba(168,85,247,0.3); box-shadow:0 0 10px rgba(168,85,247,0.25);";
+          borderColor = "#a855f7";
+        } else if (p.status === "COILING_AT_RESISTANCE") {
+          badgeStyle = "background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3);";
+          borderColor = "#f59e0b";
+        }
+
+        const scoreColor = p.score >= 75 ? "#10b981" : p.score >= 60 ? "#38bdf8" : "#f59e0b";
+        const contractionsStr = p.contractions && p.contractions.length
+          ? p.contractions.map((d) => "-" + Number(d).toFixed(1) + "%").join(" → ")
+          : "N/A";
+        const shares = p.suggested_qty || Math.max(1, Math.floor(2000 / (p.price || 1)));
+        const totalPosCost = (shares * p.price).toFixed(2);
+        const stopLoss = p.pivot_stop_loss ? Number(p.pivot_stop_loss).toFixed(2) : (p.price * 0.95).toFixed(2);
+        const targetPrice = p.target_price ? Number(p.target_price).toFixed(2) : (p.price * 1.08).toFixed(2);
+
+        return `<div class="card vcp-card" style="margin-bottom:12px; padding:16px; border:1px solid var(--border); border-left:4px solid ${borderColor};">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:1.1rem; font-weight:700; color:var(--accent);">#${rank}</span>
+                <span style="font-size:1.25rem; font-weight:700; letter-spacing:0.5px;">${p.ticker}</span>
+                <span class="badge" style="${badgeStyle}">${p.status.replace(/_/g, " ")}</span>
+                ${p.vcp_type ? `<span class="deal-pill" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3); font-weight:600;">${p.vcp_type} Base</span>` : ""}
+              </div>
+              <div style="margin-top:4px; font-size:0.85rem; color:var(--text-muted);">
+                ₹${Number(p.price).toFixed(2)}
+                <span class="${p.change_pct >= 0 ? "positive" : "negative"}" style="font-weight:600; margin-left:4px;">
+                  ${p.change_pct >= 0 ? "+" : ""}${p.change_pct}%
+                </span>
+                · Pivot Resistance: <strong style="color:var(--text);">₹${p.resistance ? Number(p.resistance).toFixed(2) : "-"}</strong>
+                (${p.dist_to_resistance_pct >= 0 ? "+" : ""}${p.dist_to_resistance_pct}% away)
+              </div>
+            </div>
+
+            <div style="text-align:right;">
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Setup Score</div>
+              <div style="font-size:1.3rem; font-weight:800; color:${scoreColor};">${p.score} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">/100</span></div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin-bottom:12px; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px 12px; font-size:0.82rem;">
+            <div>
+              <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">VCP Contraction Anatomy</div>
+              <div style="font-weight:600; color:var(--text); margin-top:2px;">${contractionsStr}</div>
+              <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Final Depth: <strong>${p.final_depth_pct ? Number(p.final_depth_pct).toFixed(1) + "%" : "-"}</strong></div>
+            </div>
+
+            <div>
+              <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Volume Dynamics</div>
+              <div style="font-weight:600; color:${p.rvol >= 1.5 ? "#10b981" : "var(--text)"}; margin-top:2px;">
+                RVOL: <strong>${p.rvol}x</strong> (20d SMA)
+              </div>
+              <div style="font-size:0.72rem; color:${p.vol_dry_up ? "#10b981" : "var(--text-muted)"}; margin-top:2px;">
+                ${p.vol_dry_up ? "✓ Supply Exhaustion (" + p.vol_reduction_pct + "% dry-up)" : "Supply Normal"}
+              </div>
+            </div>
+
+            <div>
+              <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Rolling Range & Trend</div>
+              <div style="font-weight:600; color:${p.rolling_range_pct <= 4 ? "#a855f7" : "var(--text)"}; margin-top:2px;">
+                10d Range: <strong>${p.rolling_range_pct ? Number(p.rolling_range_pct).toFixed(1) + "%" : "-"}</strong> ${p.rolling_range_pct <= 4 ? "(Ultra-Tight)" : ""}
+              </div>
+              <div style="font-size:0.72rem; color:${p.trend_template ? "#10b981" : "#f59e0b"}; margin-top:2px;">
+                ${p.trend_template ? "✓ Stage 2 (50 &gt; 200 SMA)" : "⚠️ Trend Template Alert"}
+              </div>
+            </div>
+
+            <div>
+              <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">4h 9/20 EMA Swing Check</div>
+              <div style="font-weight:600; color:${p.ema_bullish_4h ? "#10b981" : "#ef4444"}; margin-top:2px;">
+                ${p.ema_bullish_4h ? `✓ Bullish (${p.ema_gap_pct_4h ? "+" + p.ema_gap_pct_4h + "%" : "Aligned"})` : "✗ Bearish / Unaligned"}
+              </div>
+              <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">
+                ${p.bars_since_ema_cross_4h !== null && p.bars_since_ema_cross_4h !== undefined ? "Cross: " + p.bars_since_ema_cross_4h + " bars ago" : "EMA9 ₹" + (p.ema9_4h || "-") + " / EMA20 ₹" + (p.ema20_4h || "-")}
+              </div>
+            </div>
+          </div>
+
+          ${p.smc_notes ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+            <span style="font-weight:600; color:#38bdf8;">SMC Filter:</span> ${p.smc_notes}
+          </div>` : ""}
+
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.25); border-radius:6px; padding:8px 12px; font-size:0.8rem; margin-bottom:12px;">
+            <div>
+              <span style="font-weight:600; color:#38bdf8;">₹2,000 Allocation Plan:</span>
+              Buy <strong>${shares} share(s)</strong> @ ~₹${Number(p.price).toFixed(2)} (Total: ₹${totalPosCost})
+              · Stop Loss: <strong style="color:#ef4444;">₹${stopLoss}</strong>
+              · Target: <strong style="color:#10b981;">₹${targetPrice}</strong>
+            </div>
+            <div style="color:var(--text-muted); font-size:0.75rem; white-space:nowrap;">
+              Hold Expectation: <strong>${p.hold_expectation || "3-5 days minimum"}</strong>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="runSupertrendBacktest('${p.ticker}', '1d')" style="padding:5px 12px; font-size:0.78rem;">
+              ⚡ Backtest Super Trend (Daily)
+            </button>
+            <button class="btn btn-secondary" onclick="runSupertrendBacktest('${p.ticker}', '4h')" style="padding:5px 12px; font-size:0.78rem;">
+              ⚡ Backtest Super Trend (4h)
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('quote', '${p.ticker}')" style="padding:5px 12px; font-size:0.78rem;">
+              📊 Quote & Chart
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('news', '${p.ticker}')" style="padding:5px 12px; font-size:0.78rem;">
+              📰 News
+            </button>
+          </div>
+        </div>`;
+      }
+
+      function renderCurrentSwingResults() {
+        const c = document.getElementById("swing-result");
+        if (!_lastSwingData || !_lastSwingData.picks) {
+          c.innerHTML = '<div class="card">No swing candidates found.</div>';
+          return;
+        }
+
+        const res = _lastSwingData;
+        let liveBarHtml = "";
+        if (res.scanning) {
+          const scanned = res.scanned || 0;
+          const total = res.total || "…";
+          const pct = res.total ? Math.round((scanned / res.total) * 100) : 0;
+          liveBarHtml = `
+            <div id="swing-live-scan-bar" style="background:rgba(15,23,42,0.85); border:1px solid rgba(56,189,248,0.3); border-radius:8px; padding:10px 14px; margin-bottom:12px; box-shadow:0 0 12px rgba(56,189,248,0.1);">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span class="deal-pill" style="background:rgba(56,189,248,0.2); color:#38bdf8; border:1px solid rgba(56,189,248,0.4); font-weight:700;">
+                    ⚡ LIVE SCAN IN PROGRESS
+                  </span>
+                  <span style="font-size:0.82rem; color:var(--text); font-weight:600;">
+                    Scanned <strong>${scanned}/${total}</strong> stocks (${pct}%)
+                  </span>
+                  <span style="font-size:0.82rem; color:#10b981; font-weight:600;">
+                    · <strong>${res.picks ? res.picks.length : 0}</strong> qualified so far
+                  </span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">
+                  Streaming results in real-time as criteria pass...
+                </div>
+              </div>
+              <div style="width:100%; height:5px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
+                <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, #38bdf8, #10b981); transition:width 0.3s;"></div>
+              </div>
+            </div>`;
+        }
+
+        if (_currentSwingCheck === "ema_range") {
+          let html = liveBarHtml;
+          c.innerHTML = html;
+          renderEmaPicks(
+            c,
+            `Swing Trading — 9/20 EMA Bullish Cross (4h — crossed & still above · ${res.picks.length} qualified)`,
+            res.picks
           );
-        } catch (e) { c.innerHTML = `<div class="error">${e.message}</div>`; }
+          if (liveBarHtml && !c.querySelector("#swing-live-scan-bar")) {
+            c.insertAdjacentHTML("afterbegin", liveBarHtml);
+          }
+          return;
+        }
+
+        let list = res.picks;
+        if (_currentSwingStatusFilter === "breakouts") {
+          list = res.breakouts && res.breakouts.length ? res.breakouts : list.filter((p) => p.status === "CONFIRMED_BREAKOUT");
+        } else if (_currentSwingStatusFilter === "accumulations") {
+          list = res.quiet_accumulations && res.quiet_accumulations.length ? res.quiet_accumulations : list.filter((p) => p.status === "PRE_BREAKOUT_ACCUMULATION" || p.status === "COILING_AT_RESISTANCE");
+        }
+
+        const totalBreakouts = res.breakouts ? res.breakouts.length : res.picks.filter((p) => p.status === "CONFIRMED_BREAKOUT").length;
+        const totalAcc = res.quiet_accumulations ? res.quiet_accumulations.length : res.picks.filter((p) => p.status === "PRE_BREAKOUT_ACCUMULATION" || p.status === "COILING_AT_RESISTANCE").length;
+
+        let html = liveBarHtml;
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 16px;">
+          <div>
+            <h3 style="margin:0 0 4px 0; font-size:1.05rem;">
+              ${_currentSwingCheck === "combined" ? "⚡ Combined Swing Setups (9/20 EMA + VCP)" : "🎯 Mark Minervini VCP Watchlist"}
+            </h3>
+            <span style="font-size:0.8rem; color:var(--text-muted);">
+              ${list.length} showing of ${res.picks.length} qualified stocks (${res.scanned || res.total || 0} scanned)
+              ${res.cache_age_sec !== null && res.cache_age_sec !== undefined ? ` · cached ${Math.round(res.cache_age_sec / 60)}m ago` : ""}
+            </span>
+          </div>
+          <div style="display:flex; gap:12px; font-size:0.82rem; flex-wrap:wrap;">
+            <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:4px 10px; color:#10b981;">
+              <strong>${totalBreakouts}</strong> Breakouts Today
+            </div>
+            <div style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:6px; padding:4px 10px; color:#a855f7;">
+              <strong>${totalAcc}</strong> Quiet Accumulation
+            </div>
+            <div style="background:rgba(2,132,199,0.1); border:1px solid rgba(2,132,199,0.3); border-radius:6px; padding:4px 10px; color:#38bdf8;">
+              <strong>₹2,000</strong> Allocation
+            </div>
+          </div>
+        </div>`;
+
+        if (!list || !list.length) {
+          html += '<div class="card" style="padding:24px; text-align:center; color:var(--text-muted);">No stocks matching the selected filter. Try "All Setups" or click Rescan.</div>';
+          c.innerHTML = html;
+          return;
+        }
+
+        list.forEach((p, idx) => {
+          html += renderVCPCard(p, idx + 1);
+        });
+
+        c.innerHTML = html;
+      }
+
+      async function loadSwing(force) {
+        const c = document.getElementById("swing-result");
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        const apiKey = (document.getElementById("indmoney-api-key")?.value || "").trim();
+        const modeLabel = _currentSwingCheck === "combined"
+          ? "Combined 9/20 EMA + Minervini VCP setups"
+          : _currentSwingCheck === "vcp"
+            ? "Minervini VCP + Vol Divergence setups"
+            : "all stocks for 9/20 EMA bullish cross on 4h";
+
+        try {
+          for (let attempt = 0; attempt < 180; attempt++) {
+            let url = API + `/api/stock-of-day?mode=swing&check=${_currentSwingCheck}`;
+            if (force && attempt === 0) url += "&refresh=1";
+            if (apiKey) url += `&api_key=${encodeURIComponent(apiKey)}`;
+
+            const res = await apiFetch(url);
+            _lastSwingData = res;
+
+            if (res.error) {
+              c.innerHTML = `<div class="error">${res.error}</div>`;
+              return;
+            }
+
+            // Progressive real-time rendering:
+            // If picks exist, render them immediately so user sees them on the fly!
+            if (res.picks && res.picks.length > 0) {
+              renderCurrentSwingResults();
+            } else if (res.scanning) {
+              const scanned = res.scanned || 0;
+              const total = res.total || "…";
+              const pct = res.total ? Math.round((scanned / res.total) * 100) : 0;
+              c.innerHTML = `<div class="loading">
+                <div style="font-size:1rem; font-weight:600; color:var(--text); margin-bottom:6px;">
+                  ⚡ Scanning ${modeLabel} in progress...
+                </div>
+                <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">
+                  Scanned <strong>${scanned}/${total}</strong> stocks (${pct}%) · Discovered: <strong>0</strong> candidates so far...
+                </div>
+                <div style="width:260px; height:8px; background:var(--surface); border:1px solid var(--border); border-radius:4px; margin:0 auto; overflow:hidden;">
+                  <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, #38bdf8, #2563eb); transition:width 0.3s;"></div>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">
+                  Candidates will appear on screen instantly as soon as they qualify!
+                </div>
+              </div>`;
+            }
+
+            // Keep polling while scanning is active
+            if (res.scanning) {
+              await sleep(1500);
+              continue;
+            }
+
+            // Scan finished: final render
+            if (!res.picks || !res.picks.length) {
+              c.innerHTML = '<div class="card" style="padding:24px; text-align:center; color:var(--text-muted);">No swing candidates found qualifying under current filters.</div>';
+            } else {
+              renderCurrentSwingResults();
+            }
+            return;
+          }
+          c.innerHTML = '<div class="error">Scan timed out. Click Rescan to retry.</div>';
+        } catch (e) {
+          c.innerHTML = `<div class="error">${e.message}</div>`;
+        }
       }
 
       document
@@ -1397,7 +2179,10 @@
         .addEventListener("click", loadIntraday);
       document
         .querySelector('.sub-tab[data-subtab="swing"]')
-        .addEventListener("click", loadSwing);
+        .addEventListener("click", () => loadSwing());
+      document
+        .getElementById("swing-refresh")
+        .addEventListener("click", () => loadSwing(true));
       loadIntraday();
 
       async function loadMarket() {
