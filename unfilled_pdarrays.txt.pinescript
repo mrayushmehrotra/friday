@@ -1,0 +1,500 @@
+//@version=5
+indicator("Ayush MTF SMC [Unfilled Zones]", shorttitle="MTF SMC", overlay=true, max_boxes_count=500, max_lines_count=500, max_labels_count=500, max_bars_back=500)
+
+// =====================================================================
+//  Multi-timeframe SMC / ICT zones. Only UNFILLED zones are shown.
+//  Everything is one script, so it uses just 1 of the 2 free indicator slots.
+//  Zones are detected on their own timeframe and drawn on any chart
+//  timeframe that is equal to or lower than the zone timeframe.
+// =====================================================================
+
+// ============================== INPUTS ===============================
+gTF = "Timeframes  (on | timeframe | bull colour | bear colour)"
+en1 = input.bool(true, "1", inline="t1", group=gTF)
+tf1 = input.timeframe("15", "", inline="t1", group=gTF)
+bc1 = input.color(#089981, "", inline="t1", group=gTF)
+rc1 = input.color(#F23645, "", inline="t1", group=gTF)
+en2 = input.bool(true, "2", inline="t2", group=gTF)
+tf2 = input.timeframe("30", "", inline="t2", group=gTF)
+bc2 = input.color(#089981, "", inline="t2", group=gTF)
+rc2 = input.color(#F23645, "", inline="t2", group=gTF)
+en3 = input.bool(true, "3", inline="t3", group=gTF)
+tf3 = input.timeframe("60", "", inline="t3", group=gTF)
+bc3 = input.color(#089981, "", inline="t3", group=gTF)
+rc3 = input.color(#F23645, "", inline="t3", group=gTF)
+en4 = input.bool(true, "4", inline="t4", group=gTF)
+tf4 = input.timeframe("240", "", inline="t4", group=gTF)
+bc4 = input.color(#089981, "", inline="t4", group=gTF)
+rc4 = input.color(#F23645, "", inline="t4", group=gTF)
+en5 = input.bool(true, "5", inline="t5", group=gTF)
+tf5 = input.timeframe("D", "", inline="t5", group=gTF)
+bc5 = input.color(#089981, "", inline="t5", group=gTF)
+rc5 = input.color(#F23645, "", inline="t5", group=gTF)
+
+gC = "Concepts"
+sFVG  = input.bool(true, "Fair Value Gap (FVG)", group=gC)
+sIFVG = input.bool(true, "Inverse FVG (IFVG) - shown only while unfilled", group=gC)
+sOB   = input.bool(true, "Order Block (OB)", group=gC)
+sBRK  = input.bool(true, "Breaker Block (filled OB that flips) - shown only while unfilled", group=gC)
+sMIT  = input.bool(true, "Mitigation Block", group=gC)
+sREJ  = input.bool(true, "Rejection Block", group=gC)
+sEQ   = input.bool(true, "Equal Highs / Lows (EQH / EQL)", group=gC)
+
+gD = "Detection and display"
+swLen    = input.int(3, "HTF swing length", minval=1, maxval=20, group=gD)
+minGap   = input.float(0.1, "Min FVG size (x ATR)", minval=0.0, step=0.05, group=gD)
+wickPct  = input.float(50.0, "Rejection block: min wick % of candle", minval=10.0, maxval=95.0, group=gD)
+eqTol    = input.float(0.1, "Equal H/L tolerance (x ATR)", minval=0.01, step=0.01, group=gD)
+fillMode = input.string("Any touch of the zone", "Zone counts as filled when", options=["Close beyond far side", "Wick beyond far side", "Any touch of the zone"], group=gD)
+maxZ     = input.int(20, "Max zones per timeframe", minval=1, maxval=40, group=gD)
+extBars  = input.int(15, "Zone extension to the right (bars)", minval=3, maxval=100, group=gD)
+zTr      = input.int(85, "Zone fill transparency", minval=50, maxval=98, group=gD)
+
+gLq = "Liquidity levels (removed once swept)"
+sPD    = input.bool(true, "Previous Day High / Low", group=gLq)
+sPW    = input.bool(true, "Previous Week High / Low", group=gLq)
+sPM    = input.bool(true, "Previous Month High / Low", group=gLq)
+sAsia  = input.bool(true, "Asia", inline="as", group=gLq)
+sAsiaT = input.session("2000-0000", "", inline="as", group=gLq)
+sLon   = input.bool(true, "London", inline="lo", group=gLq)
+sLonT  = input.session("0200-0500", "", inline="lo", group=gLq)
+sNY    = input.bool(true, "New York", inline="ny", group=gLq)
+sNYT   = input.session("0700-1000", "", inline="ny", group=gLq)
+tzIn   = input.string("America/New_York", "Session timezone", group=gLq)
+liqCol = input.color(#FF9800, "Liquidity colour", group=gLq)
+
+gS = "Chart structure (BOS / CHoCH on the chart timeframe)"
+showStruct = input.bool(true, "Show BOS / CHoCH", group=gS)
+stSw       = input.int(5, "Swing length", minval=2, maxval=30, group=gS)
+stBull     = input.color(#089981, "Bullish break", group=gS)
+stBear     = input.color(#F23645, "Bearish break", group=gS)
+
+gR = "Premium / Discount and OTE"
+showRange = input.bool(true, "Show premium / discount + equilibrium", group=gR)
+rangeSlot = input.int(3, "Range taken from timeframe slot (1-5)", minval=1, maxval=5, group=gR)
+showOTE   = input.bool(true, "Show OTE zones (62% - 79%)", group=gR)
+premCol   = input.color(#F23645, "Premium colour", group=gR)
+discCol   = input.color(#089981, "Discount colour", group=gR)
+oteCol    = input.color(#2962FF, "OTE colour", group=gR)
+
+// ============================== TYPES / HELPERS ======================
+// kinds: 0 FVG, 1 IFVG, 2 OB, 3 Breaker, 4 Mitigation, 5 Rejection, 6 EQH, 7 EQL
+type zn
+    int   k
+    float top
+    float bot
+    int   t
+    bool  bull
+
+f_tfName(string tf) =>
+    int s = timeframe.in_seconds(tf)
+    string r = ""
+    if s < 3600
+        r := str.tostring(s / 60, "#") + "m"
+    else if s < 86400
+        r := str.tostring(s / 3600, "#") + "H"
+    else if s < 604800
+        r := str.tostring(s / 86400, "#") + "D"
+    else if s < 2419200
+        r := str.tostring(s / 604800, "#") + "W"
+    else
+        r := "M"
+    r
+
+f_kName(int k) =>
+    string r = "FVG"
+    if k == 1
+        r := "IFVG"
+    else if k == 2
+        r := "OB"
+    else if k == 3
+        r := "Breaker"
+    else if k == 4
+        r := "Mitigation Block"
+    else if k == 5
+        r := "Rejection Block"
+    else if k == 6
+        r := "EQH"
+    else if k == 7
+        r := "EQL"
+    r
+
+// Runs on the HIGHER timeframe (inside request.security). Tracks every zone,
+// removes / inverts it when filled, and returns the surviving zones as text.
+f_scan(int sw, float minG, int fm, bool oFVG, bool oIFVG, bool oOB, bool oBRK, bool oMIT, bool oREJ, bool oEQ, float wickP, float eqT, int mz) =>
+    var array<zn> zs = array.new<zn>()
+    var float shP = na
+    var float slP = na
+    var float shPv = na
+    var float slPv = na
+    var int shBi = na
+    var int slBi = na
+    var int shT = na
+    var int slT = na
+    var int shPvT = na
+    var int slPvT = na
+    var bool shX = true
+    var bool slX = true
+    var int trend = 0
+
+    float atr = ta.atr(14)
+    float ph = ta.pivothigh(high, sw, sw)
+    float pl = ta.pivotlow(low, sw, sw)
+
+    // 1) fills / inversions on existing zones
+    int cnt = zs.size()
+    if cnt > 0
+        for i = cnt - 1 to 0
+            zn z = zs.get(i)
+            bool rm = false
+            if z.k == 6
+                rm := high > z.top
+            else if z.k == 7
+                rm := low < z.top
+            else
+                bool thru = z.bull ? close < z.bot : close > z.top
+                bool wick = z.bull ? low < z.bot : high > z.top
+                bool tch = z.bull ? low <= z.top : high >= z.bot
+                if thru
+                    if z.k == 0 and oIFVG
+                        z.k := 1
+                        z.bull := not z.bull
+                    else if z.k == 2 and oBRK
+                        z.k := 3
+                        z.bull := not z.bull
+                    else
+                        rm := true
+                else if fm == 1 and wick
+                    rm := true
+                else if fm == 2 and tch
+                    rm := true
+            if rm
+                zs.remove(i)
+
+    // 2) fair value gaps
+    float gapB = low - high[2]
+    float gapS = low[2] - high
+    if oFVG and gapB > 0 and gapB > atr * minG
+        zs.push(zn.new(0, low, high[2], time[1], true))
+    if oFVG and gapS > 0 and gapS > atr * minG
+        zs.push(zn.new(0, low[2], high, time[1], false))
+
+    // 3) swing pivots, equal highs / lows, rejection blocks
+    if not na(ph)
+        shPv := shP
+        shPvT := shT
+        shP := ph
+        shBi := bar_index - sw
+        shT := time[sw]
+        shX := false
+        if oEQ and not na(shPv) and math.abs(shP - shPv) <= atr * eqT
+            float avgH = (shP + shPv) / 2
+            zs.push(zn.new(6, avgH, avgH, shPvT, false))
+        if oREJ
+            float rgH = high[sw] - low[sw]
+            float wkH = high[sw] - math.max(open[sw], close[sw])
+            if rgH > 0 and wkH / rgH * 100 >= wickP
+                zs.push(zn.new(5, high[sw], math.max(open[sw], close[sw]), time[sw], false))
+    if not na(pl)
+        slPv := slP
+        slPvT := slT
+        slP := pl
+        slBi := bar_index - sw
+        slT := time[sw]
+        slX := false
+        if oEQ and not na(slPv) and math.abs(slP - slPv) <= atr * eqT
+            float avgL = (slP + slPv) / 2
+            zs.push(zn.new(7, avgL, avgL, slPvT, true))
+        if oREJ
+            float rgL = high[sw] - low[sw]
+            float wkL = math.min(open[sw], close[sw]) - low[sw]
+            if rgL > 0 and wkL / rgL * 100 >= wickP
+                zs.push(zn.new(5, math.min(open[sw], close[sw]), low[sw], time[sw], true))
+
+    // 4) structure break up: bullish order block (+ mitigation block on a CHoCH)
+    if not na(shP) and not shX and close > shP
+        shX := true
+        bool chB = trend == -1
+        trend := 1
+        int look = math.min(bar_index - shBi, 150)
+        if oOB and look >= 1
+            float lo = na
+            int lk = na
+            for k = 1 to look
+                if na(lo) or low[k] < lo
+                    lo := low[k]
+                    lk := k
+            if not na(lk)
+                zs.push(zn.new(2, high[lk], low[lk], time[lk], true))
+        if oMIT and chB and not na(slPv) and not na(slP) and slP > slPv
+            int mo = bar_index - slBi
+            int pk = mo
+            for j = 0 to 2
+                if close[mo + j] < open[mo + j]
+                    pk := mo + j
+                    break
+            zs.push(zn.new(4, high[pk], low[pk], time[pk], true))
+
+    // 5) structure break down: bearish order block (+ mitigation block on a CHoCH)
+    if not na(slP) and not slX and close < slP
+        slX := true
+        bool chS = trend == 1
+        trend := -1
+        int look2 = math.min(bar_index - slBi, 150)
+        if oOB and look2 >= 1
+            float hi = na
+            int hk = na
+            for k = 1 to look2
+                if na(hi) or high[k] > hi
+                    hi := high[k]
+                    hk := k
+            if not na(hk)
+                zs.push(zn.new(2, high[hk], low[hk], time[hk], false))
+        if oMIT and chS and not na(shPv) and not na(shP) and shP < shPv
+            int mo2 = bar_index - shBi
+            int pk2 = mo2
+            for j = 0 to 2
+                if close[mo2 + j] > open[mo2 + j]
+                    pk2 := mo2 + j
+                    break
+            zs.push(zn.new(4, high[pk2], low[pk2], time[pk2], false))
+
+    // 6) keep only the newest zones
+    while zs.size() > mz
+        zs.remove(0)
+
+    // 7) serialise: first item = latest swing range, then every live zone
+    string out = str.tostring(shP) + "|" + str.tostring(slP) + "|" + str.tostring(math.min(shT, slT))
+    if zs.size() > 0
+        for i = 0 to zs.size() - 1
+            zn q = zs.get(i)
+            out += ";" + str.tostring(q.k) + "|" + str.tostring(q.top) + "|" + str.tostring(q.bot) + "|" + str.tostring(q.t) + "|" + (q.bull ? "1" : "0")
+    out
+
+// Session highs / lows (runs on the chart timeframe)
+f_sess(string sess, string tz) =>
+    bool inS = not na(time(timeframe.period, sess, tz))
+    var float cH = na
+    var float cL = na
+    var int cT = na
+    var float pH = na
+    var float pL = na
+    var int pT = na
+    var bool hS = true
+    var bool lS = true
+    bool st = inS and not inS[1]
+    bool en = not inS and inS[1]
+    if st
+        cH := high
+        cL := low
+        cT := time
+    else if inS
+        cH := math.max(cH, high)
+        cL := math.min(cL, low)
+    if en
+        pH := cH
+        pL := cL
+        pT := cT
+        hS := false
+        lS := false
+    if not hS and high > pH
+        hS := true
+    if not lS and low < pL
+        lS := true
+    [pH, pL, pT, hS, lS]
+
+// ============================== DRAWING STORAGE ======================
+var array<box>   gB = array.new<box>()
+var array<line>  gL = array.new<line>()
+var array<label> gT = array.new<label>()
+var array<line>  sLn = array.new<line>()
+var array<label> sLb = array.new<label>()
+
+f_clear() =>
+    for bx in gB
+        box.delete(bx)
+    for ln in gL
+        line.delete(ln)
+    for lb in gT
+        label.delete(lb)
+    gB.clear()
+    gL.clear()
+    gT.clear()
+    true
+
+f_lvl(float price, int lt, int rt, string txt, color col) =>
+    if not na(price) and not na(lt)
+        int ms = timeframe.in_seconds() * 1000
+        gL.push(line.new(lt, price, rt, price, xloc=xloc.bar_time, color=col, style=line.style_dashed, width=1))
+        gT.push(label.new(rt - ms * 2, price, txt, xloc=xloc.bar_time, style=label.style_none, textcolor=col, size=size.small))
+    true
+
+f_drawTF(string s, string nm, color bcol, color rcol, int rt) =>
+    if not na(s)
+        array<string> its = str.split(s, ";")
+        if its.size() > 1
+            for i = 1 to its.size() - 1
+                array<string> p = str.split(its.get(i), "|")
+                if p.size() >= 5
+                    int k = int(str.tonumber(p.get(0)))
+                    float tp = str.tonumber(p.get(1))
+                    float bt = str.tonumber(p.get(2))
+                    int tt = int(str.tonumber(p.get(3)))
+                    bool bl = p.get(4) == "1"
+                    color col = bl ? bcol : rcol
+                    string txt = nm + " " + f_kName(k)
+                    if not na(tp) and not na(bt) and not na(tt)
+                        if k >= 6
+                            f_lvl(tp, tt, rt, txt, liqCol)
+                        else
+                            gB.push(box.new(left=tt, top=tp, right=rt, bottom=bt, xloc=xloc.bar_time, border_color=color.new(col, 30), border_width=1, bgcolor=color.new(col, zTr), text=txt, text_size=size.small, text_color=color.new(col, 0), text_halign=text.align_right))
+    true
+
+f_range(string s, string nm, int rt) =>
+    if not na(s)
+        array<string> its = str.split(s, ";")
+        array<string> p = str.split(its.get(0), "|")
+        if p.size() >= 3
+            float hi = str.tonumber(p.get(0))
+            float lo = str.tonumber(p.get(1))
+            int lt = int(str.tonumber(p.get(2)))
+            if not na(hi) and not na(lo) and not na(lt) and hi > lo
+                float rg = hi - lo
+                float mid = (hi + lo) / 2
+                gB.push(box.new(left=lt, top=hi, right=rt, bottom=mid, xloc=xloc.bar_time, border_color=color.new(premCol, 100), bgcolor=color.new(premCol, 92), text=nm + " Premium", text_size=size.small, text_color=color.new(premCol, 20), text_halign=text.align_left))
+                gB.push(box.new(left=lt, top=mid, right=rt, bottom=lo, xloc=xloc.bar_time, border_color=color.new(discCol, 100), bgcolor=color.new(discCol, 92), text=nm + " Discount", text_size=size.small, text_color=color.new(discCol, 20), text_halign=text.align_left))
+                gL.push(line.new(lt, mid, rt, mid, xloc=xloc.bar_time, color=color.gray, style=line.style_dotted, width=1))
+                if showOTE
+                    gB.push(box.new(left=lt, top=hi - 0.62 * rg, right=rt, bottom=hi - 0.79 * rg, xloc=xloc.bar_time, border_color=color.new(oteCol, 40), bgcolor=color.new(oteCol, 85), text=nm + " OTE", text_size=size.small, text_color=oteCol, text_halign=text.align_right))
+                    gB.push(box.new(left=lt, top=lo + 0.79 * rg, right=rt, bottom=lo + 0.62 * rg, xloc=xloc.bar_time, border_color=color.new(oteCol, 40), bgcolor=color.new(oteCol, 85), text=nm + " OTE", text_size=size.small, text_color=oteCol, text_halign=text.align_right))
+    true
+
+f_brk(int lt, int rt, float y, string txt, bool bull) =>
+    color c = bull ? stBull : stBear
+    int mx = int(math.round((lt + rt) / 2.0))
+    line ln = line.new(lt, y, rt, y, xloc=xloc.bar_time, color=c, style=line.style_dashed, width=1)
+    label lb = na
+    if bull
+        lb := label.new(mx, y, txt, xloc=xloc.bar_time, style=label.style_label_down, color=color.new(c, 100), textcolor=c, size=size.small)
+    else
+        lb := label.new(mx, y, txt, xloc=xloc.bar_time, style=label.style_label_up, color=color.new(c, 100), textcolor=c, size=size.small)
+    sLn.push(ln)
+    sLb.push(lb)
+    if sLn.size() > 30
+        line.delete(sLn.shift())
+        label.delete(sLb.shift())
+    true
+
+// ============================== DATA =================================
+int fm = fillMode == "Close beyond far side" ? 0 : fillMode == "Wick beyond far side" ? 1 : 2  // default = 2 (any touch removes the zone)
+
+bool a1 = en1 and timeframe.in_seconds(tf1) >= timeframe.in_seconds()
+bool a2 = en2 and timeframe.in_seconds(tf2) >= timeframe.in_seconds()
+bool a3 = en3 and timeframe.in_seconds(tf3) >= timeframe.in_seconds()
+bool a4 = en4 and timeframe.in_seconds(tf4) >= timeframe.in_seconds()
+bool a5 = en5 and timeframe.in_seconds(tf5) >= timeframe.in_seconds()
+
+string nm1 = f_tfName(tf1)
+string nm2 = f_tfName(tf2)
+string nm3 = f_tfName(tf3)
+string nm4 = f_tfName(tf4)
+string nm5 = f_tfName(tf5)
+
+// [1] + lookahead_on = last COMPLETED higher-timeframe candle, so nothing repaints
+string z1 = request.security(syminfo.tickerid, a1 ? tf1 : timeframe.period, f_scan(swLen, minGap, fm, sFVG, sIFVG, sOB, sBRK, sMIT, sREJ, sEQ, wickPct, eqTol, maxZ)[1], lookahead=barmerge.lookahead_on)
+string z2 = request.security(syminfo.tickerid, a2 ? tf2 : timeframe.period, f_scan(swLen, minGap, fm, sFVG, sIFVG, sOB, sBRK, sMIT, sREJ, sEQ, wickPct, eqTol, maxZ)[1], lookahead=barmerge.lookahead_on)
+string z3 = request.security(syminfo.tickerid, a3 ? tf3 : timeframe.period, f_scan(swLen, minGap, fm, sFVG, sIFVG, sOB, sBRK, sMIT, sREJ, sEQ, wickPct, eqTol, maxZ)[1], lookahead=barmerge.lookahead_on)
+string z4 = request.security(syminfo.tickerid, a4 ? tf4 : timeframe.period, f_scan(swLen, minGap, fm, sFVG, sIFVG, sOB, sBRK, sMIT, sREJ, sEQ, wickPct, eqTol, maxZ)[1], lookahead=barmerge.lookahead_on)
+string z5 = request.security(syminfo.tickerid, a5 ? tf5 : timeframe.period, f_scan(swLen, minGap, fm, sFVG, sIFVG, sOB, sBRK, sMIT, sREJ, sEQ, wickPct, eqTol, maxZ)[1], lookahead=barmerge.lookahead_on)
+
+[pdH, pdL, pdT, pdcH, pdcL] = request.security(syminfo.tickerid, "D", [high[1], low[1], time[1], high, low])
+[pwH, pwL, pwT, pwcH, pwcL] = request.security(syminfo.tickerid, "W", [high[1], low[1], time[1], high, low])
+[pmH, pmL, pmT, pmcH, pmcL] = request.security(syminfo.tickerid, "M", [high[1], low[1], time[1], high, low])
+
+[asH, asL, asT, asHs, asLs] = f_sess(sAsiaT, tzIn)
+[loH, loL, loT, loHs, loLs] = f_sess(sLonT, tzIn)
+[nyH, nyL, nyT, nyHs, nyLs] = f_sess(sNYT, tzIn)
+
+// ============================== CHART STRUCTURE ======================
+var float sHp = na
+var float sLp = na
+var int sHt = na
+var int sLt = na
+var bool sHx = true
+var bool sLx = true
+var int sTrend = 0
+
+float cph = ta.pivothigh(high, stSw, stSw)
+float cpl = ta.pivotlow(low, stSw, stSw)
+if not na(cph)
+    sHp := cph
+    sHt := time[stSw]
+    sHx := false
+if not na(cpl)
+    sLp := cpl
+    sLt := time[stSw]
+    sLx := false
+if not na(sHp) and not sHx and close > sHp
+    sHx := true
+    string txB = sTrend == -1 ? "CHoCH" : "BOS"
+    sTrend := 1
+    if showStruct
+        f_brk(sHt, time, sHp, txB, true)
+if not na(sLp) and not sLx and close < sLp
+    sLx := true
+    string txS = sTrend == 1 ? "CHoCH" : "BOS"
+    sTrend := -1
+    if showStruct
+        f_brk(sLt, time, sLp, txS, false)
+
+// ============================== DRAW (last bar only) =================
+if barstate.islast
+    f_clear()
+    int rT = time + timeframe.in_seconds() * 1000 * extBars
+
+    if showRange
+        int ri = rangeSlot - 1
+        array<bool> acts = array.from(a1, a2, a3, a4, a5)
+        array<string> srcs = array.from(z1, z2, z3, z4, z5)
+        array<string> nms = array.from(nm1, nm2, nm3, nm4, nm5)
+        if acts.get(ri)
+            f_range(srcs.get(ri), nms.get(ri), rT)
+
+    if a1
+        f_drawTF(z1, nm1, bc1, rc1, rT)
+    if a2
+        f_drawTF(z2, nm2, bc2, rc2, rT)
+    if a3
+        f_drawTF(z3, nm3, bc3, rc3, rT)
+    if a4
+        f_drawTF(z4, nm4, bc4, rc4, rT)
+    if a5
+        f_drawTF(z5, nm5, bc5, rc5, rT)
+
+    // previous day / week / month: drawn only while not yet swept
+    if sPD and not na(pdH) and not (pdcH > pdH)
+        f_lvl(pdH, pdT, rT, "PDH", liqCol)
+    if sPD and not na(pdL) and not (pdcL < pdL)
+        f_lvl(pdL, pdT, rT, "PDL", liqCol)
+    if sPW and not na(pwH) and not (pwcH > pwH)
+        f_lvl(pwH, pwT, rT, "PWH", liqCol)
+    if sPW and not na(pwL) and not (pwcL < pwL)
+        f_lvl(pwL, pwT, rT, "PWL", liqCol)
+    if sPM and not na(pmH) and not (pmcH > pmH)
+        f_lvl(pmH, pmT, rT, "PMH", liqCol)
+    if sPM and not na(pmL) and not (pmcL < pmL)
+        f_lvl(pmL, pmT, rT, "PML", liqCol)
+
+    // session highs / lows: drawn only while not yet swept
+    if sAsia and not na(asH) and not asHs
+        f_lvl(asH, asT, rT, "Asia H", liqCol)
+    if sAsia and not na(asL) and not asLs
+        f_lvl(asL, asT, rT, "Asia L", liqCol)
+    if sLon and not na(loH) and not loHs
+        f_lvl(loH, loT, rT, "London H", liqCol)
+    if sLon and not na(loL) and not loLs
+        f_lvl(loL, loT, rT, "London L", liqCol)
+    if sNY and not na(nyH) and not nyHs
+        f_lvl(nyH, nyT, rT, "NY H", liqCol)
+    if sNY and not na(nyL) and not nyLs
+        f_lvl(nyL, nyT, rT, "NY L", liqCol)

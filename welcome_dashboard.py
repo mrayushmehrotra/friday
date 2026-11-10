@@ -188,15 +188,29 @@ class WelcomeHandler(SimpleHTTPRequestHandler):
     def _handle_server(self, params):
         action = self._get_param(params, "action", "")
         name = self._get_param(params, "name", "")
-        PORT_MAP = {"upload": 3000, "stock": 9090, "welcome": 9091}
+        PORT_MAP = {
+            "upload": 3000,
+            "stock": 9090,
+            "indmoney_bot": 9092,
+            "indmoney-intraday-equity-bot": 9092,
+            "welcome": 9091,
+        }
         CMD_MAP = {
             "upload": ["sh", "-c", "cd '{}' && bun run dev".format(os.path.join(HERE, "assets", "yt_upload_next"))],
             "stock": [sys.executable, "stock_dashboard.py"],
+            "indmoney_bot": [sys.executable, "indmoney_intraday_bot.py"],
+            "indmoney-intraday-equity-bot": [sys.executable, "indmoney_intraday_bot.py"],
+        }
+        SCRIPT_MAP = {
+            "stock": "stock_dashboard.py",
+            "indmoney_bot": "indmoney_intraday_bot.py",
+            "indmoney-intraday-equity-bot": "indmoney_intraday_bot.py",
+            "welcome": "welcome_dashboard.py",
         }
 
         if action == "status":
             status = {}
-            for n, p in PORT_MAP.items():
+            for n, p in [("upload", 3000), ("stock", 9090), ("indmoney_bot", 9092), ("welcome", 9091)]:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 try:
                     s.settimeout(1)
@@ -242,8 +256,9 @@ class WelcomeHandler(SimpleHTTPRequestHandler):
         elif action == "close":
             import subprocess as sp
             sp.run(["fuser", "-k", "-n", "tcp", str(port)], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
-            for script in ("stock_dashboard.py", "welcome_dashboard.py"):
-                sp.run(["pkill", "-f", script], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+            script_name = SCRIPT_MAP.get(name)
+            if script_name:
+                sp.run(["pkill", "-f", script_name], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
             self._send_json({"status": f"closed {name}"})
         else:
             self._send_json({"error": "action must be open/close/status"}, 400)

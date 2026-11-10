@@ -12,5 +12,9 @@ __pycache__/
 client_secret.json
 .cmd_queue
 .pnl_data.json
+.indmoney_bot_state.json
+telegram_config.json
+telegram_seen_deals.json
 *.server.log
+
 

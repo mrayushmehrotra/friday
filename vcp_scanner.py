@@ -11,6 +11,9 @@ Features:
 6. Trend Template: Price > 50 & 200 SMA, 50 SMA > 200 SMA, proximity to 52-week high.
 7. Liquidity / SMC Filter: Order block, liquidity sweep (Turtle Soup), and Equal Highs alignment.
 8. Combined Swing Filter: Qualified on both 4h 9/20 EMA range and Minervini VCP simultaneously.
+9. AMD Filter (Accumulation → Manipulation): confirmed-candle AMD state machine on 4h bars.
+   A tight 4h range (≤ 3x ATR) = Accumulation; a liquidity sweep of that range with the close
+   back inside and distribution NOT yet started = A+ manipulation setup for the swing trade.
 """
 
 from __future__ import annotations
@@ -46,6 +49,14 @@ try:
     from ict_strategies import add_ict_indicators
 except ImportError:
     add_ict_indicators = None
+
+
+# ── AMD (Accumulation → Manipulation → Distribution) parameters ────────────────
+# Defaults match the Pine AMD indicator (confirmed candles only, 4h timeframe).
+AMD_RANGE_LEN = 6          # candles that form the accumulation range
+AMD_MAX_RANGE_ATR = 3.0    # max range height in ATR(14) units
+AMD_MAX_MANIP_WAIT = 6     # candles allowed between sweep and distribution break
+AMD_ATR_LEN = 14
 
 
 @dataclass
@@ -88,6 +99,16 @@ class VCPResult:
     ema_gap_pct_4h: Optional[float] = None
     ema_bullish_4h: Optional[bool] = None
     bars_since_ema_cross_4h: Optional[int] = None
+    # AMD state machine on confirmed 4h candles (Accumulation → Manipulation)
+    amd_status: str = ""               # "", "ACCUMULATION", "ACCUMULATION + MANIPULATION"
+    amd_a_plus: bool = False           # live manipulation sweep → A+ swing setup at 4h TF
+    amd_bias: str = ""                 # "LONG (low swept)" / "SHORT (high swept)"
+    amd_range_low: float = 0.0
+    amd_range_high: float = 0.0
+    amd_range_height_pct: float = 0.0
+    amd_candles_in_range: int = 0
+    amd_sweep_time: str = ""
+    amd_candles_since_sweep: Optional[int] = None
     score: float = 0.0
     allocation_inr: float = 2000.0
     suggested_qty: int = 1
@@ -433,6 +454,271 @@ def check_4h_ema_alignment(df_4h: Optional[pd.DataFrame]) -> Tuple[bool, float, 
         return False, 0.0, 0.0, 0.0, None
 
 
+# ═══════════════════════════ AMD (4h) filter ═══════════════════════════
+_AMD_EMPTY = {
+    "status": "",
+    "bias": "",
+    "range_low": 0.0,
+    "range_high": 0.0,
+    "range_height_pct": 0.0,
+    "range_start": "",
+    "candles_in_range": 0,
+    "sweep_time": "",
+    "sweep_extreme": 0.0,
+    "candles_since_sweep": None,
+    "last_close": 0.0,
+    "direction": 0,
+}
+
+
+def _wilder_atr_np(high: np.ndarray, low: np.ndarray, close: np.ndarray, n: int = AMD_ATR_LEN) -> np.ndarray:
+    """Wilder ATR as a plain numpy array (first n-1 values are NaN), same as the Pine port."""
+    pc = np.concatenate([[np.nan], close[:-1]])
+    # np.fmax ignores NaN, matching pandas .max(axis=1) skipna behaviour of the original port
+    tr = np.fmax.reduce([high - low, np.abs(high - pc), np.abs(low - pc)])
+    out = np.full(len(tr), np.nan)
+    if len(tr) >= n:
+        out[n - 1] = tr[:n].mean()
+        for i in range(n, len(tr)):
+            out[i] = (out[i - 1] * (n - 1) + tr[i]) / n
+    return out
+
+
+def _drop_live_4h(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop the still-forming 4h bar so the state machine only sees confirmed candles."""
+    if df is None or df.empty or not isinstance(df.index, pd.DatetimeIndex):
+        return df
+    idx = df.index
+    try:
+        now = pd.Timestamp.now(tz=idx.tz) if idx.tz is not None else pd.Timestamp.now()
+        s = pd.Series(idx)
+        end = s + pd.Timedelta(hours=4)
+        # NSE's afternoon 4h bucket starts at 12:00 IST but the session closes at 15:30 IST.
+        if idx.tz is not None and "Kolkata" in str(idx.tz):
+            afternoon = s.dt.hour == 12
+            if bool(afternoon.any()):
+                end = end.mask(afternoon, s.dt.normalize() + pd.Timedelta(hours=15, minutes=30))
+        return df[(end <= now).to_numpy()]
+    except Exception:
+        return df
+
+
+def scan_amd_state(df_4h: Optional[pd.DataFrame]) -> Optional[Dict[str, Any]]:
+    """Run the AMD state machine over confirmed 4h candles.
+
+    Faithful port of the Pine indicator (confirmed candles only):
+
+      state 0 → 1  a tight range formed (rolling RANGE_LEN high/low height ≤ ATR × MAX_RANGE_ATR)
+                   = ACCUMULATION
+      state 1 → 2  the range high (or low) was swept by a wick while the close stayed back
+                   inside the range = manipulation; distribution has NOT started yet
+                   = ACCUMULATION + MANIPULATION  →  the A+ swing setup at 4h TF
+      state 2 → 0  price closed beyond the opposite side of the range (distribution
+                   confirmed) or the wait expired → setup is gone
+
+    Returns None when no setup is active, otherwise a dict describing the state on
+    the last confirmed candle.
+    """
+    if df_4h is None or df_4h.empty:
+        return None
+    df = df_4h
+    if isinstance(df.columns, pd.MultiIndex):
+        df = df.copy()
+        df.columns = df.columns.get_level_values(0)
+    df = df.rename(columns=str.lower)
+    if not {"high", "low", "close"}.issubset(df.columns):
+        return None
+    df = _drop_live_4h(df.dropna(subset=[c for c in ("open", "high", "low", "close") if c in df.columns]))
+    n = len(df)
+    if n < AMD_RANGE_LEN + AMD_ATR_LEN + 2:
+        return None
+
+    h = df["high"].astype(float).to_numpy()
+    l = df["low"].astype(float).to_numpy()
+    c = df["close"].astype(float).to_numpy()
+    atr = _wilder_atr_np(h, l, c, AMD_ATR_LEN)
+    rh = df["high"].rolling(AMD_RANGE_LEN).max().to_numpy()
+    rl = df["low"].rolling(AMD_RANGE_LEN).min().to_numpy()
+
+    state, direction = 0, 0
+    acc_hi = acc_lo = manip_ext = np.nan
+    acc_start = manip_bar = -1
+    last_reset = -1000
+
+    for i in range(n):
+        if state == 0:
+            range_ok = (
+                i >= AMD_RANGE_LEN
+                and not np.isnan(atr[i])
+                and not np.isnan(rh[i])
+                and (rh[i] - rl[i]) <= atr[i] * AMD_MAX_RANGE_ATR
+                and i - last_reset >= AMD_RANGE_LEN
+            )
+            if range_ok:
+                state, acc_hi, acc_lo, acc_start = 1, rh[i], rl[i], i - AMD_RANGE_LEN + 1
+        elif state == 1:
+            sweep_up = h[i] > acc_hi and acc_lo < c[i] < acc_hi
+            sweep_dn = l[i] < acc_lo and acc_lo < c[i] < acc_hi
+            broke_out = c[i] > acc_hi or c[i] < acc_lo
+            if sweep_up and sweep_dn:
+                state, last_reset = 0, i
+            elif sweep_up:
+                state, direction, manip_ext, manip_bar = 2, -1, h[i], i
+            elif sweep_dn:
+                state, direction, manip_ext, manip_bar = 2, 1, l[i], i
+            elif broke_out:
+                state, last_reset = 0, i
+        else:  # state == 2: swept, waiting for distribution
+            manip_ext = max(manip_ext, h[i]) if direction == -1 else min(manip_ext, l[i])
+            confirmed = (direction == -1 and c[i] < acc_lo) or (direction == 1 and c[i] > acc_hi)
+            failed = (
+                (direction == -1 and c[i] > acc_hi)
+                or (direction == 1 and c[i] < acc_lo)
+                or (i - manip_bar > AMD_MAX_MANIP_WAIT)
+            )
+            if confirmed or failed:
+                state, last_reset = 0, i  # distribution started → no longer a candidate
+
+    if state == 0:
+        return None
+
+    ts = df.index
+    res = dict(
+        status="ACCUMULATION" if state == 1 else "ACCUMULATION + MANIPULATION",
+        range_low=float(acc_lo),
+        range_high=float(acc_hi),
+        range_height_pct=float((acc_hi - acc_lo) / acc_lo * 100) if acc_lo else 0.0,
+        range_start=str(ts[acc_start]),
+        candles_in_range=int(n - acc_start),
+        last_close=float(c[-1]),
+        direction=int(direction),
+    )
+    if state == 2:
+        res.update(
+            bias="LONG (low swept)" if direction == 1 else "SHORT (high swept)",
+            sweep_time=str(ts[manip_bar]),
+            sweep_extreme=float(manip_ext),
+            candles_since_sweep=int(n - 1 - manip_bar),
+        )
+    else:
+        res.update(bias="", sweep_time="", sweep_extreme=0.0, candles_since_sweep=None)
+    return res
+
+
+def check_amd_manipulation(df_4h: Optional[pd.DataFrame]) -> Tuple[bool, Dict[str, Any]]:
+    """AMD swing filter → (is_a_plus, info).
+
+    is_a_plus is True while the price is INSIDE the manipulation phase: the 4h range
+    high/low was swept and price closed back inside, and distribution has NOT started
+    yet — the A+ setup for the Swing Equity trade at 4h TF.
+
+    info always carries the full AMD state (info["status"] is "" when no range is active).
+    """
+    info = dict(_AMD_EMPTY)
+    try:
+        res = scan_amd_state(df_4h)
+    except Exception:
+        res = None
+    if res is None:
+        return False, info
+    info.update(res)
+    return bool(res["status"] == "ACCUMULATION + MANIPULATION"), info
+
+
+def scan_amd_stock(
+    ticker: str,
+    df_4h: Optional[pd.DataFrame] = None,
+    api_key: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """Standalone 4h AMD filter for the swing scan — no VCP base required.
+
+    Returns a compact pick dict while the stock sits inside an active accumulation
+    range on confirmed 4h candles. When the manipulation phase is live (range swept,
+    close back inside, distribution not started) the pick is flagged ``amd_a_plus``
+    and ``status = "A+_AMD_MANIPULATION"`` — the A+ Swing Equity setup at 4h TF.
+    Returns None when no AMD range is active.
+    """
+    if df_4h is None:
+        df_4h, src = fetch_stock_candles(ticker, period="3mo", interval="4h", api_key=api_key)
+    else:
+        src = "Cached"
+    if df_4h is None or df_4h.empty:
+        return None
+
+    state = scan_amd_state(df_4h)
+    if state is None:
+        return None
+
+    df = df_4h
+    if isinstance(df.columns, pd.MultiIndex):
+        df = df.copy()
+        df.columns = df.columns.get_level_values(0)
+    df = df.rename(columns=str.lower)
+    if "close" not in df.columns:
+        return None
+    close = df["close"].astype(float).dropna()
+    if isinstance(close.index, pd.DatetimeIndex):
+        close = close.loc[_drop_live_4h(close.to_frame()).index]
+    if len(close) == 0:
+        return None
+    last_c = float(close.iloc[-1])
+    prev_c = float(close.iloc[-2]) if len(close) >= 2 else last_c
+    chg_pct = round(((last_c / (prev_c or 1)) - 1) * 100, 2) if prev_c else 0.0
+
+    a_plus = state["status"] == "ACCUMULATION + MANIPULATION"
+    sweep_ext = float(state.get("sweep_extreme") or 0.0)
+    if a_plus:
+        # Fresher sweep = higher score (window is AMD_MAX_MANIP_WAIT bars).
+        age = int(state.get("candles_since_sweep") or 0)
+        score = round(96.0 - min(age, AMD_MAX_MANIP_WAIT) * 3.0, 1)
+        if sweep_ext:
+            if "LONG" in state.get("bias", ""):
+                stop_loss = round(sweep_ext * 0.995, 2)
+                target_p = round(last_c + max(1.0, last_c - stop_loss) * 2.5, 2)
+            else:
+                stop_loss = round(sweep_ext * 1.005, 2)
+                target_p = round(last_c - max(1.0, stop_loss - last_c) * 2.5, 2)
+        else:
+            stop_loss = round(last_c * 0.95, 2)
+            target_p = round(last_c * 1.08, 2)
+    else:
+        # Tighter accumulation range = higher score.
+        score = round(72.0 + max(0.0, 10.0 - float(state["range_height_pct"]) * 2.0), 1)
+        if state.get("range_low"):
+            stop_loss = round(float(state["range_low"]) * 0.99, 2)
+            target_p = round(float(state["range_high"]) * 1.05, 2)
+        else:
+            stop_loss = round(last_c * 0.95, 2)
+            target_p = round(last_c * 1.08, 2)
+
+    return {
+        "ticker": ticker.replace(".NS", "").replace(".BO", ""),
+        "price": round(last_c, 2),
+        "change_pct": chg_pct,
+        "status": "A+_AMD_MANIPULATION" if a_plus else "AMD_ACCUMULATION",
+        "amd_status": state["status"],
+        "amd_a_plus": a_plus,
+        "amd_bias": state["bias"],
+        "amd_range_low": round(state["range_low"], 2),
+        "amd_range_high": round(state["range_high"], 2),
+        "amd_range_height_pct": round(state["range_height_pct"], 2),
+        "amd_candles_in_range": state["candles_in_range"],
+        "amd_sweep_time": state["sweep_time"],
+        "amd_candles_since_sweep": state["candles_since_sweep"],
+        "score": score,
+        "allocation_inr": 2000.0,
+        "suggested_qty": max(1, int(2000.0 / (last_c or 1))) if last_c > 0 else 1,
+        "pivot_stop_loss": stop_loss,
+        "target_price": target_p,
+        "hold_expectation": "3-5 days minimum",
+        "data_source": src,
+        "details": {
+            "amd_range_start": state.get("range_start", ""),
+            "amd_sweep_extreme": sweep_ext,
+        },
+    }
+
+
 def analyze_vcp_stock(
     ticker: str,
     df_daily: Optional[pd.DataFrame] = None,
@@ -458,65 +744,116 @@ def analyze_vcp_stock(
 
     # 3. Contraction Detection (VCP)
     contractions = detect_vcp_contractions(df_daily, lookback=100, order=2)
-    if len(contractions) < 2:
-        return None
+    vcp_qualified = len(contractions) >= 2
 
-    vcp_type = f"{len(contractions)}T"
-    depth_list = [c.depth_pct for c in contractions]
-    final_depth = contractions[-1].depth_pct
-    resistance = max(c.high_price for c in contractions)
-    dist_to_res = round((resistance - last_c) / (resistance or 1) * 100, 2)
-
-    # 4. Volume Dry-Up
-    vol_dry_up, vol_reduction, _ = check_volume_dry_up(contractions)
-
-    # 5. Relative Volume Divergence
-    quiet_acc, rolling_range, rvol, rvol_3d = detect_relative_volume_divergence(df_daily, contractions, resistance)
-
-    # 6. Breakout Confirmation
-    is_breakout, is_coiling = check_breakout_confirmation(df_daily, resistance, rvol)
-
-    # Determine Status
-    if is_breakout:
-        status = "CONFIRMED_BREAKOUT"
-    elif quiet_acc:
-        status = "PRE_BREAKOUT_ACCUMULATION"
-    elif is_coiling:
-        status = "COILING_AT_RESISTANCE"
+    if vcp_qualified:
+        vcp_type = f"{len(contractions)}T"
+        depth_list = [c.depth_pct for c in contractions]
+        final_depth = contractions[-1].depth_pct
+        resistance = max(c.high_price for c in contractions)
+        dist_to_res = round((resistance - last_c) / (resistance or 1) * 100, 2)
+        vol_dry_up, vol_reduction, _ = check_volume_dry_up(contractions)
+        quiet_acc, rolling_range, rvol, rvol_3d = detect_relative_volume_divergence(df_daily, contractions, resistance)
+        is_breakout, is_coiling = check_breakout_confirmation(df_daily, resistance, rvol)
+        if is_breakout:
+            status = "CONFIRMED_BREAKOUT"
+        elif quiet_acc:
+            status = "PRE_BREAKOUT_ACCUMULATION"
+        elif is_coiling:
+            status = "COILING_AT_RESISTANCE"
+        else:
+            status = "VCP_BASE_FORMING"
+        smc_ok, smc_notes = check_smc_confluence(df_daily, resistance)
     else:
-        status = "VCP_BASE_FORMING"
-
-    # 7. SMC Confluence
-    smc_ok, smc_notes = check_smc_confluence(df_daily, resistance)
+        vcp_type = ""
+        depth_list = [c.depth_pct for c in contractions] if contractions else []
+        final_depth = depth_list[-1] if depth_list else 0.0
+        rolling_20_hi = float(df_daily["High"].rolling(20, min_periods=5).max().iloc[-1])
+        resistance = round(rolling_20_hi, 2)
+        dist_to_res = round((resistance - last_c) / (resistance or 1) * 100, 2)
+        vol_dry_up, vol_reduction = False, 0.0
+        rolling_range = round(float(((df_daily["High"].rolling(10).max() - df_daily["Low"].rolling(10).min()) / (df_daily["Close"] or 1) * 100).iloc[-1]), 2)
+        vol_col = df_daily["Volume"].astype(float)
+        vol_sma20 = vol_col.rolling(20, min_periods=5).mean().iloc[-1]
+        rvol = round(float(vol_col.iloc[-1] / (vol_sma20 or 1)), 2)
+        rvol_3d = round(float(vol_col.tail(3).mean() / (vol_sma20 or 1)), 2)
+        is_breakout, is_coiling, quiet_acc = False, False, False
+        status = "NO_VCP_BASE"
+        smc_ok, smc_notes = False, ""
 
     # 8. 4-Hour EMA Analysis (Swing criteria)
     if df_4h is None:
         df_4h, _ = fetch_stock_candles(ticker, period="3mo", interval="4h", api_key=api_key)
     e_bull, e9, e20, e_gap, e_bars = check_4h_ema_alignment(df_4h)
 
+    # 8b. AMD state machine on confirmed 4h candles (Accumulation → Manipulation)
+    amd_a_plus, amd = check_amd_manipulation(df_4h)
+
+    # Must qualify on at least one swing paradigm: VCP base, AMD range, or 4h EMA bullish alignment
+    if not vcp_qualified and not amd["status"] and not e_bull:
+        return None
+
+    if not vcp_qualified:
+        if amd_a_plus:
+            status = "AMD_A_PLUS_MANIPULATION"
+        elif amd["status"] == "ACCUMULATION":
+            status = "AMD_ACCUMULATION"
+        elif e_bull:
+            status = "EMA_4H_BULLISH"
+
     # Compute Total Quality Score (0 - 100)
-    # Weights: Tightness (35%), Range (25%), RVOL (20%), VCP Symmetry (10%), Trend/SMC (10%)
     score = 0.0
-    score += max(0.0, 35.0 - final_depth * 2.5)  # tighter final contraction = higher score
-    score += max(0.0, 25.0 - rolling_range * 3.0)  # tight 10-day range
-    score += min(20.0, rvol * 10.0)  # relative volume
-    score += len(contractions) * 3.0  # more contractions = more mature base
-    if trend_ok:
+    if vcp_qualified:
+        score += max(0.0, 35.0 - final_depth * 2.5)  # tighter final contraction = higher score
+        score += max(0.0, 25.0 - rolling_range * 3.0)  # tight 10-day range
+        score += min(20.0, rvol * 10.0)  # relative volume
+        score += len(contractions) * 3.0  # more contractions = more mature base
+        if trend_ok:
+            score += 5.0
+        if smc_ok:
+            score += 5.0
+        if is_breakout or quiet_acc:
+            score += 5.0
+    else:
+        score += max(0.0, 25.0 - rolling_range * 2.0)
+        score += min(15.0, rvol * 10.0)
+        if trend_ok:
+            score += 10.0
+
+    if amd_a_plus:
+        score += 25.0  # A+: 4h sweep closed back inside, distribution pending
+    elif amd["status"]:
+        score += 10.0  # active accumulation range (pre-sweep)
+
+    if e_bull:
         score += 5.0
-    if smc_ok:
-        score += 5.0
-    if is_breakout or quiet_acc:
-        score += 5.0
-    final_score = round(min(100.0, max(10.0, score)), 1)
+    final_score = round(min(100.0, max(15.0, score)), 1)
 
     # 9. Swing ₹2,000 Allocation & Position Sizing
     alloc_inr = 2000.0
     suggested_qty = max(1, int(alloc_inr / (last_c or 1))) if last_c > 0 else 1
     pos_val = round(suggested_qty * last_c, 2)
-    final_low = contractions[-1].low_price if contractions else (last_c * 0.95)
-    stop_loss = round(final_low, 2)
-    risk_unit = max(1.0, last_c - stop_loss)
-    target_p = round(last_c + 2.0 * risk_unit, 2)
+    if amd["status"]:
+        if amd_a_plus and amd["sweep_extreme"]:
+            if "LONG" in amd["bias"]:
+                stop_loss = round(amd["sweep_extreme"] * 0.995, 2)
+                target_p = round(last_c + max(1.0, last_c - stop_loss) * 2.5, 2)
+            else:
+                stop_loss = round(amd["sweep_extreme"] * 1.005, 2)
+                target_p = round(last_c - max(1.0, stop_loss - last_c) * 2.5, 2)
+        elif amd["range_low"]:
+            stop_loss = round(amd["range_low"] * 0.99, 2)
+            target_p = round(amd["range_high"] * 1.05, 2)
+        else:
+            final_low = contractions[-1].low_price if contractions else (last_c * 0.95)
+            stop_loss = round(final_low, 2)
+            risk_unit = max(1.0, last_c - stop_loss)
+            target_p = round(last_c + 2.0 * risk_unit, 2)
+    else:
+        final_low = contractions[-1].low_price if contractions else (last_c * 0.95)
+        stop_loss = round(final_low, 2)
+        risk_unit = max(1.0, last_c - stop_loss)
+        target_p = round(last_c + 2.0 * risk_unit, 2)
 
     return VCPResult(
         ticker=ticker.replace(".NS", "").replace(".BO", ""),
@@ -544,6 +881,15 @@ def analyze_vcp_stock(
         ema_gap_pct_4h=e_gap,
         ema_bullish_4h=e_bull,
         bars_since_ema_cross_4h=e_bars,
+        amd_status=amd["status"],
+        amd_a_plus=amd_a_plus,
+        amd_bias=amd["bias"],
+        amd_range_low=amd["range_low"],
+        amd_range_high=amd["range_high"],
+        amd_range_height_pct=round(amd["range_height_pct"], 2),
+        amd_candles_in_range=amd["candles_in_range"],
+        amd_sweep_time=amd["sweep_time"],
+        amd_candles_since_sweep=amd["candles_since_sweep"],
         score=final_score,
         allocation_inr=alloc_inr,
         suggested_qty=suggested_qty,
@@ -555,13 +901,15 @@ def analyze_vcp_stock(
         details={
             "recent_rvol_3d": rvol_3d,
             "dist_from_52w_high_pct": trend_metrics["dist_from_52w_high_pct"],
+            "amd_range_start": amd["range_start"],
+            "amd_sweep_extreme": amd["sweep_extreme"],
         },
     )
 
 
 def scan_universe_vcp(
     tickers: Optional[List[str]] = None,
-    mode: str = "combined",  # "vcp", "ema_range", "combined"
+    mode: str = "combined",  # "vcp", "ema_range", "amd", "combined"
     api_key: Optional[str] = None,
     max_workers: int = 8,
     progress_cb: Optional[Any] = None,
@@ -570,9 +918,13 @@ def scan_universe_vcp(
     """Scan a list of stocks across the requested check mode.
 
     Modes:
-      - 'vcp': Mark Minervini VCP + Vol Divergence + SMC
-      - 'ema_range': 4h 9/20 EMA Range
-      - 'combined': Must qualify on BOTH 9/20 EMA Range AND Minervini VCP
+      - 'vcp': Mark Minervini VCP + Vol Divergence + SMC (standalone filter)
+      - 'ema_range': 4h 9/20 EMA Range (standalone filter)
+      - 'amd': 4h AMD state machine (standalone filter) — inside an active accumulation
+               range, with the manipulation phase (sweep closed back inside, no
+               distribution yet) = A+
+      - 'combined': BOTH 9/20 EMA Range AND Minervini VCP
+      - 'mixed': ALL THREE — 9/20 EMA Range AND VCP AND active 4h AMD range
     """
     if not tickers:
         try:
@@ -586,11 +938,19 @@ def scan_universe_vcp(
     breakouts = []
     accumulations = []
 
-    def _process(t):
-        try:
-            return analyze_vcp_stock(t, api_key=api_key)
-        except Exception:
-            return None
+    if mode == "amd":
+        # Standalone 4h AMD filter: no VCP structure required, only an active AMD range.
+        def _process(t):
+            try:
+                return scan_amd_stock(t, api_key=api_key)
+            except Exception:
+                return None
+    else:
+        def _process(t):
+            try:
+                return analyze_vcp_stock(t, api_key=api_key)
+            except Exception:
+                return None
 
     scanned_count = 0
     total_count = len(tickers)
@@ -609,20 +969,29 @@ def scan_universe_vcp(
             if res is None:
                 continue
 
-            # Filtering based on mode
-            if mode == "combined":
-                # Must satisfy BOTH VCP and 4h 9/20 EMA bullish alignment
-                if not (res.ema_bullish_4h and len(res.contractions) >= 2):
-                    continue
-            elif mode == "ema_range":
-                if not res.ema_bullish_4h:
-                    continue
+            if mode == "amd":
+                # scan_amd_stock already returns None unless an active 4h AMD range exists.
+                d = res
+            else:
+                # Filtering based on mode
+                if mode == "combined":
+                    # Must satisfy BOTH VCP and 4h 9/20 EMA bullish alignment
+                    if not (res.ema_bullish_4h and len(res.contractions) >= 2):
+                        continue
+                elif mode == "mixed":
+                    # All three filters simultaneously: 4h 9/20 EMA + VCP + active 4h AMD range
+                    if not (res.ema_bullish_4h and len(res.contractions) >= 2 and res.amd_status):
+                        continue
+                elif mode == "ema_range":
+                    if not res.ema_bullish_4h:
+                        continue
+                d = asdict(res)
 
-            d = asdict(res)
             all_picks.append(d)
-            if res.status == "CONFIRMED_BREAKOUT":
+            status = d.get("status")
+            if status == "CONFIRMED_BREAKOUT":
                 breakouts.append(d)
-            elif res.status in ("PRE_BREAKOUT_ACCUMULATION", "COILING_AT_RESISTANCE"):
+            elif status in ("PRE_BREAKOUT_ACCUMULATION", "COILING_AT_RESISTANCE"):
                 accumulations.append(d)
 
             if on_match_cb:
@@ -635,6 +1004,10 @@ def scan_universe_vcp(
     all_picks.sort(key=lambda x: -x["score"])
     breakouts.sort(key=lambda x: -x["score"])
     accumulations.sort(key=lambda x: -x["score"])
+    amd_a_plus = [p for p in all_picks if p.get("amd_a_plus")]
+    amd_accumulations = [p for p in all_picks if not p.get("amd_a_plus") and p.get("amd_status") == "ACCUMULATION"]
+    amd_a_plus.sort(key=lambda x: -x["score"])
+    amd_accumulations.sort(key=lambda x: -x["score"])
 
     return {
         "mode": mode,
@@ -643,13 +1016,16 @@ def scan_universe_vcp(
         "picks": all_picks,
         "breakouts": breakouts,
         "quiet_accumulations": accumulations,
+        "amd_a_plus": amd_a_plus,
+        "amd_accumulations": amd_accumulations,
     }
 
 
 def main():
     parser = argparse.ArgumentParser(description="Mark Minervini VCP Scanner with Volume Divergence & SMC Filters")
     parser.add_argument("--ticker", "-t", type=str, help="Specific ticker to analyze (e.g. RELIANCE, TRENT, TCS)")
-    parser.add_argument("--mode", "-m", choices=["vcp", "ema_range", "combined"], default="combined", help="Scanner mode")
+    parser.add_argument("--mode", "-m", choices=["vcp", "ema_range", "amd", "combined", "mixed"], default="combined",
+                        help="Scanner mode: each filter standalone (vcp / ema_range / amd), combined = EMA+VCP, mixed = all three")
     parser.add_argument("--api-key", type=str, default="", help="INDmoney API Key / token")
     parser.add_argument("--json", action="store_true", help="Output raw JSON format")
     parser.add_argument("--limit", type=int, default=15, help="Max candidates to show")
@@ -677,6 +1053,14 @@ def main():
             print(f"Rolling Range (10d):  {res.rolling_range_pct:.2f}% (Volatility)")
             print(f"Trend Template:       {'PASS' if res.trend_template else 'FAIL'} (SMA50: ₹{res.sma50:.1f}, SMA200: ₹{res.sma200:.1f})")
             print(f"4h 9/20 EMA Swing:    {'BULLISH (+ ' + str(res.ema_gap_pct_4h) + '%)' if res.ema_bullish_4h else 'BEARISH'}")
+            amd_line = res.amd_status or "No active 4h range"
+            if res.amd_a_plus:
+                amd_line += " — A+ manipulation live"
+            if res.amd_bias:
+                amd_line += f" · {res.amd_bias}"
+            if res.amd_status:
+                amd_line += f" (range ₹{res.amd_range_low:.2f}–₹{res.amd_range_high:.2f})"
+            print(f"AMD 4h Filter:        {amd_line}")
             print(f"SMC Confluence:       {res.smc_notes}")
             print(f"Total Quality Score:  {res.score:.1f} / 100")
             print(f"{'=' * 60}\n")
@@ -696,6 +1080,13 @@ def main():
                 print(f"--- PRE-BREAKOUT QUIET ACCUMULATION WATCHLIST ({len(scan_res['quiet_accumulations'])}) ---")
                 for p in scan_res["quiet_accumulations"][:args.limit]:
                     print(f"  • {p['ticker']:<12} ₹{p['price']:<8} VCP: {p['vcp_type']} {p['contractions']} | RVOL: {p['rvol']}x | Range: {p['rolling_range_pct']}% | Score: {p['score']}")
+                print()
+            a_plus = [p for p in scan_res["picks"] if p.get("amd_a_plus")]
+            if a_plus:
+                print(f"--- AMD A+ MANIPULATION SETUPS (4h) ({len(a_plus)}) ---")
+                for p in a_plus[:args.limit]:
+                    print(f"  • {p['ticker']:<12} ₹{p['price']:<8} {p['amd_bias']} | Sweep {p['amd_candles_since_sweep']} bars ago | "
+                          f"Range ₹{p['amd_range_low']}–₹{p['amd_range_high']} | Score: {p['score']}")
                 print()
 
 

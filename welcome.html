@@ -681,6 +681,7 @@
         <span class="chip" data-cmd="sensex">Sensex</span>
         <span class="chip" data-cmd="open video uploader">Open uploader</span>
         <span class="chip" data-cmd="open stock dashboard">Stock dashboard</span>
+        <span class="chip" data-cmd="open indmoney bot">Intraday Bot</span>
       </div>
 
       <div id="response"></div>
@@ -727,7 +728,10 @@
         </div>
 
         <div class="card full" id="news-card">
-          <h2>Stock News</h2>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h2>Stock News</h2>
+            <a href="http://localhost:9092" target="_blank" style="font-size:0.8rem; color:var(--accent); text-decoration:none; font-weight:600;">⚡ Intraday Bot (Scanning Top 5 Buys) ↗</a>
+          </div>
           <div id="news-list"><div class="loading">Scanning news feeds...</div></div>
         </div>
       </div>
@@ -1125,6 +1129,7 @@
           const names = {
             upload: "Upload Service",
             stock: "Market Engine",
+            indmoney_bot: "INDmoney Intraday Bot",
             welcome: "Dashboard Core",
           };
           el.innerHTML = Object.entries(names)
@@ -1164,7 +1169,7 @@
                   await fetchAPI(API + "/api/server?action=close&name=welcome");
                   gsap.to("body", { duration: 0.5, opacity: 0, onComplete: () => {
                     document.body.innerHTML =
-                      '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--text-muted);font-family:var(--font-mono);font-size:1.2rem">DASHBOARD_OFFLINE</div>';
+                       '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:var(--text-muted);font-family:var(--font-mono);font-size:1.2rem">DASHBOARD_OFFLINE</div>';
                   }});
                 }
                 return;
@@ -1174,10 +1179,14 @@
                   API + "/api/server?action=" + action + "&name=" + name,
                 );
                 if (action === "open" && name !== "welcome") {
+                  const urlMap = {
+                    upload: "http://localhost:3000",
+                    stock: "http://localhost:9090",
+                    indmoney_bot: "http://localhost:9092",
+                    "indmoney-intraday-equity-bot": "http://localhost:9092",
+                  };
                   window.open(
-                    name === "upload"
-                      ? "http://localhost:3000"
-                      : "http://localhost:9090",
+                    urlMap[name] || "http://localhost:9092",
                     "_blank",
                   );
                 }

@@ -51,6 +51,7 @@ try:
         VCPResult,
         analyze_vcp_stock,
         fetch_stock_candles,
+        scan_amd_stock,
         scan_universe_vcp,
     )
 except ImportError:
@@ -58,6 +59,7 @@ except ImportError:
     VCPResult = None
     analyze_vcp_stock = None
     fetch_stock_candles = None
+    scan_amd_stock = None
     scan_universe_vcp = None
 
 import requests as _requests
@@ -314,6 +316,10 @@ def _midterm_picks(strategy, start, movement_min, movement_max, top_n=10):
 # 1. Check 1: 9/20 EMA bullish cross on 4h timeframe (all NSE EQ symbols).
 # 2. Check 2: Mark Minervini VCP + Relative Volume Divergence + SMC filters.
 # 3. Combined Filter: Simultaneous qualification on BOTH 4h 9/20 EMA & VCP (₹2,000 allocation rule).
+# 4. AMD Filter (standalone): 4h Accumulation → Manipulation state machine (Pine port, confirmed
+#    candles). A liquidity sweep of a tight 4h range that closes back inside (no distribution
+#    yet) = the A+ Swing Equity setup at 4h TF.
+# 5. Mixed Filter: ALL THREE at once — 4h 9/20 EMA + VCP + active 4h AMD range.
 #
 # Background thread caching ensures fast dashboard responses and live progress.
 # Single stocks can also be analyzed immediately via ticker=... parameter.
@@ -353,6 +359,32 @@ _SWING_STATES: Dict[str, Dict[str, Any]] = {
         "results": None,
         "breakouts": [],
         "quiet_accumulations": [],
+        "error": None,
+    },
+    "amd": {
+        "running": False,
+        "started": 0.0,
+        "finished": 0.0,
+        "scanned": 0,
+        "total": 0,
+        "results": None,
+        "breakouts": [],
+        "quiet_accumulations": [],
+        "amd_a_plus": [],
+        "amd_accumulations": [],
+        "error": None,
+    },
+    "mixed": {
+        "running": False,
+        "started": 0.0,
+        "finished": 0.0,
+        "scanned": 0,
+        "total": 0,
+        "results": None,
+        "breakouts": [],
+        "quiet_accumulations": [],
+        "amd_a_plus": [],
+        "amd_accumulations": [],
         "error": None,
     },
 }
@@ -511,6 +543,8 @@ def _run_vcp_scan(mode="combined", api_key=None):
             results=[],
             breakouts=[],
             quiet_accumulations=[],
+            amd_a_plus=[],
+            amd_accumulations=[],
             error=None,
             running=True,
         )
@@ -533,6 +567,12 @@ def _run_vcp_scan(mode="combined", api_key=None):
                 elif item.get("status") in ("PRE_BREAKOUT_ACCUMULATION", "COILING_AT_RESISTANCE"):
                     st["quiet_accumulations"].append(item)
                     st["quiet_accumulations"].sort(key=lambda x: -x["score"])
+                if item.get("amd_a_plus"):
+                    st["amd_a_plus"].append(item)
+                    st["amd_a_plus"].sort(key=lambda x: -x["score"])
+                elif item.get("amd_status") == "ACCUMULATION":
+                    st["amd_accumulations"].append(item)
+                    st["amd_accumulations"].sort(key=lambda x: -x["score"])
 
     try:
         scan_res = scan_universe_vcp(
@@ -542,11 +582,15 @@ def _run_vcp_scan(mode="combined", api_key=None):
             progress_cb=_prog,
             on_match_cb=_on_match,
         )
+        amd_ap = scan_res.get("amd_a_plus") or [p for p in scan_res.get("picks", []) if p.get("amd_a_plus")]
+        amd_acc = scan_res.get("amd_accumulations") or [p for p in scan_res.get("picks", []) if not p.get("amd_a_plus") and p.get("amd_status") == "ACCUMULATION"]
         with _SWING_LOCK:
             _SWING_STATES[mode].update(
                 results=scan_res.get("picks", []),
                 breakouts=scan_res.get("breakouts", []),
                 quiet_accumulations=scan_res.get("quiet_accumulations", []),
+                amd_a_plus=amd_ap,
+                amd_accumulations=amd_acc,
                 running=False,
                 finished=time.time(),
             )
@@ -576,6 +620,8 @@ def _start_swing_scan(check="combined", refresh=False, api_key=None):
         st["results"] = []
         st["breakouts"] = []
         st["quiet_accumulations"] = []
+        st["amd_a_plus"] = []
+        st["amd_accumulations"] = []
 
     if check == "ema_range":
         threading.Thread(target=_run_ema_scan, daemon=True).start()
@@ -601,6 +647,8 @@ def _swing_picks(check="combined", refresh=False, api_key=None):
         "picks": st["results"] or [],
         "breakouts": st.get("breakouts", []),
         "quiet_accumulations": st.get("quiet_accumulations", []),
+        "amd_a_plus": st.get("amd_a_plus", []),
+        "amd_accumulations": st.get("amd_accumulations", []),
         "cache_age_sec": round(age) if age is not None else None,
     }
 
@@ -904,6 +952,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._send_json(example_strategies())
         elif path == "/api/bullish-news":
             self._handle_bullish_news()
+        elif path == "/api/top-buying-stocks":
+            self._handle_top_buying_stocks()
         elif path == "/api/large-deals":
             self._handle_large_deals()
         elif path == "/api/market-overview":
@@ -1065,7 +1115,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 self._send_json({"mode": "intraday", "picks": picks})
             elif mode == "swing":
                 check = self._get_param(params, "check", "combined").strip().lower()
-                if check not in ("combined", "vcp", "ema_range"):
+                if check not in ("combined", "vcp", "ema_range", "amd", "mixed"):
                     check = "combined"
                 refresh = self._get_param(params, "refresh", "") in ("1", "true", "yes", "on")
                 api_key = self._get_param(params, "api_key", "").strip() or None
@@ -1093,12 +1143,37 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                             self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "error": str(ex)})
                         return
 
+                    if check == "amd":
+                        # Standalone 4h AMD filter — needs no VCP base.
+                        if scan_amd_stock is not None:
+                            try:
+                                pick = scan_amd_stock(f"{ticker_clean}.NS", api_key=api_key)
+                                if pick:
+                                    self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "pick": pick})
+                                else:
+                                    self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "error": f"No active 4h AMD range for {ticker_clean} right now (no tight accumulation base / setup already resolved)."})
+                            except Exception as ex:
+                                self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "error": str(ex)})
+                        else:
+                            self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "error": "VCP/AMD scanner not loaded."})
+                        return
+
                     if analyze_vcp_stock is not None:
                         res = analyze_vcp_stock(ticker_clean, api_key=api_key)
                         if res is not None:
                             d = asdict(res)
                             if check == "combined" and not (res.ema_bullish_4h and len(res.contractions) >= 2):
                                 d["combined_warning"] = "Stock has VCP structure but does not pass 4h 9/20 EMA bullish alignment simultaneously, or has fewer than 2 contractions."
+                            if check == "mixed":
+                                fails = []
+                                if not res.ema_bullish_4h:
+                                    fails.append("4h 9/20 EMA is not bullish")
+                                if len(res.contractions) < 2:
+                                    fails.append("fewer than 2 VCP contractions")
+                                if not res.amd_status:
+                                    fails.append("no active 4h AMD range")
+                                if fails:
+                                    d["mixed_warning"] = "Mixed Filter (EMA + VCP + AMD) not fully satisfied: " + "; ".join(fails) + "."
                             self._send_json({"mode": "swing", "check": check, "single": True, "ticker": ticker_clean, "pick": d})
                             return
                         else:
@@ -1132,9 +1207,25 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
 
-    def _handle_bullish_news(self):
+    def _get_top_gainers_batch(self):
+        gainers = []
+        tickers = [t + ".NS" for t in NIFTY_50]
         try:
-            gainers = []
+            df = yf.download(tickers, period="5d", progress=False)
+            if not df.empty and "Close" in df:
+                close = df["Close"]
+                for t in tickers:
+                    sym = t.replace(".NS", "")
+                    if t in close:
+                        c = close[t].dropna()
+                        if len(c) >= 2:
+                            pct = (float(c.iloc[-1]) / float(c.iloc[-2]) - 1) * 100
+                            if pct > 0:
+                                gainers.append((sym, round(pct, 2), round(float(c.iloc[-1]), 2)))
+        except Exception:
+            pass
+
+        if not gainers:
             with ThreadPoolExecutor(max_workers=10) as pool:
                 futures = {pool.submit(get_stock_data, t + ".NS"): t for t in NIFTY_50}
                 for fut in as_completed(futures):
@@ -1145,16 +1236,31 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                             gainers.append((t, d["change_pct"], d["price"]))
                     except Exception:
                         pass
-            gainers.sort(key=lambda x: x[1], reverse=True)
+        gainers.sort(key=lambda x: x[1], reverse=True)
+        return gainers
+
+    def _handle_bullish_news(self):
+        try:
+            gainers = self._get_top_gainers_batch()
             top = gainers[:8]
+            top_5_symbols = [t[0] for t in top[:5]]
             all_news = []
             for t, chg, price in top:
                 try:
                     news = get_stock_news(t + ".NS", 3)
                     all_news.append({"ticker": t, "change_pct": chg, "price": price, "news": news})
                 except Exception:
-                    pass
-            self._send_json({"gainers": all_news})
+                    all_news.append({"ticker": t, "change_pct": chg, "price": price, "news": []})
+            self._send_json({"gainers": all_news, "top_5": top_5_symbols})
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
+
+    def _handle_top_buying_stocks(self):
+        try:
+            gainers = self._get_top_gainers_batch()
+            top_5 = gainers[:5]
+            stocks = [{"symbol": t[0], "change_pct": t[1], "price": t[2]} for t in top_5]
+            self._send_json({"status": "success", "top_5": [t[0] for t in top_5], "stocks": stocks})
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
 
@@ -1214,7 +1320,22 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description="Stock Dashboard Server")
     parser.add_argument("--port", type=int, default=PORT, help=f"Port (default: {PORT})")
+    parser.add_argument("--no-telegram", action="store_true",
+                        help="do not start the institutional-deals Telegram watcher")
     args = parser.parse_args()
+
+    # Institutional deal watcher → Telegram alerts (best effort, daemon thread).
+    if not args.no_telegram:
+        try:
+            from institution_telegram_bot import start_watcher
+            if start_watcher():
+                print("Telegram institution watcher started (new institution "
+                      "buy/sell deals will be messaged)")
+            else:
+                print("Telegram watcher not configured "
+                      "(telegram_config.json) — skipping")
+        except Exception as e:
+            print(f"Telegram watcher failed to start: {e}")
 
     server = ThreadingHTTPServer(("0.0.0.0", args.port), DashboardHandler)
     print(f"Stock dashboard running at http://localhost:{args.port}")

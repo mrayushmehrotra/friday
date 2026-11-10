@@ -869,6 +869,12 @@
               <button class="btn btn-secondary swing-check-btn" data-check="ema_range" style="padding:6px 14px; font-size:0.82rem; border-radius:20px;">
                 📈 Check 1: 9-20 EMA Range (4h)
               </button>
+              <button class="btn btn-secondary swing-check-btn" data-check="amd" style="padding:6px 14px; font-size:0.82rem; border-radius:20px;">
+                🧲 AMD Filter (4h) — A+ Manipulation
+              </button>
+              <button class="btn btn-secondary swing-check-btn" data-check="mixed" style="padding:6px 14px; font-size:0.82rem; border-radius:20px;">
+                🧩 Mixed Filter (All 3)
+              </button>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <button class="btn btn-secondary" id="swing-refresh" style="padding:6px 14px; font-size:0.82rem;">↻ Rescan</button>
@@ -896,6 +902,7 @@
               <span class="chip active" data-status="all" onclick="filterSwingStatus('all', this)" style="font-size:0.78rem; padding:4px 10px;">All Setups</span>
               <span class="chip" data-status="breakouts" onclick="filterSwingStatus('breakouts', this)" style="font-size:0.78rem; padding:4px 10px; color:#10b981; border-color:rgba(168,85,247,0.3);">Confirmed Breakouts</span>
               <span class="chip" data-status="accumulations" onclick="filterSwingStatus('accumulations', this)" style="font-size:0.78rem; padding:4px 10px; color:#a855f7; border-color:rgba(168,85,247,0.3);">Quiet Accumulation</span>
+              <span class="chip" data-status="amd_aplus" onclick="filterSwingStatus('amd_aplus', this)" style="font-size:0.78rem; padding:4px 10px; color:#ff9800; border-color:rgba(255,152,0,0.35);">🧲 AMD A+ (4h)</span>
             </div>
           </div>
 
@@ -1736,9 +1743,42 @@
         }
       }
 
-      let _currentSwingCheck = "combined"; // "combined", "vcp", "ema_range"
-      let _currentSwingStatusFilter = "all"; // "all", "breakouts", "accumulations"
+      let _currentSwingCheck = "combined"; // "combined", "vcp", "ema_range", "amd", "mixed"
+      let _currentSwingStatusFilter = "all"; // "all", "breakouts", "accumulations", "amd_aplus"
       let _lastSwingData = null;
+
+      // Show/hide and adapt the status pills that make sense for the active strategy check.
+      function syncSwingPills(mode) {
+        const pills = document.getElementById("swing-status-pills");
+        if (!pills) return;
+        if (mode === "ema_range") {
+          pills.style.display = "none";
+          return;
+        }
+        pills.style.display = "flex";
+        if (mode === "amd") {
+          pills.innerHTML = `
+            <span class="chip active" data-status="all" onclick="filterSwingStatus('all', this)" style="font-size:0.78rem; padding:4px 10px;">All AMD Setups</span>
+            <span class="chip" data-status="amd_aplus" onclick="filterSwingStatus('amd_aplus', this)" style="font-size:0.78rem; padding:4px 10px; color:#f59e0b; border-color:rgba(245,158,11,0.4); font-weight:600;">🔥 A+ Manipulation (Live Sweeps)</span>
+            <span class="chip" data-status="amd_acc" onclick="filterSwingStatus('amd_acc', this)" style="font-size:0.78rem; padding:4px 10px; color:#a855f7; border-color:rgba(168,85,247,0.3);">📦 4h Accumulation Base</span>
+          `;
+        } else if (mode === "mixed") {
+          pills.innerHTML = `
+            <span class="chip active" data-status="all" onclick="filterSwingStatus('all', this)" style="font-size:0.78rem; padding:4px 10px;">All 3 Confluence</span>
+            <span class="chip" data-status="amd_aplus" onclick="filterSwingStatus('amd_aplus', this)" style="font-size:0.78rem; padding:4px 10px; color:#f59e0b; border-color:rgba(245,158,11,0.4); font-weight:600;">🔥 A+ AMD Confluence</span>
+            <span class="chip" data-status="breakouts" onclick="filterSwingStatus('breakouts', this)" style="font-size:0.78rem; padding:4px 10px; color:#10b981; border-color:rgba(16,185,129,0.3);">Confirmed Breakouts</span>
+            <span class="chip" data-status="accumulations" onclick="filterSwingStatus('accumulations', this)" style="font-size:0.78rem; padding:4px 10px; color:#a855f7; border-color:rgba(168,85,247,0.3);">Quiet Accumulation</span>
+          `;
+        } else {
+          pills.innerHTML = `
+            <span class="chip active" data-status="all" onclick="filterSwingStatus('all', this)" style="font-size:0.78rem; padding:4px 10px;">All Setups</span>
+            <span class="chip" data-status="breakouts" onclick="filterSwingStatus('breakouts', this)" style="font-size:0.78rem; padding:4px 10px; color:#10b981; border-color:rgba(16,185,129,0.3);">Confirmed Breakouts</span>
+            <span class="chip" data-status="accumulations" onclick="filterSwingStatus('accumulations', this)" style="font-size:0.78rem; padding:4px 10px; color:#a855f7; border-color:rgba(168,85,247,0.3);">Quiet Accumulation</span>
+            <span class="chip" data-status="amd_aplus" onclick="filterSwingStatus('amd_aplus', this)" style="font-size:0.78rem; padding:4px 10px; color:#f59e0b; border-color:rgba(245,158,11,0.4);">🔥 With AMD A+</span>
+          `;
+        }
+        _currentSwingStatusFilter = "all";
+      }
 
       document.querySelectorAll(".swing-check-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1751,17 +1791,18 @@
           _currentSwingCheck = btn.dataset.check;
 
           const banner = document.getElementById("swing-info-banner");
-          const statusPills = document.getElementById("swing-status-pills");
           if (_currentSwingCheck === "combined") {
             banner.innerHTML = `<strong style="color:var(--accent);">Combined Filter (₹2,000 Allocation Rule):</strong> Selects stocks qualifying on <em>both</em> the 4h 9/20 EMA bullish alignment and Mark Minervini's VCP pattern simultaneously. Passing only one is not enough. Position size: ₹2,000 allocation per trade. Swing hold expectation: 3–5 days minimum.`;
-            if (statusPills) statusPills.style.display = "flex";
           } else if (_currentSwingCheck === "vcp") {
             banner.innerHTML = `<strong style="color:var(--accent);">Mark Minervini VCP + Vol Divergence + SMC:</strong> Detects contracting pullbacks (D1 &gt; D2 &gt; D3, tightness &le; 12%), supply dry-up, late-stage relative volume divergence (compression score), and smart money order block confluence.`;
-            if (statusPills) statusPills.style.display = "flex";
+          } else if (_currentSwingCheck === "amd") {
+            banner.innerHTML = `<strong style="color:var(--accent);">AMD Filter — Accumulation → Manipulation (4h):</strong> Runs the confirmed-candle AMD state machine on 4-hour bars. A tight 4h range (&le; 3× ATR) = <em>Accumulation</em>; a liquidity sweep of that range with the close back inside and distribution <em>not</em> yet started = <strong style="color:#ff9800;">A+ manipulation setup</strong> — the entry window before expansion. Bias shown as LONG (low swept) / SHORT (high swept). Works standalone (no VCP required).`;
+          } else if (_currentSwingCheck === "mixed") {
+            banner.innerHTML = `<strong style="color:var(--accent);">Mixed Filter — All 3 at Once:</strong> Only stocks passing <em>every</em> filter simultaneously: 4h 9/20 EMA bullish alignment + Mark Minervini VCP structure + an active 4h AMD range. A+ manipulation sweeps inside that confluence rank first. Position size: ₹2,000 allocation per trade.`;
           } else {
             banner.innerHTML = `<strong style="color:var(--accent);">Check 1: 9-20 EMA Range (4h):</strong> Scans all NSE equity stocks for 9/20 EMA bullish crosses (crossed and still above) on 4-hour timeframe.`;
-            if (statusPills) statusPills.style.display = "none";
           }
+          syncSwingPills(_currentSwingCheck);
 
           loadSwing();
         });
@@ -1784,7 +1825,13 @@
         const clearBtn = document.getElementById("swing-clear-btn");
         if (clearBtn) clearBtn.style.display = "inline-block";
 
-        const label = _currentSwingCheck === "ema_range" ? "4h 9/20 EMA alignment" : "Minervini VCP contraction + Vol Divergence + SMC";
+        const label = _currentSwingCheck === "ema_range"
+          ? "4h 9/20 EMA alignment"
+          : _currentSwingCheck === "amd"
+            ? "4h AMD accumulation / manipulation state"
+            : _currentSwingCheck === "mixed"
+              ? "all-three filter (9/20 EMA + VCP + AMD)"
+              : "Minervini VCP contraction + Vol Divergence + SMC";
         const routeLabel = apiKey ? "⚡ INDmoney API" : "🌐 Yahoo Finance";
         c.innerHTML = `<div class="loading">Deep analyzing ${ticker} via ${routeLabel} for ${label}...</div>`;
 
@@ -1799,6 +1846,18 @@
           if (res.pick) {
             if (_currentSwingCheck === "ema_range") {
               renderEmaPicks(c, `Swing Analysis: ${ticker}`, [res.pick]);
+            } else if (_currentSwingCheck === "amd") {
+              let html = `<div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;">🧲 ICT AMD Setup: ${ticker}</h3>
+                <span style="font-size:0.8rem; color:var(--text-muted);">Single Stock Deep Dive · 4h confirmed candles</span>
+              </div>`;
+              if (res.pick.amd_warning) {
+                html += `<div style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px 14px; margin-bottom:12px; font-size:0.82rem; color:#f59e0b;">
+                  ⚠️ <strong>AMD Notice:</strong> ${res.pick.amd_warning}
+                </div>`;
+              }
+              html += renderAmdCard(res.pick, 1);
+              c.innerHTML = html;
             } else {
               let html = `<div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
                 <h3 style="margin:0;">VCP Setup: ${ticker}</h3>
@@ -1807,6 +1866,16 @@
               if (res.pick.combined_warning) {
                 html += `<div style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px 14px; margin-bottom:12px; font-size:0.82rem; color:#f59e0b;">
                   ⚠️ <strong>Combined Filter Notice:</strong> ${res.pick.combined_warning}
+                </div>`;
+              }
+              if (res.pick.mixed_warning) {
+                html += `<div style="background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.35); border-radius:6px; padding:10px 14px; margin-bottom:12px; font-size:0.82rem; color:#c084fc;">
+                  ⚠️ <strong>Mixed Filter Notice:</strong> ${res.pick.mixed_warning}
+                </div>`;
+              }
+              if (res.pick.amd_warning) {
+                html += `<div style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px 14px; margin-bottom:12px; font-size:0.82rem; color:#f59e0b;">
+                  ⚠️ <strong>AMD Notice:</strong> ${res.pick.amd_warning}
                 </div>`;
               }
               html += renderVCPCard(res.pick, 1);
@@ -1858,6 +1927,146 @@
         );
       }
 
+      // Standalone 4h AMD pick (scan_amd_stock dict — no VCP fields).
+      function renderAmdCard(p, rank) {
+        const aplus = !!p.amd_a_plus;
+        const borderColor = aplus ? "#ff9800" : "#a855f7";
+        const badge = aplus
+          ? `<span class="badge" style="background:rgba(255,152,0,0.2); color:#ff9800; border:1px solid rgba(255,152,0,0.5); font-weight:700; box-shadow:0 0 12px rgba(255,152,0,0.3);">🔥 A+ MANIPULATION (4h)</span>`
+          : `<span class="badge" style="background:rgba(168,85,247,0.15); color:#c084fc; border:1px solid rgba(168,85,247,0.35); font-weight:600;">📦 ACCUMULATION BASE (4h)</span>`;
+        const scoreColor = p.score >= 90 ? "#ff9800" : p.score >= 75 ? "#10b981" : "#38bdf8";
+        const shares = p.suggested_qty || Math.max(1, Math.floor(2000 / (p.price || 1)));
+        const totalPosCost = (shares * p.price).toFixed(2);
+        const stopLoss = p.pivot_stop_loss ? Number(p.pivot_stop_loss).toFixed(2) : (p.price * 0.95).toFixed(2);
+        const targetPrice = p.target_price ? Number(p.target_price).toFixed(2) : (p.price * 1.08).toFixed(2);
+        const sweepAge = p.amd_candles_since_sweep !== null && p.amd_candles_since_sweep !== undefined
+          ? p.amd_candles_since_sweep + " bar(s) ago"
+          : "not swept yet";
+
+        const isLong = (p.amd_bias || "").includes("LONG");
+        const isShort = (p.amd_bias || "").includes("SHORT");
+        let amdBiasPill = "";
+        if (isLong) {
+          amdBiasPill = `<span class="deal-pill" style="background:rgba(16,185,129,0.18); color:#10b981; border:1px solid rgba(16,185,129,0.4); font-weight:700;">🟢 LONG BIAS (Low Swept)</span>`;
+        } else if (isShort) {
+          amdBiasPill = `<span class="deal-pill" style="background:rgba(239,68,68,0.18); color:#f87171; border:1px solid rgba(239,68,68,0.4); font-weight:700;">🔴 SHORT BIAS (High Swept)</span>`;
+        } else if (p.amd_bias) {
+          amdBiasPill = `<span class="deal-pill" style="background:rgba(255,152,0,0.12); color:#ff9800; border:1px solid rgba(255,152,0,0.3); font-weight:600;">${p.amd_bias}</span>`;
+        }
+
+        const srcPill = (p.data_source === "INDstocks API" || p.data_source === "INDmoney API")
+          ? `<span class="deal-pill" style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.35); font-weight:600;">⚡ INDmoney</span>`
+          : `<span class="deal-pill" style="background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid rgba(148,163,184,0.25); font-weight:500;">🌐 Yahoo</span>`;
+
+        return `<div class="card vcp-card" style="margin-bottom:12px; padding:16px; border:1px solid var(--border); border-left:4px solid ${borderColor};">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:1.1rem; font-weight:700; color:var(--accent);">#${rank}</span>
+                <span style="font-size:1.25rem; font-weight:700; letter-spacing:0.5px;">${p.ticker}</span>
+                ${badge}
+                ${amdBiasPill}
+                ${srcPill}
+              </div>
+              <div style="margin-top:4px; font-size:0.85rem; color:var(--text-muted);">
+                ₹${Number(p.price).toFixed(2)}
+                <span class="${p.change_pct >= 0 ? "positive" : "negative"}" style="font-weight:600; margin-left:4px;">
+                  ${p.change_pct >= 0 ? "+" : ""}${p.change_pct}%
+                </span>
+                · 4h Range: <strong style="color:var(--text);">₹${Number(p.amd_range_low).toFixed(2)} – ₹${Number(p.amd_range_high).toFixed(2)}</strong>
+                (${Number(p.amd_range_height_pct || 0).toFixed(1)}% Height · ${p.amd_candles_in_range} bars in base)
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Setup Score</div>
+              <div style="font-size:1.3rem; font-weight:800; color:${scoreColor};">${p.score} <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">/100</span></div>
+            </div>
+          </div>
+
+          <!-- 3-Phase ICT Flow Visualizer -->
+          <div style="margin-bottom:12px; background:linear-gradient(135deg, rgba(30,27,75,0.4) 0%, rgba(15,23,42,0.6) 100%); border:1px solid ${aplus ? 'rgba(255,152,0,0.4)' : 'rgba(168,85,247,0.3)'}; border-radius:8px; padding:12px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-weight:700; font-size:0.85rem; color:#c084fc;">🧲 ICT Institutional 4h Cycle</span>
+                ${aplus 
+                  ? `<span style="font-size:0.75rem; background:rgba(255,152,0,0.2); color:#ff9800; padding:2px 8px; border-radius:12px; font-weight:700; border:1px solid rgba(255,152,0,0.4);">🔥 Live Entry Window</span>` 
+                  : `<span style="font-size:0.75rem; background:rgba(168,85,247,0.15); color:#c084fc; padding:2px 8px; border-radius:12px; font-weight:600;">Coiling In Base</span>`}
+              </div>
+              <div style="font-size:0.78rem; color:var(--text-muted);">
+                Range: <strong style="color:var(--text);">₹${Number(p.amd_range_low).toFixed(2)} – ₹${Number(p.amd_range_high).toFixed(2)}</strong>
+                (${Number(p.amd_range_height_pct || 0).toFixed(1)}%)
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:8px; font-size:0.75rem;">
+              <div style="background:rgba(168,85,247,0.12); border:1px solid rgba(168,85,247,0.35); border-radius:6px; padding:8px 10px; text-align:center;">
+                <div style="font-weight:700; color:#c084fc; text-transform:uppercase; font-size:0.7rem; letter-spacing:0.5px;">1. Accumulation</div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--text); margin-top:2px;">
+                  ${p.amd_candles_in_range} Candles
+                </div>
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:1px;">
+                  Base Formed
+                </div>
+              </div>
+
+              <div style="color:${aplus ? '#ff9800' : 'rgba(255,255,255,0.2)'}; font-weight:bold; font-size:1.1rem; text-align:center;">➔</div>
+
+              <div style="background:${aplus ? 'rgba(255,152,0,0.18)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${aplus ? 'rgba(255,152,0,0.5)' : 'var(--border)'}; border-radius:6px; padding:8px 10px; text-align:center; ${aplus ? 'box-shadow:0 0 10px rgba(255,152,0,0.2);' : ''}">
+                <div style="font-weight:700; color:${aplus ? '#ff9800' : 'var(--text-muted)'}; text-transform:uppercase; font-size:0.7rem; letter-spacing:0.5px;">
+                  ${aplus ? '🔥 2. Manipulation (LIVE)' : '2. Manipulation'}
+                </div>
+                <div style="font-size:0.82rem; font-weight:600; color:${aplus ? '#ff9800' : 'var(--text-muted)'}; margin-top:2px;">
+                  ${aplus ? (p.amd_bias || 'Liquidity Reclaimed') : 'Waiting for Sweep'}
+                </div>
+                <div style="font-size:0.7rem; color:${aplus ? 'var(--text)' : 'var(--text-muted)'}; margin-top:1px;">
+                  ${aplus ? `Swept ${sweepAge}` : 'Stop-hunt Pending'}
+                </div>
+              </div>
+
+              <div style="color:${aplus ? '#10b981' : 'rgba(255,255,255,0.2)'}; font-weight:bold; font-size:1.1rem; text-align:center;">➔</div>
+
+              <div style="background:${aplus ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.04)'}; border:1px solid ${aplus ? 'rgba(16,185,129,0.35)' : 'rgba(16,185,129,0.2)'}; border-radius:6px; padding:8px 10px; text-align:center;">
+                <div style="font-weight:700; color:#10b981; text-transform:uppercase; font-size:0.7rem; letter-spacing:0.5px;">3. Distribution</div>
+                <div style="font-size:0.82rem; font-weight:600; color:var(--text); margin-top:2px;">
+                  Target: ₹${targetPrice}
+                </div>
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:1px;">
+                  ${aplus ? 'Expansion Ahead' : 'Pending Entry Trigger'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ₹2,000 Allocation Plan -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.25); border-radius:6px; padding:8px 12px; font-size:0.8rem; margin-bottom:12px;">
+            <div>
+              <span style="font-weight:600; color:#38bdf8;">₹2,000 Allocation Plan:</span>
+              Buy <strong>${shares} share(s)</strong> @ ~₹${Number(p.price).toFixed(2)} (Total: ₹${totalPosCost})
+              · Stop Loss: <strong style="color:#ef4444;">₹${stopLoss}</strong> ${aplus ? '<span style="font-size:0.72rem; color:var(--text-muted);">(Sweep Wick Extreme)</span>' : ''}
+              · Target: <strong style="color:#10b981;">₹${targetPrice}</strong>
+            </div>
+            <div style="color:var(--text-muted); font-size:0.75rem; white-space:nowrap;">
+              Hold Expectation: <strong>${p.hold_expectation || "3-5 days minimum"}</strong>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="runSupertrendBacktest('${p.ticker}', '4h')" style="padding:5px 12px; font-size:0.78rem;">
+              ⚡ Backtest Super Trend (4h)
+            </button>
+            <button class="btn btn-secondary" onclick="runSupertrendBacktest('${p.ticker}', '1d')" style="padding:5px 12px; font-size:0.78rem;">
+              ⚡ Backtest Super Trend (Daily)
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('quote', '${p.ticker}')" style="padding:5px 12px; font-size:0.78rem;">
+              📊 Quote & Chart
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('news', '${p.ticker}')" style="padding:5px 12px; font-size:0.78rem;">
+              📰 News
+            </button>
+          </div>
+        </div>`;
+      }
+
       function renderVCPCard(p, rank) {
         let badgeStyle = "background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);";
         let borderColor = "#38bdf8";
@@ -1889,6 +2098,11 @@
                 <span style="font-size:1.25rem; font-weight:700; letter-spacing:0.5px;">${p.ticker}</span>
                 <span class="badge" style="${badgeStyle}">${p.status.replace(/_/g, " ")}</span>
                 ${p.vcp_type ? `<span class="deal-pill" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3); font-weight:600;">${p.vcp_type} Base</span>` : ""}
+                ${p.amd_a_plus
+                  ? `<span class="deal-pill" style="background:rgba(255,152,0,0.18); color:#ff9800; border:1px solid rgba(255,152,0,0.45); font-weight:700; box-shadow:0 0 8px rgba(255,152,0,0.25);">🧲 A+ AMD Manipulation${p.amd_bias ? " · " + p.amd_bias.replace(/ \(.*/, "") : ""}</span>`
+                  : p.amd_status
+                    ? `<span class="deal-pill" style="background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid rgba(148,163,184,0.3); font-weight:600;">AMD Accumulation (4h)</span>`
+                    : ""}
                 ${(p.data_source === "INDstocks API" || p.data_source === "INDmoney API")
                   ? `<span class="deal-pill" style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.35); font-weight:600;">⚡ INDmoney API</span>`
                   : `<span class="deal-pill" style="background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid rgba(148,163,184,0.25); font-weight:500;">🌐 Yahoo Finance</span>`}
@@ -1943,6 +2157,22 @@
               </div>
               <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">
                 ${p.bars_since_ema_cross_4h !== null && p.bars_since_ema_cross_4h !== undefined ? "Cross: " + p.bars_since_ema_cross_4h + " bars ago" : "EMA9 ₹" + (p.ema9_4h || "-") + " / EMA20 ₹" + (p.ema20_4h || "-")}
+              </div>
+            </div>
+
+            <div>
+              <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">AMD State (4h)</div>
+              <div style="font-weight:600; color:${p.amd_a_plus ? "#ff9800" : p.amd_status ? "var(--text)" : "var(--text-muted)"}; margin-top:2px;">
+                ${p.amd_a_plus
+                  ? "🧲 A+ Manipulation Live"
+                  : p.amd_status
+                    ? p.amd_status
+                    : "No Active Range"}
+              </div>
+              <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">
+                ${p.amd_status
+                  ? `Range ₹${Number(p.amd_range_low).toFixed(2)}–₹${Number(p.amd_range_high).toFixed(2)} (${Number(p.amd_range_height_pct || 0).toFixed(1)}%)${p.amd_candles_since_sweep !== null && p.amd_candles_since_sweep !== undefined ? " · swept " + p.amd_candles_since_sweep + " bar(s) ago" : p.amd_bias ? " · " + p.amd_bias : ""}`
+                  : "Waiting for a tight 4h range (&le;3×ATR)"}
               </div>
             </div>
           </div>
@@ -2035,21 +2265,37 @@
           return;
         }
 
+        const isAmd = _currentSwingCheck === "amd";
+        const totalAPlus = res.picks.filter((p) => p.amd_a_plus).length;
+
         let list = res.picks;
         if (_currentSwingStatusFilter === "breakouts") {
           list = res.breakouts && res.breakouts.length ? res.breakouts : list.filter((p) => p.status === "CONFIRMED_BREAKOUT");
         } else if (_currentSwingStatusFilter === "accumulations") {
           list = res.quiet_accumulations && res.quiet_accumulations.length ? res.quiet_accumulations : list.filter((p) => p.status === "PRE_BREAKOUT_ACCUMULATION" || p.status === "COILING_AT_RESISTANCE");
+        } else if (_currentSwingStatusFilter === "amd_aplus") {
+          list = res.amd_a_plus && res.amd_a_plus.length ? res.amd_a_plus : list.filter((p) => p.amd_a_plus);
+        } else if (_currentSwingStatusFilter === "amd_acc") {
+          list = res.amd_accumulations && res.amd_accumulations.length ? res.amd_accumulations : list.filter((p) => !p.amd_a_plus && p.amd_status === "ACCUMULATION");
         }
 
         const totalBreakouts = res.breakouts ? res.breakouts.length : res.picks.filter((p) => p.status === "CONFIRMED_BREAKOUT").length;
         const totalAcc = res.quiet_accumulations ? res.quiet_accumulations.length : res.picks.filter((p) => p.status === "PRE_BREAKOUT_ACCUMULATION" || p.status === "COILING_AT_RESISTANCE").length;
+        const totalAmdAcc = res.amd_accumulations ? res.amd_accumulations.length : res.picks.filter((p) => !p.amd_a_plus && p.amd_status === "ACCUMULATION").length;
+
+        const heading = _currentSwingCheck === "combined"
+          ? "⚡ Combined Swing Setups (9/20 EMA + VCP)"
+          : _currentSwingCheck === "mixed"
+            ? "🧩 Mixed Swing Setups (9/20 EMA + VCP + AMD)"
+            : isAmd
+              ? "🧲 ICT AMD Watchlist (4h — Accumulation → Manipulation)"
+              : "🎯 Mark Minervini VCP Watchlist";
 
         let html = liveBarHtml;
         html += `<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 16px;">
           <div>
             <h3 style="margin:0 0 4px 0; font-size:1.05rem;">
-              ${_currentSwingCheck === "combined" ? "⚡ Combined Swing Setups (9/20 EMA + VCP)" : "🎯 Mark Minervini VCP Watchlist"}
+              ${heading}
             </h3>
             <span style="font-size:0.8rem; color:var(--text-muted);">
               ${list.length} showing of ${res.picks.length} qualified stocks (${res.scanned || res.total || 0} scanned)
@@ -2057,12 +2303,22 @@
             </span>
           </div>
           <div style="display:flex; gap:12px; font-size:0.82rem; flex-wrap:wrap;">
+            ${isAmd ? `
+            <div style="background:rgba(255,152,0,0.1); border:1px solid rgba(255,152,0,0.3); border-radius:6px; padding:4px 10px; color:#ff9800; font-weight:600;">
+              🔥 <strong>${totalAPlus}</strong> A+ Manipulation Sweeps
+            </div>
+            <div style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:6px; padding:4px 10px; color:#a855f7;">
+              📦 <strong>${totalAmdAcc}</strong> In Accumulation Base
+            </div>` : `
             <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:4px 10px; color:#10b981;">
               <strong>${totalBreakouts}</strong> Breakouts Today
             </div>
             <div style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:6px; padding:4px 10px; color:#a855f7;">
               <strong>${totalAcc}</strong> Quiet Accumulation
             </div>
+            <div style="background:rgba(255,152,0,0.1); border:1px solid rgba(255,152,0,0.3); border-radius:6px; padding:4px 10px; color:#ff9800;">
+              <strong>${totalAPlus}</strong> AMD A+ (4h)
+            </div>`}
             <div style="background:rgba(2,132,199,0.1); border:1px solid rgba(2,132,199,0.3); border-radius:6px; padding:4px 10px; color:#38bdf8;">
               <strong>₹2,000</strong> Allocation
             </div>
@@ -2076,7 +2332,7 @@
         }
 
         list.forEach((p, idx) => {
-          html += renderVCPCard(p, idx + 1);
+          html += isAmd ? renderAmdCard(p, idx + 1) : renderVCPCard(p, idx + 1);
         });
 
         c.innerHTML = html;
@@ -2091,7 +2347,11 @@
           ? "Combined 9/20 EMA + Minervini VCP setups"
           : _currentSwingCheck === "vcp"
             ? "Minervini VCP + Vol Divergence setups"
-            : "all stocks for 9/20 EMA bullish cross on 4h";
+            : _currentSwingCheck === "amd"
+              ? "all stocks for the 4h AMD accumulation / manipulation state machine"
+              : _currentSwingCheck === "mixed"
+                ? "Mixed all-three setups (9/20 EMA + VCP + AMD)"
+                : "all stocks for 9/20 EMA bullish cross on 4h";
 
         try {
           for (let attempt = 0; attempt < 180; attempt++) {
@@ -2302,10 +2562,16 @@
 
       window._dealsViewMode = window._dealsViewMode || "grouped";
       window._dealsFilterText = window._dealsFilterText || "";
+      window._dealsSideFilter = window._dealsSideFilter || "all";
       window._lastLargeDealsData = null;
 
       window.setDealsView = function(mode) {
         window._dealsViewMode = mode;
+        renderLargeDealsView();
+      };
+
+      window.setDealsSideFilter = function(filter) {
+        window._dealsSideFilter = filter;
         renderLargeDealsView();
       };
 
@@ -2317,6 +2583,132 @@
           input.focus();
           const len = input.value.length;
           input.setSelectionRange(len, len);
+        }
+      };
+
+      window.copyFilteredDealsStocks = async function() {
+        const res = window._lastLargeDealsData;
+        if (!res) return;
+        const bulk = res.BULK_DEALS_DATA || [];
+        const block = res.BLOCK_DEALS_DATA || [];
+        const groupedBulk = res.GROUPED_BULK_DEALS_DATA || groupDealsByStock(bulk);
+        const groupedBlock = res.GROUPED_BLOCK_DEALS_DATA || groupDealsByStock(block);
+        const filter = (window._dealsFilterText || "").toLowerCase().trim();
+        const sideFilter = window._dealsSideFilter || "all";
+        const viewMode = window._dealsViewMode || "grouped";
+
+        const applySideGrouped = (list) => {
+          if (sideFilter === "all") return list;
+          if (sideFilter === "buy") {
+            return list.filter((s) => (s.buy_val || 0) > (s.sell_val || 0) || (s.buy_count > 0 && s.sell_count === 0));
+          }
+          if (sideFilter === "sell") {
+            return list.filter((s) => (s.sell_val || 0) > (s.buy_val || 0) || (s.sell_count > 0 && s.buy_count === 0));
+          }
+          return list;
+        };
+
+        const applySideRaw = (list) => {
+          if (sideFilter === "all") return list;
+          if (sideFilter === "buy") return list.filter((d) => (d.buySell || "").toUpperCase() === "BUY");
+          if (sideFilter === "sell") return list.filter((d) => (d.buySell || "").toUpperCase() === "SELL");
+          return list;
+        };
+
+        let items = [];
+        if (viewMode === "grouped") {
+          let list = applySideGrouped([...groupedBulk, ...groupedBlock]);
+          if (filter) {
+            list = list.filter((s) => {
+              if ((s.symbol || "").toLowerCase().includes(filter)) return true;
+              if ((s.name || "").toLowerCase().includes(filter)) return true;
+              if ((s.client_list || []).some((c) => (c.client || "").toLowerCase().includes(filter))) return true;
+              return false;
+            });
+          }
+          items = list;
+          if (!items.length) {
+            alert("Nothing to copy for current filters.");
+            return;
+          }
+          const header = ["Symbol", "Name", "Deals(B/S)", "Buy Qty", "Sell Qty", "Buy Value", "Sell Value", "Net Value", "Top Institutions"];
+          const rows = [header.join("\t")];
+          items.forEach((s) => {
+            const deals = (s.buy_count||0) + "B/" + (s.sell_count||0) + "S";
+            const insts = (s.client_list||[]).slice(0,3).map((c)=>{
+              const parts=[];
+              if(c.buys&&c.buys.length) parts.push("BUY@"+c.buys.map(b=>b.watp.toFixed(2)).join(","));
+              if(c.sells&&c.sells.length) parts.push("SELL@"+c.sells.map(b=>b.watp.toFixed(2)).join(","));
+              return c.client+":"+parts.join("|");
+            }).join("; ");
+            rows.push([
+              s.symbol||"",
+              (s.name||"").replace(/\t/g," "),
+              deals,
+              Math.round(s.buy_qty||0),
+              Math.round(s.sell_qty||0),
+              Math.round(s.buy_val||0),
+              Math.round(s.sell_val||0),
+              Math.round(s.net_val||0),
+              insts.replace(/\t/g," ")
+            ].join("\t"));
+          });
+          const text = rows.join("\n");
+          try {
+            await navigator.clipboard.writeText(text);
+            alert("Copied " + items.length + " stocks (tab-separated with data) to clipboard.");
+          } catch (e) {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            alert("Copied " + items.length + " stocks (tab-separated with data) to clipboard.");
+          }
+          return;
+        } else {
+          let list = applySideRaw([...bulk, ...block]);
+          if (filter) {
+            list = list.filter((d) => {
+              if ((d.symbol||"").toLowerCase().includes(filter)) return true;
+              if ((d.name||"").toLowerCase().includes(filter)) return true;
+              if ((d.clientName||"").toLowerCase().includes(filter)) return true;
+              return false;
+            });
+          }
+          items = list;
+          if (!items.length) {
+            alert("Nothing to copy for current filters.");
+            return;
+          }
+          const header = ["Symbol","Company","B/S","Client","Qty","Price","Value","Date"];
+          const rows = [header.join("\t")];
+          items.forEach((d)=>{
+            rows.push([
+              d.symbol||"",
+              (d.name||"").replace(/\t/g," "),
+              d.buySell||"",
+              (d.clientName||"").replace(/\t/g," "),
+              d.qty||"",
+              d.watp||"",
+              (parseFloat(d.qty)||0)*(parseFloat(d.watp)||0),
+              d.date||""
+            ].join("\t"));
+          });
+          const text = rows.join("\n");
+          try {
+            await navigator.clipboard.writeText(text);
+            alert("Copied " + items.length + " deals (tab-separated with data) to clipboard.");
+          } catch (e) {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            alert("Copied " + items.length + " deals (tab-separated with data) to clipboard.");
+          }
         }
       };
 
@@ -2409,7 +2801,7 @@
             "<tr>" +
             "<td>" +
             '<div style="display:flex;align-items:center;gap:6px;">' +
-            '<strong style="color:var(--accent);font-size:0.95rem;cursor:pointer;" onclick="switchTab(\'quote\',\'' + s.symbol + '\')" title="View Quote for ' + s.symbol + '">' + s.symbol + "</strong>" +
+            '<a href="https://in.tradingview.com/chart/?symbol=NSE%3A' + encodeURIComponent(s.symbol) + '" target="_blank" rel="noopener" style="color:var(--accent);font-size:0.95rem;font-weight:700;text-decoration:none;" title="Open ' + s.symbol + ' on TradingView" onclick="event.stopPropagation();">' + s.symbol + "</a>" +
             '<button class="btn btn-primary" style="padding:1px 6px;font-size:0.7rem;line-height:1.2;" onclick="switchTab(\'news\',\'' + s.symbol + '\')" title="Get News for ' + s.symbol + '">News</button>' +
             "</div>" +
             '<div style="font-size:0.75rem;color:var(--text-muted);white-space:normal;max-width:180px;margin-top:2px;">' + (s.name || "") + "</div>" +
@@ -2456,7 +2848,7 @@
           const val = qty * price;
           h +=
             "<tr>" +
-            '<td><strong style="color:var(--accent);cursor:pointer;" onclick="switchTab(\'quote\',\'' + d.symbol + '\')">' + d.symbol + "</strong></td>" +
+            '<td><a href="https://in.tradingview.com/chart/?symbol=NSE%3A' + encodeURIComponent(d.symbol) + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:600;text-decoration:none;" title="Open ' + d.symbol + ' on TradingView" onclick="event.stopPropagation();">' + d.symbol + "</a></td>" +
             '<td style="white-space:normal;max-width:180px;">' + (d.name || "") + "</td>" +
             '<td><span class="badge ' + (d.buySell === "BUY" ? "buy" : "sell") + '">' + d.buySell + "</span></td>" +
             '<td style="white-space:normal;max-width:240px;">' + (d.clientName || "") + "</td>" +
@@ -2505,10 +2897,36 @@
 
         // Apply search filter if present
         const filter = (window._dealsFilterText || "").toLowerCase().trim();
+        const dealsSideFilter = window._dealsSideFilter || "all";
+
+        let filteredGroupedBulkForCopy = res.GROUPED_BULK_DEALS_DATA || groupDealsByStock(bulk);
+        let filteredGroupedBlockForCopy = res.GROUPED_BLOCK_DEALS_DATA || groupDealsByStock(block);
+        const filterBySideGrouped = (list) => {
+          if (dealsSideFilter === "all") return list;
+          if (dealsSideFilter === "buy") {
+            return list.filter((s) => (s.buy_val || 0) > (s.sell_val || 0) || (s.buy_count > 0 && s.sell_count === 0));
+          }
+          if (dealsSideFilter === "sell") {
+            return list.filter((s) => (s.sell_val || 0) > (s.buy_val || 0) || (s.sell_count > 0 && s.buy_count === 0));
+          }
+          return list;
+        };
+
+        const filterBySideRaw = (list) => {
+          if (dealsSideFilter === "all") return list;
+          if (dealsSideFilter === "buy") {
+            return list.filter((d) => (d.buySell || "").toUpperCase() === "BUY");
+          }
+          if (dealsSideFilter === "sell") {
+            return list.filter((d) => (d.buySell || "").toUpperCase() === "SELL");
+          }
+          return list;
+        };
 
         const filterGrouped = (list) => {
-          if (!filter) return list;
-          return list.filter((s) => {
+          const sideFiltered = filterBySideGrouped(list);
+          if (!filter) return sideFiltered;
+          return sideFiltered.filter((s) => {
             if (s.symbol.toLowerCase().includes(filter)) return true;
             if ((s.name || "").toLowerCase().includes(filter)) return true;
             if ((s.client_list || []).some((c) => c.client.toLowerCase().includes(filter))) return true;
@@ -2517,8 +2935,9 @@
         };
 
         const filterRaw = (list) => {
-          if (!filter) return list;
-          return list.filter((d) => {
+          const sideFiltered = filterBySideRaw(list);
+          if (!filter) return sideFiltered;
+          return sideFiltered.filter((d) => {
             if ((d.symbol || "").toLowerCase().includes(filter)) return true;
             if ((d.name || "").toLowerCase().includes(filter)) return true;
             if ((d.clientName || "").toLowerCase().includes(filter)) return true;
@@ -2527,6 +2946,7 @@
         };
 
         let html = '<div class="card">';
+        const sideFilter = window._dealsSideFilter || "all";
         html +=
           '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">' +
           "<div>" +
@@ -2535,7 +2955,11 @@
           "</div>" +
           '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
           '<input type="text" id="deals-search-input" placeholder="Filter symbol or institution..." value="' + (window._dealsFilterText || "").replace(/"/g, "&quot;") + '" oninput="handleDealsFilter(this.value)" style="padding:4px 10px;font-size:0.8rem;background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:3px;min-width:190px;" />' +
+          '<button class="btn btn-primary" style="padding:4px 10px;font-size:0.78rem;" onclick="copyFilteredDealsStocks()">Copy all (' + (sideFilter === "all" ? "All" : sideFilter === "buy" ? "Buys" : "Sells") + ')</button>' +
           '<div style="display:inline-flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;">' +
+          '<button class="deals-toggle-btn ' + (sideFilter === "all" ? "active" : "") + '" onclick="setDealsSideFilter(\'all\')">All Deals</button>' +
+          '<button class="deals-toggle-btn ' + (sideFilter === "buy" ? "active" : "") + '" style="color:' + (sideFilter === "buy" ? "#fff" : "var(--green)") + ';' + (sideFilter === "buy" ? "background:rgba(8,153,129,0.25);border-color:var(--green);" : "") + '" onclick="setDealsSideFilter(\'buy\')">Only Buys</button>' +
+          '<button class="deals-toggle-btn ' + (sideFilter === "sell" ? "active" : "") + '" style="color:' + (sideFilter === "sell" ? "#fff" : "var(--red)") + ';' + (sideFilter === "sell" ? "background:rgba(242,54,69,0.25);border-color:var(--red);" : "") + '" onclick="setDealsSideFilter(\'sell\')">Only Sells</button>' +
           '<button class="deals-toggle-btn ' + (window._dealsViewMode === "grouped" ? "active" : "") + '" onclick="setDealsView(\'grouped\')">Grouped by Stock</button>' +
           '<button class="deals-toggle-btn ' + (window._dealsViewMode === "raw" ? "active" : "") + '" onclick="setDealsView(\'raw\')">All Deals</button>' +
           '<button class="deals-toggle-btn" style="background:rgba(41,98,255,0.15);color:var(--accent);border-color:var(--accent);" onclick="switchTab(\'institutions\')">&#127963; Govt of Singapore &amp; Funds &rarr;</button>' +
@@ -2553,10 +2977,16 @@
           "</div>";
 
         if (window._dealsViewMode === "grouped") {
-          const filteredGroupedBulk = filterGrouped(groupedBulk);
-          const filteredGroupedBlock = filterGrouped(groupedBlock);
+          filteredGroupedBulkForCopy = filterGrouped(groupedBulk);
+          filteredGroupedBlockForCopy = filterGrouped(groupedBlock);
+          const filteredGroupedBulk = filteredGroupedBulkForCopy;
+          const filteredGroupedBlock = filteredGroupedBlockForCopy;
           if (!filteredGroupedBulk.length && !filteredGroupedBlock.length) {
-            html += '<div class="empty">No stocks match your filter "' + filter + '".</div>';
+            let msg = "No stocks match your filter";
+            if (filter) msg += ' "' + filter + '"';
+            if (dealsSideFilter === "buy") msg = "No net-buy stocks found";
+            else if (dealsSideFilter === "sell") msg = "No net-sell stocks found";
+            html += '<div class="empty">' + msg + '.</div>';
           } else {
             html += renderGroupedDealsTable(filteredGroupedBulk, "Bulk Deals", "bulk");
             html += renderGroupedDealsTable(filteredGroupedBlock, "Block Deals", "block");
@@ -2565,7 +2995,11 @@
           const filteredRawBulk = filterRaw(bulk);
           const filteredRawBlock = filterRaw(block);
           if (!filteredRawBulk.length && !filteredRawBlock.length) {
-            html += '<div class="empty">No deals match your filter "' + filter + '".</div>';
+            let msg = "No deals match your filter";
+            if (filter) msg += ' "' + filter + '"';
+            if (dealsSideFilter === "buy") msg = "No BUY deals found";
+            else if (dealsSideFilter === "sell") msg = "No SELL deals found";
+            html += '<div class="empty">' + msg + '.</div>';
           } else {
             html += renderRawDealsTable(filteredRawBulk, "Bulk Deals");
             html += renderRawDealsTable(filteredRawBlock, "Block Deals");
@@ -2858,7 +3292,7 @@
               "<tr>" +
               "<td>" +
               '<div style="display:flex;align-items:center;gap:6px;">' +
-              '<strong style="color:var(--accent);font-size:0.95rem;cursor:pointer;" onclick="switchTab(\'quote\',\'' + s.symbol + '\')">' + s.symbol + "</strong>" +
+              '<a href="https://in.tradingview.com/chart/?symbol=NSE%3A' + encodeURIComponent(s.symbol) + '" target="_blank" rel="noopener" style="color:var(--accent);font-size:0.95rem;font-weight:700;text-decoration:none;" title="Open ' + s.symbol + ' on TradingView" onclick="event.stopPropagation();">' + s.symbol + "</a>" +
               '<button class="btn btn-primary" style="padding:1px 6px;font-size:0.7rem;line-height:1.2;" onclick="switchTab(\'news\',\'' + s.symbol + '\')">News</button>' +
               "</div>" +
               '<div style="font-size:0.75rem;color:var(--text-muted);white-space:normal;max-width:180px;margin-top:2px;">' + (s.name || "") + "</div>" +
@@ -2881,7 +3315,7 @@
             const cls = d.buySell === "BUY" ? "positive" : "negative";
             html +=
               "<tr>" +
-              '<td><strong style="color:var(--accent);cursor:pointer;" onclick="switchTab(\'quote\',\'' + d.symbol + '\')">' + d.symbol + "</strong><br><span style=\"color:var(--text-muted);font-size:0.75rem\">" + (d.name || "") + "</span></td>" +
+              "<td><a href=\"https://in.tradingview.com/chart/?symbol=NSE%3A" + encodeURIComponent(d.symbol) + "\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--accent);font-weight:600;text-decoration:none;\" title=\"Open " + d.symbol + " on TradingView\" onclick=\"event.stopPropagation();\">" + d.symbol + "</a><br><span style=\"color:var(--text-muted);font-size:0.75rem;\">" + (d.name || "") + "</span></td>" +
               "<td>" + (d.deal_type || "") + "</td>" +
               '<td><span class="badge ' + (d.buySell === "BUY" ? "buy" : "sell") + '">' + d.buySell + "</span></td>" +
               "<td>" + (d.date || "") + "</td>" +
@@ -2898,6 +3332,38 @@
         el.innerHTML = html;
       }
 
+      window.addStockToIntradayBot = async function(symbol) {
+        try {
+          const res = await fetch("http://localhost:9092/api/watchlist/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbol: symbol })
+          });
+          const d = await res.json();
+          alert(`✓ ${symbol} added to INDmoney Intraday Scanner watchlist!`);
+        } catch (e) {
+          alert(`Could not connect to INDmoney Intraday Bot on port 9092: ${e.message}. Ensure the bot server is running.`);
+        }
+      };
+
+      window.syncTop5ToIntradayBot = async function() {
+        const top5 = window._lastTop5BuyingStocks || [];
+        if (!top5.length) {
+          alert("No top buying stocks found yet.");
+          return;
+        }
+        try {
+          const res = await fetch("http://localhost:9092/api/watchlist/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbols: top5.join(", ") })
+          });
+          alert(`✓ Top 5 buying stocks (${top5.join(", ")}) synchronized to INDmoney Intraday Scanner!`);
+        } catch (e) {
+          alert(`Could not connect to INDmoney Intraday Bot on port 9092: ${e.message}`);
+        }
+      };
+
       async function loadBullishNews() {
         const el = document.getElementById("bullish-news");
         el.innerHTML =
@@ -2910,13 +3376,49 @@
               '<div class="card"><h3>Bullish Stocks Today</h3><div class="empty">No gainers found.</div></div>';
             return;
           }
-          let html =
-            '<div class="card"><h3>Bullish Stocks Today \u2014 Top Gainers</h3>';
+
+          const top5 = res.top_5 || gainers.slice(0, 5).map(g => g.ticker);
+          window._lastTop5BuyingStocks = top5;
+
+          let html = '';
+
+          // Prominent Top 5 Buying Stocks Banner
+          html += '<div class="card" style="margin-bottom:16px; border:1px solid rgba(0, 212, 255, 0.4); background:rgba(10, 25, 60, 0.65);">';
+          html += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">';
+          html += '  <div>';
+          html += '    <h3 style="margin:0; font-size:1.1rem; color:#fff; display:flex; align-items:center; gap:8px;">';
+          html += '      <span style="color:var(--accent);">⚡ Top 5 Buying Stocks</span>';
+          html += '      <span style="font-size:0.75rem; background:rgba(16, 185, 129, 0.2); color:#10b981; padding:2px 8px; border-radius:4px; font-weight:700;">Active in INDmoney Intraday Scanner</span>';
+          html += '    </h3>';
+          html += '    <p style="margin:4px 0 0; font-size:0.82rem; color:var(--text-muted);">';
+          html += '      Top momentum buying stocks present in the INDmoney Intraday Equity Continuous Scanner (₹3k Bullish ATR Bot).';
+          html += '    </p>';
+          html += '  </div>';
+          html += '  <div style="display:flex; gap:8px;">';
+          html += '    <button class="btn btn-primary" onclick="syncTop5ToIntradayBot()" style="padding:6px 14px; font-size:0.8rem;">⚡ Sync All 5 to Intraday Bot</button>';
+          html += '    <a href="http://localhost:9092" target="_blank" class="btn btn-secondary" style="padding:6px 14px; font-size:0.8rem; text-decoration:none;">Open Intraday Bot ↗</a>';
+          html += '  </div>';
+          html += '</div>';
+
+          html += '<div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">';
+          gainers.slice(0, 5).forEach((g) => {
+            html += '<div style="background:rgba(20, 32, 70, 0.85); border:1px solid var(--border); border-radius:6px; padding:8px 12px; display:flex; align-items:center; gap:10px;">';
+            html += '  <strong style="color:#fff; font-size:0.95rem;">' + g.ticker + '</strong>';
+            html += '  <span style="color:var(--green); font-weight:700; font-size:0.85rem;">+' + g.change_pct + '%</span>';
+            html += '  <span style="color:var(--text-muted); font-size:0.8rem;">₹' + fmt(g.price) + '</span>';
+            html += '  <button class="btn btn-outline" onclick="addStockToIntradayBot(\'' + g.ticker + '\')" style="padding:2px 8px; font-size:0.72rem; color:var(--accent);" title="Push ' + g.ticker + ' to continuous scanner">+ Bot</button>';
+            html += '</div>';
+          });
+          html += '</div>';
+          html += '</div>';
+
+          // Gainers List with News
+          html += '<div class="card"><h3>Bullish Stocks Today \u2014 Top Gainers & News</h3>';
           gainers.forEach((g) => {
             html +=
               '<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">';
             html +=
-              '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">';
+              '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">';
             html += '<strong style="font-size:1rem">' + g.ticker + "</strong>";
             html +=
               '<span style="color:var(--green);font-weight:600">+' +
@@ -2930,6 +3432,10 @@
               '<button class="btn btn-primary" style="padding:4px 10px;font-size:0.75rem" onclick="switchTab(\'news\',\'' +
               g.ticker +
               "')\">News</button>";
+            html +=
+              '<button class="btn btn-secondary" style="padding:4px 10px;font-size:0.75rem" onclick="addStockToIntradayBot(\'' +
+              g.ticker +
+              "')\">⚡ Add to Bot</button>";
             html += "</div>";
             (g.news || []).forEach((a) => {
               const title = a.title || "";

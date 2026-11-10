@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import random
+import re
 import socket
 import subprocess
 import sys
@@ -31,6 +32,9 @@ class Jarvis:
         self._music_proc = None
         self._welcome_proc = None
         self._stock_proc = None
+        # False after "jarvis, stop listening": speech is ignored until the
+        # wake word "jarvis" is heard again (resume_if_awake).
+        self.listening = True
 
     def _kill_music(self):
         if self._music_proc and self._music_proc.poll() is None:
@@ -110,7 +114,7 @@ class Jarvis:
             ["fuser", "-k", "-n", "tcp", str(port)],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
-        script = {9090: "stock_dashboard.py", 9091: "welcome_dashboard.py"}.get(port)
+        script = {9090: "stock_dashboard.py", 9091: "welcome_dashboard.py", 9092: "indmoney_intraday_bot.py"}.get(port)
         if script:
             subprocess.run(
                 ["pkill", "-f", script],
@@ -146,6 +150,8 @@ class Jarvis:
             )
             if script == "welcome_dashboard.py":
                 self._welcome_proc = proc
+            elif script == "indmoney_intraday_bot.py":
+                self._bot_proc = proc
             else:
                 self._stock_proc = proc
         except Exception as e:
@@ -174,16 +180,63 @@ class Jarvis:
         speak("Could not start the stock dashboard, sir. Check stock_dashboard.server.log.")
         return False
 
+    def _open_indmoney_bot(self) -> bool:
+        """Launch the INDmoney Intraday Equity Bot and open the browser."""
+        if self._start_dashboard("indmoney_intraday_bot.py", 9092):
+            webbrowser.open_new_tab("http://localhost:9092")
+            return True
+        log_event("INDmoney bot failed to start", "error")
+        speak("Could not start the INDmoney intraday bot, sir. Check indmoney_bot.server.log.")
+        return False
+
+    # Wake word at the start of an utterance, optional "hey", optional comma
+    # ("jarvis, what's the time", "hey jarvis stop listening", "jarvis.").
+    _WAKE_RE = re.compile(r"^\s*(?:hey\s+)?jarvis\b[,\s]*(.*)$", re.IGNORECASE)
+
+    def resume_if_awake(self, query: str) -> bool:
+        """Paused-mode gate: ignore speech unless it starts with the wake word.
+
+        Returns True once woken. Anything spoken after the wake word runs as a
+        normal command; a bare "jarvis" just resumes listening with no spoken
+        reply.
+        """
+        m = self._WAKE_RE.match(query)
+        if not m:
+            log_event(f"Ignored while paused: {query}")
+            return False
+        self.listening = True
+        print("\n--- Listening ---")
+        log_event("Resumed listening (wake word)")
+        rest = m.group(1).strip().strip(",.!? ")
+        if rest:
+            self.execute_query(rest)
+        return True
+
     def execute_query(self, query):
         stop_speech()
         for prefix in ["jarvis ", "jarvis", "jarvis's "]:
             if query.startswith(prefix):
                 query = query.removeprefix(prefix)
                 break
+        # "jarvis, stop listening" → go quiet: speak the sign-off once, then
+        # ignore every word except the wake word. Must run before the
+        # close/stop block below, which would otherwise treat this as
+        # "stop music" and reply "Music stopped, sir."
+        if "stop listening" in query:
+            self.listening = False
+            print("\n--- Paused: say 'jarvis' when you need me ---")
+            log_event("Paused listening (voice command)")
+            speak("Say Jarvis when you need me.", wait=True)
+            return
         # Close commands must be handled before the topic branches below, since
         # "close stock dashboard" also contains "stock" and "dashboard" and would
         # otherwise be swallowed by the stock branch and reopen the dashboard.
         if "close" in query or "shut" in query or "kill" in query or "stop" in query:
+            wants_bot = "indmoney" in query or "intraday" in query or "equity bot" in query or "9092" in query
+            if wants_bot:
+                speak("Shutting down the INDmoney intraday bot, sir.")
+                self._free_port(9092)
+                return
             wants_welcome = "welcome" in query or "9091" in query
             wants_stock = "stock" in query or "9090" in query or (
                 "dashboard" in query and not wants_welcome
@@ -200,6 +253,14 @@ class Jarvis:
                 return
 
         # Handle hardcoded voice shortcuts first for speed
+        if "indmoney" in query or "intraday" in query or "equity bot" in query:
+            if self._dashboard_ready(9092):
+                speak("INDmoney intraday bot is already running, sir.")
+                webbrowser.open_new_tab("http://localhost:9092")
+            elif self._open_indmoney_bot():
+                speak("Opening INDmoney intraday equity bot dashboard.")
+            return
+
         if "time" in query:
             strTime = datetime.datetime.now().strftime("%H:%M:%S")
             speak(f"Sir, the time is {strTime}")
@@ -437,6 +498,12 @@ class Jarvis:
             if self._open_welcome():
                 opened.append("welcome dashboard")
 
+            if self._dashboard_ready(9092):
+                speak("INDmoney intraday bot is already running.")
+                opened.append("intraday bot")
+            elif self._start_dashboard("indmoney_intraday_bot.py", 9092):
+                opened.append("intraday bot")
+
             if opened:
                 speak("Starting " + " and ".join(opened) + ".")
                 if any("YouTube" in o for o in opened):
@@ -445,6 +512,8 @@ class Jarvis:
                     webbrowser.open_new_tab("http://localhost:9090")
                 if any("welcome" in o for o in opened):
                     webbrowser.open_new_tab("http://localhost:9091")
+                if any("intraday" in o for o in opened):
+                    webbrowser.open_new_tab("http://localhost:9092")
             if not opened:
                 speak("All servers are already running, sir.")
         elif "upload" in query and ("youtube" in query or "video" in query):
@@ -643,7 +712,12 @@ def main():
         while True:
             query = takeCommand()
             if query != "none":
-                bot.execute_query(query)
+                if bot.listening:
+                    bot.execute_query(query)
+                else:
+                    # Paused: only "jarvis ..." revives it; everything else
+                    # is deliberately ignored — no replies while paused.
+                    bot.resume_if_awake(query)
             # Check typed commands from the welcome dashboard
             try:
                 if os.path.exists(cmd_queue):

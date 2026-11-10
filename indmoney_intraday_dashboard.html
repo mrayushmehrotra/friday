@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FRIDAY | INDmoney Morning Momentum Ignition Bot</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0a0e27;
+      --bg-secondary: #111b3c;
+      --surface: #151f3f;
+      --surface-hover: #1e2c56;
+      --border: #2d3e6f;
+      --border-light: #3d4e7f;
+      --text-primary: #e8ecf1;
+      --text-secondary: #a8b5c8;
+      --text-muted: #6b7a94;
+      --accent-primary: #00d4ff;
+      --accent-secondary: #6366f1;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --glow-cyan: rgba(0, 212, 255, 0.2);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0; padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: radial-gradient(circle at 10% 20%, rgba(0, 212, 255, 0.05) 0%, transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
+                  linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: #fff;
+      box-shadow: 0 0 20px var(--glow-cyan);
+    }
+
+    .brand-title h1 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title .sub {
+      font-size: 0.78rem;
+      color: var(--accent-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted);
+    }
+    .status-dot.active { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .status-dot.warning { background: var(--warning); }
+    .status-dot.danger { background: var(--danger); }
+
+    .btn {
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      color: #fff;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      box-shadow: 0 2px 10px var(--glow-cyan);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 0 20px var(--glow-cyan);
+      transform: translateY(-1px);
+    }
+    .btn-outline {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    .btn-outline:hover {
+      border-color: var(--accent-primary);
+      background: var(--surface-hover);
+      color: var(--accent-primary);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+    .btn-danger:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Balance Banner */
+    .balance-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .bal-card {
+      background: rgba(21, 31, 63, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .bal-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--accent-primary);
+    }
+    .bal-card.profit::before { background: var(--success); }
+    .bal-card.loss::before { background: var(--danger); }
+    .bal-card.warning::before { background: var(--warning); }
+
+    .bal-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .bal-value {
+      font-size: 1.55rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    .bal-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .pos { color: var(--success); }
+    .neg { color: var(--danger); }
+
+    /* Panels */
+    .panel {
+      background: rgba(21, 31, 63, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(12px);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(17, 27, 60, 0.5);
+    }
+    .panel-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-body {
+      padding: 20px;
+    }
+
+    /* Watchlist Input Section */
+    .watchlist-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .watchlist-form input {
+      flex: 1;
+      background: rgba(10, 14, 39, 0.8);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-family: var(--font-mono);
+      outline: none;
+      text-transform: uppercase;
+    }
+    .watchlist-form input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px var(--glow-cyan);
+    }
+
+    /* Active Trade Hero Box */
+    .active-trade-box {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(0, 212, 255, 0.05));
+      border: 1px solid var(--success);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
+    }
+    .active-trade-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .trade-sym {
+      font-size: 1.5rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: #fff;
+    }
+    .trade-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+    .trade-grid .item .label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .trade-grid .item .val {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    /* Table */
+    .table-responsive { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(45, 62, 111, 0.5);
+      vertical-align: middle;
+    }
+    tr:hover td { background: rgba(99, 102, 241, 0.04); }
+
+    .tag-breakout {
+      background: rgba(0, 212, 255, 0.15);
+      color: var(--accent-primary);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      border: 1px solid var(--accent-primary);
+    }
+    .tag-normal {
+      background: rgba(168, 181, 200, 0.1);
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+    }
+    .tag-gap {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+    }
+
+    .console-box {
+      background: #070a1a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      height: 160px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: #38bdf8;
+      line-height: 1.6;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      width: 90%; max-width: 500px; padding: 24px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+    }
+    .form-group input, .form-group select {
+      width: 100%; background: #0a0e27; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px 12px; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.85rem;
+    }
+
+    @media (max-width: 1024px) {
+      .balance-grid { grid-template-columns: repeat(2, 1fr); }
+      .trade-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .balance-grid { grid-template-columns: 1fr; }
+      .trade-grid { grid-template-columns: repeat(2, 1fr); }
+      header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="logo-badge">⚡</div>
+        <div class="brand-title">
+          <h1>INDmoney Morning Momentum Ignition Bot</h1>
+          <div class="sub">Baseline Reclaim & Consolidation Breakout Engine · Trailing Profit Lock · Single Trade (₹3k)</div>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="status-pill">
+          <span class="status-dot active" id="dot-mkt"></span>
+          <span id="txt-mkt">Market Checking...</span>
+          <span id="sub-ist-clock" style="font-size:0.75rem; color:var(--text-muted); margin-left:6px; font-family:var(--font-mono);"></span>
+        </div>
+        <div class="status-pill">
+          <span class="status-dot active" id="dot-bot"></span>
+          <span id="txt-bot">Scanner Active</span>
+        </div>
+        <div class="status-pill">
+          <span class="status-dot warning" id="dot-broker"></span>
+          <span id="txt-broker">Paper Mode</span>
+        </div>
+
+        <button class="btn btn-outline" id="btn-toggle-bot">Pause Scanner</button>
+        <button class="btn btn-outline" id="btn-settings">⚙ Settings</button>
+      </div>
+    </header>
+
+    <!-- INDmoney API Key Connection & Live Balance Fetcher -->
+    <div class="panel" style="margin-bottom: 20px; border-color: rgba(0, 212, 255, 0.4); background: rgba(17, 27, 60, 0.75);">
+      <div class="panel-header" style="background: rgba(10, 14, 39, 0.6);">
+        <div class="panel-title" style="color: var(--accent-primary);">
+          <span>🔑 INDmoney API Key & Live Account Data</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span id="txt-api-status" style="font-size:0.78rem; color:var(--warning);">● Paper Mode (No Live API Key)</span>
+          <button class="btn btn-outline" id="btn-sync-balance" style="padding:4px 10px; font-size:0.75rem;">↻ Sync Live Balance</button>
+        </div>
+      </div>
+      <div class="panel-body" style="padding: 16px 20px;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <input
+            type="password"
+            id="input-api-key"
+            placeholder="Paste INDmoney / INDstocks Access Token here to fetch live balance & place trades..."
+            style="flex: 1; min-width: 300px; background: rgba(10, 14, 39, 0.9); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); padding: 10px 14px; font-family: var(--font-mono); font-size: 0.85rem; outline: none;"
+          />
+          <button class="btn btn-primary" id="btn-save-key">⚡ Connect & Fetch Balance</button>
+          <button class="btn btn-outline" id="btn-disconnect-key" style="color: var(--danger); display: none;">Disconnect Key</button>
+        </div>
+        <div id="api-feedback" style="margin-top: 10px; font-size: 0.8rem; min-height: 20px;"></div>
+      </div>
+    </div>
+
+    <!-- Balance Banner -->
+    <div class="balance-grid">
+      <div class="bal-card">
+        <div class="bal-label">
+          <span>Available Margin (MIS)</span>
+          <span id="bal-source" style="color:var(--accent-primary)">LIVE LEDGER</span>
+        </div>
+        <div class="bal-value" id="val-avl-balance">₹--</div>
+        <div class="bal-sub" id="sub-sod">SOD Balance: ₹--</div>
+      </div>
+
+      <div class="bal-card" id="card-pnl">
+        <div class="bal-label">
+          <span>Today Net P&L</span>
+          <span id="val-pnl-pct">+0.00%</span>
+        </div>
+        <div class="bal-value pos" id="val-net-pnl">₹+0.00</div>
+        <div class="bal-sub" id="sub-pnl-split">Realized: ₹0.00 | Floating: ₹0.00</div>
+      </div>
+
+      <div class="bal-card warning">
+        <div class="bal-label">
+          <span>Utilized Margin</span>
+          <span id="sub-exposure">Single Trade · ₹3k</span>
+        </div>
+        <div class="bal-value" id="val-utilized" style="color:var(--warning);">₹0.00</div>
+        <div class="bal-sub" id="sub-trade-alloc">5x Leverage (₹15k Exposure)</div>
+      </div>
+
+      <div class="bal-card">
+        <div class="bal-label">
+          <span>Auto Square-Off</span>
+          <span style="color:var(--warning)">3:15 PM IST</span>
+        </div>
+        <div class="bal-value" id="val-sq-timer">--:--</div>
+        <div class="bal-sub" id="sub-withdraw">Withdrawal: ₹--</div>
+      </div>
+    </div>
+
+    <!-- Active Trade Area -->
+    <div class="panel" id="panel-active-trade">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>🎯 Active Intraday Position</span>
+          <span style="font-size:0.75rem; color:var(--text-muted);">(Strictly 1 Trade at a Time · ₹3k Capital)</span>
+        </div>
+        <div id="active-action-container"></div>
+      </div>
+      <div class="panel-body">
+        <div id="active-trade-content">
+          <div style="text-align:center; padding:30px 20px; color:var(--text-muted); font-size:0.9rem;">
+            Awaiting abnormal ATR breakout on your watchlist. No active position currently open.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Continuous Watchlist & ATR Scanner -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>📡 Continuously Scanned Stocks</span>
+          <span id="badge-count" style="font-size:0.75rem; color:var(--accent-primary); font-family:var(--font-mono)">(0 stocks)</span>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-primary" id="btn-sync-top-buying" style="padding:4px 12px; font-size:0.75rem;">⚡ Sync Top 5 Buying from News</button>
+          <button class="btn btn-outline" id="btn-clear-wl" style="padding:4px 10px; font-size:0.75rem; color:var(--danger)">Clear All</button>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <!-- Top 5 Buying Stocks from News Quick Strip -->
+        <div id="strip-top-buying" style="margin-bottom:14px; padding:10px 14px; background:rgba(0, 212, 255, 0.08); border:1px solid rgba(0, 212, 255, 0.25); border-radius:6px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <strong style="font-size:0.8rem; color:var(--accent-primary);">⚡ Top 5 Buying Stocks (from Stock Dashboard News):</strong>
+            <span id="pills-top-buying" style="display:flex; gap:6px; flex-wrap:wrap;">
+              <span style="background:rgba(20, 32, 70, 0.9); border:1px solid var(--border); border-radius:4px; padding:2px 8px; font-size:0.75rem; font-family:var(--font-mono); color:#fff;">DRREDDY</span>
+              <span style="background:rgba(20, 32, 70, 0.9); border:1px solid var(--border); border-radius:4px; padding:2px 8px; font-size:0.75rem; font-family:var(--font-mono); color:#fff;">JSWSTEEL</span>
+              <span style="background:rgba(20, 32, 70, 0.9); border:1px solid var(--border); border-radius:4px; padding:2px 8px; font-size:0.75rem; font-family:var(--font-mono); color:#fff;">HEROMOTOCO</span>
+              <span style="background:rgba(20, 32, 70, 0.9); border:1px solid var(--border); border-radius:4px; padding:2px 8px; font-size:0.75rem; font-family:var(--font-mono); color:#fff;">BPCL</span>
+              <span style="background:rgba(20, 32, 70, 0.9); border:1px solid var(--border); border-radius:4px; padding:2px 8px; font-size:0.75rem; font-family:var(--font-mono); color:#fff;">ADANIPORTS</span>
+            </span>
+          </div>
+          <span style="font-size:0.72rem; color:var(--success); font-weight:600;">✓ Synced in Continuous Scanner</span>
+        </div>
+        <!-- Watchlist Input Bar -->
+        <div class="watchlist-form">
+          <input type="text" id="input-symbol" placeholder="Enter stock symbol(s) to scan continuously (e.g. TRENT, RELIANCE, TATAMOTORS)" autofocus />
+          <button class="btn btn-primary" id="btn-add-stock">+ Add Stock</button>
+        </div>
+
+        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:14px; line-height: 1.6;">
+          <strong>Strategy Anatomy:</strong> Monitors 5-minute candles for <strong>Baseline Reclaim & Consolidation Breakout</strong> (9:25–10:30 AM ignition). Requires holding above Baseline (Prev Close / Day Open), breaking morning base high, with <strong>Volume Surge & ATR Expansion</strong>. Includes <strong>Dynamic Trailing Stop</strong> to lock peak profits on vertical ascents.
+        </div>
+
+        <!-- Watchlist Scanner Table -->
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Stock</th>
+                <th>Price (LTP)</th>
+                <th>Baseline (Prev Close)</th>
+                <th>Morning Base Range</th>
+                <th>Volume Surge</th>
+                <th>ATR Expansion</th>
+                <th>Setup Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-watchlist">
+              <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Your watchlist is currently empty. Add stocks above to start scanning.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completed Trades -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📜 Today's Closed Trades</div>
+        <span id="badge-closed-count" style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono)">0 closed</span>
+      </div>
+      <div class="panel-body">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Qty</th>
+                <th>Entry Price</th>
+                <th>Exit Price</th>
+                <th>Net P&L</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-completed">
+              <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">No trades closed today yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Console -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">💻 Live Scanner Activity</div>
+      </div>
+      <div class="panel-body" style="padding:12px;">
+        <div class="console-box" id="console-stream">
+          <div class="console-entry">[SYSTEM] Intraday ATR Breakout Bot initialized. Add stocks to start continuous scan.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="modal-settings">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="font-size:1.1rem; font-weight:700;">Bot Configuration</h3>
+        <button id="modal-close" style="background:none; border:none; color:var(--text-muted); font-size:1.4rem; cursor:pointer;">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label>Execution Mode</label>
+        <select id="cfg-mode">
+          <option value="paper">Paper Simulation (Safe Execution Ledger)</option>
+          <option value="live">Live Broker (INDmoney API)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>INDmoney Access Token</label>
+        <input type="password" id="cfg-token" placeholder="Paste access token from INDmoney dashboard" />
+      </div>
+
+      <div class="form-group">
+        <label>Capital Per Trade (₹)</label>
+        <input type="number" id="cfg-cap" value="3000" disabled style="opacity:0.8;" />
+        <small style="color:var(--accent-primary); font-size:0.72rem;">Fixed at ₹3,000 as configured.</small>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label>Volume Surge Multiplier</label>
+          <input type="number" id="cfg-vol" step="0.1" value="1.3" />
+          <small style="color:var(--text-muted); font-size:0.7rem;">Breakout bar volume vs 10-bar avg (default: 1.3x).</small>
+        </div>
+
+        <div class="form-group">
+          <label>ATR Expansion Multiplier</label>
+          <input type="number" id="cfg-mult" step="0.1" value="1.3" />
+          <small style="color:var(--text-muted); font-size:0.7rem;">Candle range vs ATR(14) (default: 1.3x).</small>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label>Trailing SL Activation (%)</label>
+          <input type="number" id="cfg-trail-act" step="0.1" value="1.5" />
+          <small style="color:var(--text-muted); font-size:0.7rem;">Activate TSL when profit reaches this % (default: +1.5%).</small>
+        </div>
+
+        <div class="form-group">
+          <label>Trailing Buffer Distance (%)</label>
+          <input type="number" id="cfg-trail-buf" step="0.1" value="0.8" />
+          <small style="color:var(--text-muted); font-size:0.7rem;">Trail peak price with this buffer (default: 0.8%).</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Target Risk : Reward (R:R)</label>
+        <input type="number" id="cfg-rr" step="0.1" value="2.0" />
+        <small style="color:var(--text-muted); font-size:0.7rem;">Profit target multiplier based on risk (default: 2.0x).</small>
+      </div>
+
+      <div class="form-group">
+        <label>Starting Paper Balance (₹)</label>
+        <input type="number" id="cfg-sod" value="10000" />
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+        <button class="btn btn-outline" id="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-save">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = "";
+
+    function fmt(n) {
+      if (n === null || n === undefined) return "--";
+      return Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Modal
+    const modal = document.getElementById("modal-settings");
+    document.getElementById("btn-settings").addEventListener("click", () => modal.classList.add("open"));
+    document.getElementById("modal-close").addEventListener("click", () => modal.classList.remove("open"));
+    document.getElementById("modal-cancel").addEventListener("click", () => modal.classList.remove("open"));
+
+    document.getElementById("modal-save").addEventListener("click", async () => {
+      const mode = document.getElementById("cfg-mode").value;
+      const token = document.getElementById("cfg-token").value.trim();
+      const mult = parseFloat(document.getElementById("cfg-mult").value) || 1.3;
+      const vol = parseFloat(document.getElementById("cfg-vol").value) || 1.3;
+      const trailAct = parseFloat(document.getElementById("cfg-trail-act").value) || 1.5;
+      const trailBuf = parseFloat(document.getElementById("cfg-trail-buf").value) || 0.8;
+      const rr = parseFloat(document.getElementById("cfg-rr").value) || 2.0;
+
+      await fetch(API + "/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode,
+          token,
+          atr_multiplier: mult,
+          volume_multiplier: vol,
+          trail_activation_pct: trailAct,
+          trail_distance_pct: trailBuf,
+          target_rr: rr,
+          trade_capital: 3000.0
+        })
+      });
+      modal.classList.remove("open");
+      refreshAll();
+    });
+
+    // INDmoney API Key Connection & Live Balance Fetching
+    const inputApiKey = document.getElementById("input-api-key");
+    const btnSaveKey = document.getElementById("btn-save-key");
+    const btnSyncBalance = document.getElementById("btn-sync-balance");
+    const btnDisconnectKey = document.getElementById("btn-disconnect-key");
+    const apiFeedback = document.getElementById("api-feedback");
+
+    async function connectIndmoneyKey() {
+      const token = inputApiKey.value.trim();
+      if (!token) {
+        apiFeedback.innerHTML = '<span style="color:var(--danger)">⚠ Please paste your INDmoney Access Token or API key.</span>';
+        return;
+      }
+      apiFeedback.innerHTML = '<span style="color:var(--accent-primary)">Connecting to INDmoney & fetching live account data...</span>';
+      btnSaveKey.disabled = true;
+      try {
+        const r = await fetch(API + "/api/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: token })
+        });
+        const d = await r.json();
+        if (d.status === "success" && d.funds) {
+          apiFeedback.innerHTML = `<span style="color:var(--success)">✓ Connected to INDmoney! Live Available Margin: ₹${fmt(d.funds.available_balance)} (SOD: ₹${fmt(d.funds.sod_balance)})</span>`;
+          inputApiKey.value = "";
+          inputApiKey.placeholder = "●●●●●●●● INDmoney Token Active (Paste new to replace)";
+          btnDisconnectKey.style.display = "inline-block";
+          document.getElementById("txt-api-status").innerHTML = '<span style="color:var(--success)">● Live INDmoney Connected</span>';
+          refreshBalance();
+        } else {
+          apiFeedback.innerHTML = `<span style="color:var(--danger)">✗ ${d.message || "Failed to validate INDmoney token"}</span>`;
+        }
+      } catch (e) {
+        apiFeedback.innerHTML = `<span style="color:var(--danger)">✗ Network error: ${e.message}</span>`;
+      } finally {
+        btnSaveKey.disabled = false;
+      }
+    }
+
+    if (btnSaveKey) {
+      btnSaveKey.addEventListener("click", connectIndmoneyKey);
+    }
+    if (inputApiKey) {
+      inputApiKey.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") connectIndmoneyKey();
+      });
+    }
+
+    if (btnSyncBalance) {
+      btnSyncBalance.addEventListener("click", async () => {
+        apiFeedback.innerHTML = '<span style="color:var(--accent-primary)">Syncing latest live balance from INDmoney...</span>';
+        try {
+          const r = await fetch(API + "/api/balance/sync", { method: "POST" });
+          const b = await r.json();
+          if (b.status === "success") {
+            apiFeedback.innerHTML = `<span style="color:var(--success)">✓ Live balance synced! Available Margin: ₹${fmt(b.available_balance)}</span>`;
+          } else {
+            apiFeedback.innerHTML = `<span style="color:var(--warning)">⚠ ${b.message || "Balance sync notice"}</span>`;
+          }
+          refreshBalance();
+        } catch (e) {
+          apiFeedback.innerHTML = `<span style="color:var(--danger)">✗ Sync error: ${e.message}</span>`;
+        }
+      });
+    }
+
+    if (btnDisconnectKey) {
+      btnDisconnectKey.addEventListener("click", async () => {
+        if (!confirm("Disconnect INDmoney API key and revert to paper ledger mode?")) return;
+        try {
+          await fetch(API + "/api/token/clear", { method: "POST" });
+          apiFeedback.innerHTML = '<span style="color:var(--text-muted)">INDmoney key disconnected. Switched back to Paper Mode.</span>';
+          btnDisconnectKey.style.display = "none";
+          inputApiKey.value = "";
+          inputApiKey.placeholder = "Paste INDmoney / INDstocks Access Token here to fetch live balance & place trades...";
+          document.getElementById("txt-api-status").innerHTML = '<span style="color:var(--warning)">● Paper Mode (No Live API Key)</span>';
+          refreshBalance();
+        } catch (e) {
+          apiFeedback.innerHTML = `<span style="color:var(--danger)">✗ Error: ${e.message}</span>`;
+        }
+      });
+    }
+
+    // Add Stock to Watchlist
+    async function addStock() {
+      const input = document.getElementById("input-symbol");
+      const sym = input.value.trim().toUpperCase();
+      if (!sym) return;
+      input.value = "";
+      try {
+        await fetch(API + "/api/watchlist/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol: sym })
+        });
+        refreshWatchlist();
+      } catch (e) {
+        alert("Error adding stock: " + e.message);
+      }
+    }
+
+    document.getElementById("btn-add-stock").addEventListener("click", addStock);
+    document.getElementById("input-symbol").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addStock();
+    });
+
+    // Top 5 Buying Stocks Sync from News Section
+    window._top5BuyingStocks = ["DRREDDY", "JSWSTEEL", "HEROMOTOCO", "BPCL", "ADANIPORTS"];
+
+    async function loadTopBuyingStocks() {
+      try {
+        const r = await fetch(API + "/api/top_buying");
+        const d = await r.json();
+        if (d.top_5 && d.top_5.length) {
+          window._top5BuyingStocks = d.top_5;
+          const container = document.getElementById("pills-top-buying");
+          if (container) {
+            container.innerHTML = d.top_5.map(s => `
+              <span style="background:rgba(20, 32, 70, 0.9); border:1px solid var(--border); border-radius:4px; padding:2px 8px; font-size:0.75rem; font-family:var(--font-mono); color:#fff;">${s}</span>
+            `).join("");
+          }
+        }
+      } catch (e) {
+        console.error("Top buying load error:", e);
+      }
+    }
+
+    const btnSyncTopBuying = document.getElementById("btn-sync-top-buying");
+    if (btnSyncTopBuying) {
+      btnSyncTopBuying.addEventListener("click", async () => {
+        btnSyncTopBuying.disabled = true;
+        btnSyncTopBuying.textContent = "Syncing...";
+        try {
+          const r = await fetch(API + "/api/watchlist/sync_top_buying", { method: "POST" });
+          const d = await r.json();
+          if (d.top_5 && d.top_5.length) {
+            window._top5BuyingStocks = d.top_5;
+            loadTopBuyingStocks();
+          }
+          refreshWatchlist();
+        } catch (e) {
+          alert("Error syncing top 5 buying stocks: " + e.message);
+        } finally {
+          btnSyncTopBuying.disabled = false;
+          btnSyncTopBuying.textContent = "⚡ Sync Top 5 Buying from News";
+        }
+      });
+    }
+
+    // Clear Watchlist
+    document.getElementById("btn-clear-wl").addEventListener("click", async () => {
+      if (!confirm("Clear all stocks from the scan list?")) return;
+      await fetch(API + "/api/watchlist/clear", { method: "POST" });
+      refreshWatchlist();
+    });
+
+    // Remove single stock
+    window.removeStock = async function(sym) {
+      await fetch(API + "/api/watchlist/remove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol: sym })
+      });
+      refreshWatchlist();
+    };
+
+    // Toggle Bot Scanner
+    document.getElementById("btn-toggle-bot").addEventListener("click", async () => {
+      const r = await fetch(API + "/api/bot/toggle", { method: "POST" });
+      const d = await r.json();
+      updateBotStatus(d.is_running);
+    });
+
+    function updateBotStatus(isRunning) {
+      const dot = document.getElementById("dot-bot");
+      const txt = document.getElementById("txt-bot");
+      const btn = document.getElementById("btn-toggle-bot");
+      if (isRunning) {
+        dot.className = "status-dot active";
+        txt.textContent = "Scanner Active";
+        btn.textContent = "Pause Scanner";
+        btn.className = "btn btn-outline";
+      } else {
+        dot.className = "status-dot warning";
+        txt.textContent = "Scanner Paused";
+        btn.textContent = "Resume Scanner";
+        btn.className = "btn btn-primary";
+      }
+    }
+
+    // Manual Square Off
+    window.squareOffActiveTrade = async function() {
+      if (!confirm("Square off the active intraday trade now?")) return;
+      try {
+        await fetch(API + "/api/square_off", { method: "POST" });
+        refreshAll();
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    };
+
+    // Refresh Balance
+    async function refreshBalance() {
+      try {
+        const r = await fetch(API + "/api/balance");
+        const b = await r.json();
+        document.getElementById("val-avl-balance").textContent = "₹" + fmt(b.available_balance);
+        document.getElementById("sub-sod").textContent = "SOD: ₹" + fmt(b.sod_balance);
+
+        const brokerDot = document.getElementById("dot-broker");
+        const brokerTxt = document.getElementById("txt-broker");
+        const apiStatus = document.getElementById("txt-api-status");
+        const btnDisconnect = document.getElementById("btn-disconnect-key");
+        const inputKey = document.getElementById("input-api-key");
+
+        if (b.connected) {
+          brokerDot.className = "status-dot active";
+          brokerTxt.textContent = "INDmoney Live";
+          document.getElementById("bal-source").textContent = "INDMONEY API";
+          if (apiStatus) {
+            apiStatus.innerHTML = '<span style="color:var(--success)">● Live INDmoney Connected</span>';
+          }
+          if (btnDisconnect) btnDisconnect.style.display = "inline-block";
+          if (inputKey && !inputKey.value) {
+            inputKey.placeholder = "●●●●●●●● INDmoney Token Active (Paste new to replace)";
+          }
+        } else {
+          brokerDot.className = "status-dot warning";
+          brokerTxt.textContent = "Paper Mode";
+          document.getElementById("bal-source").textContent = "PAPER LEDGER";
+          if (apiStatus) {
+            apiStatus.innerHTML = '<span style="color:var(--warning)">● Paper Mode (No Live API Key)</span>';
+          }
+          if (btnDisconnect) btnDisconnect.style.display = "none";
+          if (inputKey && !inputKey.value) {
+            inputKey.placeholder = "Paste INDmoney / INDstocks Access Token here to fetch live balance & place trades...";
+          }
+        }
+
+        if (b.withdrawal_balance !== undefined && document.getElementById("sub-withdraw")) {
+          document.getElementById("sub-withdraw").textContent = "Withdrawal: ₹" + fmt(b.withdrawal_balance);
+        }
+
+        if (b.utilized_margin !== undefined && document.getElementById("val-utilized")) {
+          document.getElementById("val-utilized").textContent = "₹" + fmt(b.utilized_margin);
+        }
+
+        const realized = b.realized_pnl || 0.0;
+        const unrealized = b.unrealized_pnl || 0.0;
+        const net = realized + unrealized;
+        const sod = b.sod_balance || 10000.0;
+        const netPct = sod > 0 ? ((net / sod) * 100.0).toFixed(2) : "0.00";
+
+        const netEl = document.getElementById("val-net-pnl");
+        const pctEl = document.getElementById("val-pnl-pct");
+        const cardPnl = document.getElementById("card-pnl");
+        const sign = net >= 0 ? "+" : "";
+
+        netEl.textContent = `₹${sign}${fmt(net)}`;
+        pctEl.textContent = `${sign}${netPct}%`;
+
+        if (net >= 0) {
+          netEl.className = "bal-value pos";
+          cardPnl.className = "bal-card profit";
+        } else {
+          netEl.className = "bal-value neg";
+          cardPnl.className = "bal-card loss";
+        }
+
+        document.getElementById("sub-pnl-split").textContent = `Realized: ₹${fmt(realized)} | Floating: ₹${fmt(unrealized)}`;
+      } catch (e) {
+        console.error("Balance error:", e);
+      }
+    }
+
+    // Refresh Watchlist & Scanner
+    async function refreshWatchlist() {
+      try {
+        const r = await fetch(API + "/api/watchlist");
+        const d = await r.json();
+        const items = d.watchlist || [];
+
+        document.getElementById("badge-count").textContent = `(${items.length} stocks)`;
+        const tbody = document.getElementById("tbody-watchlist");
+
+        if (items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Your watchlist is currently empty. Add stocks above to start continuous momentum scanning.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = items.map(s => {
+          const sym = s.symbol;
+          if (s.status === "NO_DATA" || s.status === "ERROR") {
+            return `
+              <tr>
+                <td><strong style="font-family:var(--font-mono); color:var(--accent-primary)">${sym}</strong></td>
+                <td colspan="6" style="color:var(--text-muted)">Fetching live intraday candles...</td>
+                <td><button class="btn btn-outline" onclick="removeStock('${sym}')" style="padding:2px 8px; font-size:0.75rem;">×</button></td>
+              </tr>
+            `;
+          }
+
+          const atrRatio = s.atr_ratio || 0.0;
+          const volRatio = s.vol_ratio || 1.0;
+          const isBreakout = s.is_breakout;
+          const baseDist = s.baseline_dist_pct !== undefined ? s.baseline_dist_pct : 0.0;
+          const distSign = baseDist >= 0 ? "+" : "";
+
+          // Volume Surge badge
+          let volBadge = `<span style="font-family:var(--font-mono); font-weight:600; color:var(--text-muted)">${volRatio}x</span>`;
+          if (volRatio >= 1.5) {
+            volBadge = `<span class="tag-breakout">🔥 ${volRatio}x SURGE</span>`;
+          } else if (volRatio >= 1.2) {
+            volBadge = `<span class="tag-gap">${volRatio}x Expanding</span>`;
+          }
+
+          // ATR Expansion badge
+          let atrBadge = `<span style="font-family:var(--font-mono); color:var(--text-muted)">${atrRatio}x</span>`;
+          if (atrRatio >= 1.4) {
+            atrBadge = `<span class="tag-breakout">⚡ ${atrRatio}x ATR</span>`;
+          }
+
+          // Status & Signal
+          let statusBadge = '<span style="color:var(--text-muted)">Monitoring</span>';
+          if (isBreakout) {
+            statusBadge = '<strong style="color:var(--success); font-family:var(--font-mono); font-size:0.8rem; background:rgba(16,185,129,0.15); padding:3px 8px; border-radius:4px; border:1px solid var(--success);">🚀 IGNITION BREAKOUT</strong>';
+          } else if (s.status === "TESTING_RESISTANCE") {
+            statusBadge = '<span style="color:var(--accent-primary); font-weight:600;">⚡ At Base Resistance</span>';
+          } else if (s.status === "COILING_ABOVE_BASE") {
+            statusBadge = '<span style="color:#38bdf8;">● Coiling Above Base</span>';
+          } else if (s.status === "BELOW_BASELINE") {
+            statusBadge = '<span style="color:var(--text-muted);">Below Baseline</span>';
+          } else if (s.status && (s.status.includes("GAP") || s.status.includes("IGNORED"))) {
+            statusBadge = `<span class="tag-gap">⊘ ${s.status}</span>`;
+          }
+
+          const baseRangeStr = (s.consolidation_low && s.consolidation_high)
+            ? `₹${fmt(s.consolidation_low)} - ₹${fmt(s.consolidation_high)}`
+            : "--";
+
+          const isTop5 = (window._top5BuyingStocks || []).includes(sym);
+          const top5Tag = isTop5 ? '<span style="background:rgba(0,212,255,0.15); color:var(--accent-primary); border:1px solid rgba(0,212,255,0.4); font-size:0.68rem; padding:1px 6px; border-radius:3px; margin-left:6px; font-weight:700;">TOP 5 BUY</span>' : '';
+
+          return `
+            <tr>
+              <td><strong style="font-family:var(--font-mono); color:#fff; font-size:0.95rem;">${sym}</strong>${top5Tag}</td>
+              <td style="font-family:var(--font-mono); font-weight:700;">₹${fmt(s.current_price)}</td>
+              <td style="font-family:var(--font-mono);">
+                ₹${fmt(s.baseline)}
+                <span style="font-size:0.72rem; color:${baseDist >= 0 ? 'var(--success)' : 'var(--danger)'}; margin-left:4px;">(${distSign}${baseDist}%)</span>
+              </td>
+              <td style="font-family:var(--font-mono); color:var(--text-secondary); font-size:0.8rem;">${baseRangeStr}</td>
+              <td>${volBadge}</td>
+              <td>${atrBadge}</td>
+              <td>${statusBadge}</td>
+              <td>
+                <button class="btn btn-outline" onclick="removeStock('${sym}')" style="padding:4px 10px; font-size:0.75rem; color:var(--danger)">Remove</button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      } catch (e) {
+        console.error("Watchlist error:", e);
+      }
+    }
+
+    // Refresh Active & Completed Trades
+    async function refreshTrades() {
+      try {
+        const r = await fetch(API + "/api/trades");
+        const data = await r.json();
+
+        // 1. Single Active Trade
+        const active = data.active || [];
+        const activeContainer = document.getElementById("active-trade-content");
+        const actionContainer = document.getElementById("active-action-container");
+
+        if (active.length === 0) {
+          activeContainer.innerHTML = `
+            <div style="text-align:center; padding:24px 20px; color:var(--text-muted); font-size:0.9rem;">
+              Awaiting morning baseline reclaim & momentum ignition breakout on your watchlist. No active trade open (Strictly 1 trade limit).
+            </div>
+          `;
+          actionContainer.innerHTML = "";
+        } else {
+          const t = active[0];
+          const fpnl = t.floating_pnl || 0.0;
+          const fpnlPct = t.floating_pnl_pct || 0.0;
+          const pnlCls = fpnl >= 0 ? "pos" : "neg";
+          const sign = fpnl >= 0 ? "+" : "";
+
+          let statusTag = '<span style="background:var(--success); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; margin-left:8px;">BULLISH BUY</span>';
+          if (t.is_trailing) {
+            statusTag += ' <span style="background:rgba(0,212,255,0.2); border:1px solid var(--accent-primary); color:var(--accent-primary); padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; margin-left:6px;">⚡ TSL ACTIVE</span>';
+          } else if (t.is_breakeven) {
+            statusTag += ' <span style="background:rgba(245,158,11,0.2); border:1px solid var(--warning); color:var(--warning); padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; margin-left:6px;">🔒 BREAKEVEN LOCKED</span>';
+          }
+
+          actionContainer.innerHTML = `
+            <button class="btn btn-danger" onclick="squareOffActiveTrade()" style="padding:6px 14px; font-size:0.8rem;">⚠ Square Off Trade</button>
+          `;
+
+          activeContainer.innerHTML = `
+            <div class="active-trade-box">
+              <div class="active-trade-header">
+                <div>
+                  <span class="trade-sym">${t.symbol}</span>
+                  ${statusTag}
+                  <span style="color:var(--text-muted); font-size:0.78rem; margin-left:8px;">Ignition at ${t.entry_time}</span>
+                </div>
+                <div style="text-align:right;">
+                  <div class="${pnlCls}" style="font-size:1.4rem; font-weight:800; font-family:var(--font-mono);">${sign}₹${fmt(fpnl)} (${sign}${fpnlPct}%)</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Floating P&L · ₹${fmt(t.capital)} Margin</div>
+                </div>
+              </div>
+              <div class="trade-grid">
+                <div class="item"><div class="label">Quantity</div><div class="val">${t.qty} shares</div></div>
+                <div class="item"><div class="label">Entry Price</div><div class="val">₹${fmt(t.entry_price)}</div></div>
+                <div class="item"><div class="label">Current LTP</div><div class="val" style="color:var(--accent-primary)">₹${fmt(t.current_price)}</div></div>
+                <div class="item"><div class="label">Peak High</div><div class="val" style="color:#38bdf8;">₹${fmt(t.highest_price || t.current_price)}</div></div>
+                <div class="item"><div class="label">Stop / Trailing SL</div><div class="val" style="color:var(--danger)">₹${fmt(t.stop_loss)} <small style="font-size:0.68rem; color:var(--text-muted); font-weight:normal;">(Max -₹150)</small></div></div>
+                <div class="item"><div class="label">Target Price</div><div class="val" style="color:var(--success)">₹${fmt(t.target_price)}</div></div>
+              </div>
+            </div>
+          `;
+        }
+
+        // 2. Completed Trades Today
+        const completed = data.completed || [];
+        document.getElementById("badge-closed-count").textContent = `${completed.length} closed`;
+        const completedTbody = document.getElementById("tbody-completed");
+
+        if (completed.length === 0) {
+          completedTbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">No trades closed today yet.</td></tr>';
+        } else {
+          completedTbody.innerHTML = completed.map(c => {
+            const pnl = c.pnl || 0.0;
+            const pnlCls = pnl >= 0 ? "pos" : "neg";
+            const sign = pnl >= 0 ? "+" : "";
+            return `
+              <tr>
+                <td style="font-family:var(--font-mono); color:var(--text-muted)">${c.exit_time || c.entry_time}</td>
+                <td><strong style="font-family:var(--font-mono); color:#fff;">${c.symbol}</strong></td>
+                <td><span style="color:var(--success); font-weight:700;">BUY</span></td>
+                <td style="font-family:var(--font-mono)">${c.qty}</td>
+                <td style="font-family:var(--font-mono)">₹${fmt(c.entry_price)}</td>
+                <td style="font-family:var(--font-mono)">₹${fmt(c.exit_price)}</td>
+                <td style="font-family:var(--font-mono); font-weight:700;" class="${pnlCls}">${sign}₹${fmt(pnl)} (${sign}${c.pnl_pct}%)</td>
+                <td style="font-size:0.78rem; color:var(--text-muted)">${c.reason}</td>
+              </tr>
+            `;
+          }).join("");
+        }
+      } catch (e) {
+        console.error("Trades error:", e);
+      }
+    }
+
+    // Refresh Status & Timer
+    async function refreshStatus() {
+      try {
+        const r = await fetch(API + "/api/status");
+        const s = await r.json();
+        const m = s.market || {};
+
+        document.getElementById("sub-ist-clock").textContent = `Clock: ${m.current_time || "--:--:--"} IST`;
+
+        const mktDot = document.getElementById("dot-mkt");
+        const mktTxt = document.getElementById("txt-mkt");
+        if (m.status === "MARKET_OPEN") {
+          mktDot.className = "status-dot active";
+          mktTxt.textContent = "Market Live";
+        } else if (m.status === "SQUARE_OFF_ZONE") {
+          mktDot.className = "status-dot warning";
+          mktTxt.textContent = "Square-Off Zone";
+        } else {
+          mktDot.className = "status-dot danger";
+          mktTxt.textContent = "Market Closed";
+        }
+
+        const mins = m.minutes_to_square_off || 0;
+        const h = Math.floor(mins / 60);
+        const remMins = mins % 60;
+        document.getElementById("val-sq-timer").textContent = `${h}h ${remMins}m`;
+
+        updateBotStatus(s.is_running);
+      } catch (e) {
+        console.error("Status error:", e);
+      }
+    }
+
+    // Refresh Logs
+    async function refreshLogs() {
+      try {
+        const r = await fetch(API + "/api/logs");
+        const d = await r.json();
+        const stream = document.getElementById("console-stream");
+        if (d.logs && d.logs.length > 0) {
+          stream.innerHTML = d.logs.map(l => `<div class="console-entry">${l}</div>`).join("");
+          stream.scrollTop = stream.scrollHeight;
+        }
+      } catch (e) {
+        console.error("Logs error:", e);
+      }
+    }
+
+    function refreshAll() {
+      loadTopBuyingStocks();
+      refreshStatus();
+      refreshBalance();
+      refreshWatchlist();
+      refreshTrades();
+      refreshLogs();
+    }
+
+    loadTopBuyingStocks();
+    refreshAll();
+    setInterval(loadTopBuyingStocks, 30000);
+    setInterval(refreshBalance, 3000);
+    setInterval(refreshTrades, 3000);
+    setInterval(refreshWatchlist, 4000);
+    setInterval(refreshStatus, 4000);
+    setInterval(refreshLogs, 4000);
+  </script>
+</body>
+</html>
