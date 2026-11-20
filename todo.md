@@ -1,9 +1,11 @@
-# TODO — Live NIFTY 50 GEX / Greeks Report + NSE Earnings & Event News
+# TODO — Live NIFTY 50 GEX / Greeks Report + NSE Events + Market Decision Data
 
-Two workstreams:
+Four workstreams:
 
 1. **Live NIFTY 50 GEX report** from the INDmoney / INDstocks option-chain API (IV, delta, gamma, theta, vega, max pain, PCR, gamma flip).
 2. **NSE earnings / corporate-event + news calendar** — scrape all stock names and every upcoming event/announcement from NSE and expose it in the dashboard.
+3. **Market decision-support data** — India VIX, FII/DII flows, breadth, delivery volume, OI build-up, global cues, risk gates.
+4. **Nifty options edge handbook** — Charm, Vanna, Theta-to-Gamma, OI/PCR positioning, expiry-day mechanics, and pre-market/intraday checklists.
 
 Legend: `[x]` already in the repo, `[ ]` still to do.
 
@@ -120,11 +122,87 @@ RSS fallback: `https://nsearchives.nseindia.com/content/RSS/{Announcements,Corpo
 
 ---
 
+## 3. Market decision-support data (beyond GEX and earnings)
+
+Goal: give the dashboard a complete "regime + flows + risk" picture so signals are sized and filtered correctly.
+
+| Priority | Data | Why it matters | Where to get it (India) | How to use it |
+|---|---|---|---|---|
+| 1 | **India VIX + IV rank / IV skew / term structure** | Tells you whether the market is calm, complacent, or panicking. GEX = dealer positioning; VIX/IV = price of risk. | India VIX from NSE `/api/allIndices`; IV from INDmoney option chain; NSE F&O volatility archives | Suppress breakouts when VIX spikes; prefer spreads when IV rank is high; inspect 25-delta skew before directional trades |
+| 2 | **FII / DII flows + participant-wise OI** | FIIs drive index trends; DIIs absorb selling. Participant OI shows whether clients, pros, or institutions hold the position. | NSE `fiidiiTradeReact`, FII stats XLS, F&O “Participant wise Open Interest” CSV | Align bias with FII flow; fade client-only moves with no institutional support |
+| 3 | **Market breadth + sector rotation** | A NIFTY rally led by 4 heavyweights is fragile; broad participation is durable. | NSE constituents, advances/declines, 52-week high/low lists, `/api/allIndices` sector indices | Size positions down when breadth is negative even if a stock signal is bullish |
+| 4 | **Delivery volume + price/volume** | High delivery % = real accumulation; low delivery = intraday churn. Bulk deals are stronger when confirmed by delivery. | NSE full bhavcopy `sec_bhavdata_full` (`DELIV_QTY`, `DELIV_PER`) | Filter watchlist to rising delivery % + price breakouts; avoid volume spikes with poor delivery |
+| 5 | **OI change / PCR / long–short build-up** | Complements GEX. Price↑ + OI↑ = long build-up; price↓ + OI↑ = short build-up; PCR extremes flag crowding. | INDmoney `oi` vs `previous_oi`; NSE F&O bhavcopy | Add an “OI build-up” column next to the GEX table; use PCR + max pain + gamma flip together |
+| 6 | **F&O ban list, MWPL, ASM/GSM** | Hard risk gates — a perfect setup is useless if the stock is banned or under surveillance. | NSE F&O ban-period report / `fo_secban`, ASM/GSM lists | Block or flag entries in banned/ASM/GSM stocks as a pre-trade check in `indmoney_intraday_bot.py` |
+| 7 | **Promoter/insider activity + shareholding pattern** | Promoter buying and FII stake increases are slow but powerful signals. | NSE PIT, shareholding master, corporate announcements | Add an “Ownership” filter to the NSE Events tab; combine with delivery volume |
+| 8 | **Global macro / pre-market cues** | Indian gaps are often driven by overnight US, crude, dollar and Asia moves. | Gift/SGX Nifty, USD/INR, Brent, DXY, US 10Y, Fed/CPI/RBI calendar | Show a “Global Cues” strip above the GEX tab; decide aggressive vs defensive sizing at open |
+| 9 | **Earnings quality, not just date** | Guidance, concall language and estimate revisions drive post-result drift. | NSE announcement PDFs, concall transcripts, broker reports | In the NSE Events tab, link the PDF and add a “guidance / estimate” note field |
+| 10 | **Order book / liquidity** | Spread and depth decide whether the exit is clean, especially in options. | NSE quote/order book, INDmoney depth | Avoid trades where bid-ask is wide relative to the stop; check impact cost before sizing |
+
+### Already in the repo `[x]`
+- [x] GEX, Greeks, max pain, PCR, gamma flip — `gex.py` + GEX tab
+- [x] Bulk/block/large deals — `stock_dashboard.py`
+- [x] News RSS + top-buying stocks — `stock_dashboard.py`, `stock_tools.py`
+- [x] Daily support scanner, opening-range backtester, Monte Carlo reports
+- [x] VWAP×EMA auto bot with trailing/partial exits — `indmoney_intraday_bot.py`
+
+### Next additions `[ ]`
+- [ ] **Market Regime tab** — India VIX, breadth, FII/DII, sector heatmap, global cues. One screen that answers “risk-on or risk-off today?”
+- [ ] **Delivery × OI confluence screener** — full bhavcopy delivery % + option OI change + GEX/PCR → rank stocks by conviction.
+- [ ] **Risk-gate layer** — F&O ban, ASM/GSM, high IV, and event-risk flags wired into the bot so it refuses bad setups automatically.
+
+---
+
+## 4. Nifty options edge handbook — Greeks, positioning, mechanics
+
+Companion to GEX/IV: focus on **additional Greeks**, **market positioning**, and **Indian market mechanics**.
+
+### 4.1 Additional option Greeks `[ ]`
+- [x] **Delta, Gamma, Theta, Vega** — already supplied pre-calculated by INDmoney (`greeks.*`) and shown per strike.
+- [ ] **Charm (Delta decay)** — how Delta changes as time passes. On weekly Nifty expiry days Charm accelerates, forcing market makers to unwind hedges and causing sudden late-session moves. Approximate from cached snapshots: `Charm ≈ ΔDelta / ΔT`; store snapshots in `assets/gex_history.jsonl`.
+- [ ] **Vanna** — how Delta changes when IV shifts. After an event/IV crush, Vanna flows can push Nifty upward as dealers buy back short hedges. Approximate: `Vanna ≈ ΔDelta / ΔIV` using the IV term-structure snapshots.
+- [ ] **Theta-to-Gamma ratio** — Nifty options decay fast in the final two days; this ratio helps choose buying for momentum vs selling for range-bound decay. Add as a per-strike column and a regime flag.
+- [ ] Label Charm/Vanna as **finite-difference approximations** from snapshots, not exact analytic greeks (the API does not supply them).
+
+### 4.2 Market positioning & liquidity
+- [x] **OI & Change in OI** — highest Call OI = resistance, highest Put OI = support. Keep the existing `oi` / `previous_oi` fields and expose them per strike.
+- [ ] **Intraday OI change at psychological levels** — watch fresh addition vs unwinding around every 100 / 500 Nifty point level; add a “fresh position vs unwinding” indicator.
+- [x] **PCR** — already computed (OI and volume). Track intraday extremes: `PCR > 1.4` often means put writers are heavily confident; if support breaks, expect a sharp short-covering drop.
+- [ ] **India VIX + IV Rank (IVR)** — compare VIX and strike IV to the past year. High IVR favors option selling; low IVR favors buying ahead of a breakout.
+- [x] **Max Pain** — already computed. Use as a quiet-session expiry magnet, not a standalone signal.
+
+### 4.3 Indian market mechanics & flows
+- [ ] **FII/DII derivatives data** — NSE releases participant-wise OI daily after close. Strong FII net-short futures positioning often caps Nifty rallies. Show net long/short by participant.
+- [ ] **Synthetic future & spot–future basis** — infer from ATM call/put OI and futures price vs spot; premium/discount indicates institutional sentiment and cost-of-carry shifts.
+- [ ] **Expiry-day dynamics** — weekly expiries mean 0-DTE mechanics dominate. Post **13:30 IST** frequently sees gamma squeezes when a major OI strike breaks; add a time-aware alert/flag.
+
+### 4.4 Checklists to build into the dashboard
+**Pre-market**
+1. India VIX / IVR regime + global cues (Gift Nifty, USD/INR, crude, DXY, US 10Y).
+2. Previous-close FII/DII derivatives positioning.
+3. Max pain, gamma flip, highest CE/PE OI strikes for the chosen expiry.
+4. Earnings/event calendar for watchlist holdings.
+
+**Intraday**
+1. Spot vs gamma flip and max pain; note which OI strikes are being defended.
+2. PCR shift and OI change at key 100/500-point strikes.
+3. Charm / Vanna / Theta-to-Gamma flag as expiry approaches; raise post-13:30 gamma-squeeze alert.
+4. Risk gates: F&O ban, ASM/GSM, wide bid-ask, event risk.
+5. Position size from the Market Regime tab, not from a single signal.
+
+### 4.5 Open questions to tailor this
+- [ ] Trading style: intraday option buying, expiry-day selling, or positional swings?
+- [ ] Current charting/data setup: Sensibull, Opstra, TradingView, or only this dashboard?
+
+---
+
 ## Order of work
 1. Refresh INDmoney token, verify live GEX endpoint, add the compact live report card + auto-refresh.
-2. Build `nse_events.py` + API routes with caching and tests.
-3. Add the **NSE Events / Earnings** dashboard tab and stock-name panel.
-4. Optional: IV term structure and Telegram digests (only after 1–3 are stable).
+2. Build `nse_events.py` + API routes with caching and tests; add the **NSE Events / Earnings** tab and stock-name panel.
+3. Add the **Market Regime** tab (India VIX, breadth, FII/DII, sector heatmap, global cues).
+4. Add advanced Greeks (Charm/Vanna approximations, Theta-to-Gamma) and OI/PCR/expiry-day flags.
+5. Add the **Delivery × OI confluence screener** and the F&O-ban/ASM/GSM risk-gate layer.
+6. Optional: IV term structure, Telegram digests, and pre-market/intraday checklist view (only after 1–5 are stable).
 
 ## Notes / constraints
 - INDmoney token expiry currently blocks live GEX; the code now fails loudly and shows the last-good snapshot instead of an empty section.
