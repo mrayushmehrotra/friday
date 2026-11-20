@@ -86,6 +86,7 @@ NIFTY_50 = [
 ]
 
 _CSV_PATH = os.path.join(HERE, "assets", "equity_stocks.csv")
+_FNO_CSV_PATH = os.path.join(HERE, "assets", "stocks_with_options.csv")
 ALL_EQ_SYMBOLS = []
 if os.path.exists(_CSV_PATH):
     try:
@@ -100,6 +101,39 @@ if os.path.exists(_CSV_PATH):
         pass
 if not ALL_EQ_SYMBOLS:
     ALL_EQ_SYMBOLS = NIFTY_50[:]
+
+
+_WATCH_UNIVERSE_CACHE = None
+_WATCH_UNIVERSE_LOCK = threading.Lock()
+
+
+def _load_watch_universe():
+    """Return every symbol from the equity and F&O CSV universe (cached)."""
+    global _WATCH_UNIVERSE_CACHE
+    if _WATCH_UNIVERSE_CACHE is not None:
+        return _WATCH_UNIVERSE_CACHE
+    with _WATCH_UNIVERSE_LOCK:
+        if _WATCH_UNIVERSE_CACHE is not None:
+            return _WATCH_UNIVERSE_CACHE
+        import csv
+        symbols = set()
+        for path in (_CSV_PATH, _FNO_CSV_PATH):
+            if not os.path.exists(path):
+                continue
+            try:
+                with open(path) as f:
+                    for row in csv.DictReader(f):
+                        symbol = row.get("SYMBOL", "").strip().upper()
+                        if symbol:
+                            symbols.add(symbol)
+            except Exception:
+                pass
+        if not symbols:
+            symbols = set(ALL_EQ_SYMBOLS)
+        _WATCH_UNIVERSE_CACHE = sorted(symbols)
+        return _WATCH_UNIVERSE_CACHE
+
+
 from backtest_tools import (
     run as run_backtest,
     compare_strategies,
@@ -938,6 +972,575 @@ def _scrape_trendlyne_deals(url: str = None):
         return {"error": f"Scraping failed: {str(e)}"}
 
 
+# ---------------------------------------------------------------------------
+# FRIDAY fundamentals — Screener.in + Yahoo Finance
+#
+# INDstocks does not expose balance sheets, P&L, cash flow or ratios. This layer
+# combines the Indian-format tables from Screener.in with Yahoo's statements and
+# price history. Both are public read-only sources and are cached briefly.
+# ---------------------------------------------------------------------------
+
+_FUNDAMENTALS_CACHE = {}
+_FUND_PRICE_CACHE = {}
+_FUND_TTL = 600  # 10 minutes
+
+
+def _fund_clean(node):
+    return re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip() if node else ""
+
+
+def _fund_num(value):
+    if value is None:
+        return None
+    text = str(value).replace(",", "").replace("−", "-").strip()
+    if not text or text in ("-", "—", "NA", "N/A"):
+        return None
+    match = re.search(r"-?\d+(?:\.\d+)?", text)
+    return float(match.group()) if match else None
+
+
+def _fund_table(table):
+    head = table.find("thead")
+    head_cells = head.find_all("th") if head else []
+    periods = [_fund_clean(c) for c in head_cells[1:] if _fund_clean(c)]
+    body = table.find("tbody") or table
+    rows = []
+    for tr in body.find_all("tr"):
+        cells = tr.find_all(["th", "td"], recursive=False)
+        if len(cells) < 2:
+            continue
+        label = _fund_clean(cells[0])
+        values = [_fund_clean(c) for c in cells[1:]]
+        if not periods and label:
+            periods = values
+            continue
+        if label or any(v for v in values):
+            rows.append({"label": label, "values": values})
+    return {"periods": periods, "rows": rows}
+
+
+def _fund_ranges(table):
+    lines = []
+    for tr in table.find_all("tr"):
+        cells = [_fund_clean(c) for c in tr.find_all(["th", "td"])]
+        cells = [c for c in cells if c]
+        if cells:
+            lines.append(cells)
+    if not lines:
+        return {"title": "", "metrics": {}}
+    title = lines[0][0]
+    metrics = {}
+    for line in lines[1:]:
+        if len(line) >= 2:
+            metrics[line[0].rstrip(":")] = line[1]
+    return {"title": title, "metrics": metrics}
+
+
+def _fetch_screener_fundamentals(symbol):
+    sym = re.sub(r"\.(NS|BO)$", "", (symbol or "").strip().upper())
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/120 Safari/537.36",
+        "Accept-Language": "en-IN,en;q=0.9",
+    }
+    url = f"https://www.screener.in/company/{sym}/consolidated/"
+    response = _requests.get(url, headers=headers, timeout=20)
+    if response.status_code != 200:
+        response = _requests.get(
+            f"https://www.screener.in/company/{sym}/", headers=headers, timeout=20
+        )
+    if response.status_code != 200:
+        raise RuntimeError(f"Screener.in returned HTTP {response.status_code}")
+    soup = BeautifulSoup(response.text, "html.parser")
+    ratios = {}
+    for item in soup.select("#top-ratios li"):
+        name = _fund_clean(item.select_one(".name"))
+        value = _fund_clean(item.select_one(".value"))
+        if name and value:
+            ratios[name] = value
+    h1 = soup.find("h1")
+    about = soup.select_one(".about")
+    sector = industry = ""
+    peer = soup.find("h2", string=lambda s: s and "Peer comparison" in s)
+    if peer:
+        links = peer.parent.select("p.sub a[href]")
+        by_title = {a.get("title", ""): _fund_clean(a) for a in links}
+        sector = by_title.get("Sector") or ""
+        industry = by_title.get("Industry") or ""
+        if not sector or not industry:
+            labels = [_fund_clean(a) for a in links if _fund_clean(a)]
+            if len(labels) > 1:
+                sector = sector or labels[1]
+                industry = industry or labels[-1]
+    tables = {}
+    ranges = []
+    for table in soup.find_all("table"):
+        heading = _fund_clean(table.find_previous("h2"))
+        css = " ".join(table.get("class") or [])
+        if "ranges-table" in css:
+            parsed = _fund_ranges(table)
+            if parsed["title"]:
+                ranges.append(parsed)
+            continue
+        if "blur" in css or "pointer-events-none" in css:
+            continue
+        parsed = _fund_table(table)
+        if not parsed["periods"] or not parsed["rows"]:
+            continue
+        if heading.startswith("Quarterly"):
+            tables["quarterly"] = parsed
+        elif heading.startswith("Profit"):
+            tables["annual"] = parsed
+        elif heading.startswith("Balance"):
+            tables["balance_sheet"] = parsed
+        elif heading.startswith("Cash"):
+            tables["cash_flow"] = parsed
+        elif heading.startswith("Ratios"):
+            tables["ratios"] = parsed
+        elif heading.startswith("Shareholding"):
+            key = "shareholding" if "shareholding" not in tables else "shareholding_annual"
+            tables[key] = parsed
+    return {
+        "profile": {
+            "name": _fund_clean(h1) or sym,
+            "about": _fund_clean(about),
+            "sector": sector,
+            "industry": industry,
+            "url": url,
+        },
+        "ratios": ratios,
+        "ranges": ranges,
+        "tables": tables,
+        "source": "Screener.in",
+    }
+
+
+def _fund_df_table(frame, limit=12):
+    if frame is None or getattr(frame, "empty", True):
+        return {"periods": [], "rows": []}
+    frame = frame.iloc[:, :limit]
+    periods = []
+    for col in frame.columns:
+        try:
+            periods.append(pd.Timestamp(col).strftime("%b %Y"))
+        except Exception:
+            periods.append(str(col))
+    rows = []
+    for label, row in frame.iterrows():
+        values = []
+        for value in row.tolist():
+            try:
+                values.append("—" if pd.isna(value) else f"{float(value):,.2f}")
+            except (TypeError, ValueError):
+                values.append(str(value))
+        rows.append({"label": str(label), "values": values})
+    return {"periods": periods, "rows": rows}
+
+
+def _fetch_yahoo_fundamentals(symbol):
+    resolved = _resolve_ticker(symbol)
+    ticker = yf.Ticker(resolved)
+    info = ticker.info or {}
+    top = {}
+    for key, label in [
+        ("marketCap", "Market Cap"), ("currentPrice", "Current Price"),
+        ("trailingPE", "Stock P/E"), ("priceToBook", "Price/Book"),
+        ("dividendYield", "Dividend Yield"), ("returnOnEquity", "ROE"),
+        ("returnOnAssets", "ROA"), ("enterpriseValue", "Enterprise Value"),
+    ]:
+        if info.get(key) is not None:
+            top[label] = str(info[key])
+    try:
+        quote = get_stock_data(resolved) or {}
+    except Exception:
+        quote = {}
+    tables = {
+        "quarterly": _fund_df_table(ticker.quarterly_financials),
+        "annual": _fund_df_table(ticker.financials),
+        "balance_sheet": _fund_df_table(ticker.balance_sheet),
+        "cash_flow": _fund_df_table(ticker.cashflow),
+        "ratios": _fund_df_table(None),
+        "shareholding": {"periods": [], "rows": []},
+    }
+    return {
+        "profile": {
+            "name": info.get("longName") or quote.get("company") or resolved,
+            "about": info.get("longBusinessSummary", ""),
+            "sector": info.get("sector", ""),
+            "industry": info.get("industry", ""),
+            "url": f"https://finance.yahoo.com/quote/{resolved}/",
+        },
+        "ratios": top,
+        "ranges": [],
+        "tables": tables,
+        "source": "Yahoo Finance",
+    }
+
+
+def _fund_find_row(table, *keywords, exclude=()):
+    for row in (table or {}).get("rows", []):
+        label = row.get("label", "").lower()
+        if all(k in label for k in keywords) and not any(x in label for x in exclude):
+            return row
+    return None
+
+
+def _fund_yoy(tables):
+    annual = tables.get("annual") or {}
+    quarterly = tables.get("quarterly") or {}
+    sales = _fund_find_row(annual, "sales", exclude=("growth",))
+    profit = _fund_find_row(annual, "net profit", exclude=("growth",))
+    if not profit:
+        profit = _fund_find_row(annual, "profit", exclude=("growth", "operating", "before tax"))
+    s_growth = _fund_find_row(annual, "sales", "growth")
+    p_growth = _fund_find_row(annual, "profit", "growth")
+    opm = _fund_find_row(annual, "opm")
+    eps = _fund_find_row(annual, "eps")
+
+    def seq(row, index):
+        values = (row or {}).get("values", [])
+        return _fund_num(values[index]) if 0 <= index < len(values) else None
+
+    def derived(row, index, lag=1):
+        cur, prev = seq(row, index), seq(row, index - lag) if index >= lag else None
+        if cur is None or prev in (None, 0):
+            return None
+        return (cur / prev - 1) * 100
+
+    out = []
+    for i, period in enumerate(annual.get("periods", [])):
+        out.append({
+            "period": period,
+            "sales": seq(sales, i),
+            "profit": seq(profit, i),
+            "sales_growth": seq(s_growth, i) if s_growth else derived(sales, i),
+            "profit_growth": seq(p_growth, i) if p_growth else derived(profit, i),
+            "opm": seq(opm, i),
+            "eps": seq(eps, i),
+        })
+
+    q_sales = _fund_find_row(quarterly, "sales", exclude=("growth",))
+    q_profit = _fund_find_row(quarterly, "net profit", exclude=("growth",))
+    q_yoy = []
+    for i, period in enumerate(quarterly.get("periods", [])):
+        q_yoy.append({
+            "period": period,
+            "sales": seq(q_sales, i),
+            "profit": seq(q_profit, i),
+            "sales_growth": derived(q_sales, i, 4),
+            "profit_growth": derived(q_profit, i, 4),
+        })
+    return {"annual": out, "quarterly": q_yoy}
+
+
+def _fund_price_history(symbol, period):
+    period = period if period in ("1y", "3y", "5y", "max") else "1y"
+    key = (re.sub(r"\.(NS|BO)$", "", (symbol or "").strip().upper()), period)
+    cached = _FUND_PRICE_CACHE.get(key)
+    if cached and time.time() - cached[0] < _FUND_TTL:
+        return cached[1]
+    try:
+        frame = yf.Ticker(_resolve_ticker(key[0])).history(
+            period=period, interval="1d", auto_adjust=False
+        )
+    except Exception:
+        frame = None
+    out = []
+    if frame is not None and not frame.empty:
+        for ts, row in frame.iterrows():
+            try:
+                out.append({"t": int(ts.timestamp() * 1000), "c": float(row["Close"])})
+            except Exception:
+                continue
+    _FUND_PRICE_CACHE[key] = (time.time(), out)
+    return out
+
+
+def _fetch_fundamentals(symbol, period="1y"):
+    sym = re.sub(r"\.(NS|BO)$", "", (symbol or "").strip().upper())
+    key = (sym, period if period in ("1y", "3y", "5y", "max") else "1y")
+    cached = _FUNDAMENTALS_CACHE.get(key)
+    if cached and time.time() - cached[0] < _FUND_TTL:
+        return cached[1]
+
+    errors = []
+    screener, yahoo = None, None
+    try:
+        screener = _fetch_screener_fundamentals(sym)
+    except Exception as exc:
+        errors.append(f"Screener.in: {exc}")
+    try:
+        yahoo = _fetch_yahoo_fundamentals(sym)
+    except Exception as exc:
+        errors.append(f"Yahoo Finance: {exc}")
+    if not screener and not yahoo:
+        raise RuntimeError(" ; ".join(errors) or "No fundamental data available")
+
+    base = screener or yahoo
+    tables = dict(base.get("tables") or {})
+    if yahoo:
+        for name, table in (yahoo.get("tables") or {}).items():
+            if not tables.get(name) or not (tables[name] or {}).get("rows"):
+                tables[name] = table
+    ratios = dict(base.get("ratios") or {})
+    if yahoo:
+        for name, value in (yahoo.get("ratios") or {}).items():
+            ratios.setdefault(name, value)
+    result = {
+        "status": "success",
+        "symbol": sym,
+        "resolved": _resolve_ticker(sym),
+        "profile": base.get("profile") or {},
+        "ratios": ratios,
+        "ranges": base.get("ranges") or (yahoo or {}).get("ranges") or [],
+        "tables": tables,
+        "yoy": _fund_yoy(tables),
+        "price_history": _fund_price_history(sym, key[1]),
+        "price_range": key[1],
+        "sources": [name for name, obj in (("Screener.in", screener), ("Yahoo Finance", yahoo)) if obj],
+        "errors": errors,
+        "ts": time.time(),
+    }
+    _FUNDAMENTALS_CACHE[key] = (time.time(), result)
+    return result
+
+
+# ---------------------------------------------------------------------------
+# FRIDAY Terminal — INDstocks (INDmoney) proxy
+#
+# The terminal asks the user to paste an access token on first load. The
+# browser keeps it in localStorage and sends it as the `X-IND-Token` header.
+# These routes forward it server-side so the browser never has to deal with
+# CORS, and so order placement can be audited in one place. Nothing is stored
+# on disk here.
+# ---------------------------------------------------------------------------
+
+INDSTOCKS_BASE = "https://api.indstocks.com"
+
+_IND_MASTER = None
+_IND_SEARCH = None
+
+INDEX_ALIASES = {
+    "^NSEI": ("NIDX_40000001", "NIFTY 50"),
+    "NIFTY": ("NIDX_40000001", "NIFTY 50"),
+    "NIFTY50": ("NIDX_40000001", "NIFTY 50"),
+    "BANKNIFTY": ("NIDX_40000003", "BANK NIFTY"),
+    "^NSEBANK": ("NIDX_40000003", "BANK NIFTY"),
+    "NIFTYBANK": ("NIDX_40000003", "BANK NIFTY"),
+    "FINNIFTY": ("NIDX_40000100", "NIFTY FINANCIAL"),
+    "MIDCPNIFTY": ("NIDX_40000062", "NIFTY MIDCAP 150"),
+    "^BSESN": ("BIDX_40000006", "SENSEX"),
+    "SENSEX": ("BIDX_40000006", "SENSEX"),
+}
+
+
+def _load_ind_master():
+    """Lazy-load the INDstocks equity master (symbol → scrip code)."""
+    global _IND_MASTER, _IND_SEARCH
+    if _IND_MASTER is not None:
+        return _IND_MASTER
+    mapping, search = {}, {}
+    path = os.path.join(HERE, "assets", "indstocks_equity_master.csv")
+    if os.path.exists(path):
+        import csv
+        try:
+            with open(path, newline="", encoding="utf-8") as f:
+                for row in csv.DictReader(f):
+                    exch = (row.get("EXCH") or "").strip().upper()
+                    segment = (row.get("SEGMENT") or "").strip().upper()
+                    sid = (row.get("SECURITY_ID") or "").strip()
+                    sym = (row.get("TRADING_SYMBOL") or "").strip().upper()
+                    if not sym or not sid or segment not in ("E", "EQ"):
+                        continue
+                    entry = {
+                        "symbol": sym,
+                        "name": (row.get("SYMBOL_NAME") or sym).strip(),
+                        "exchange": exch,
+                        "scrip": f"{exch}_{sid}",
+                        "security_id": sid,
+                        "lot": (row.get("LOT_UNITS") or "1").strip(),
+                        "isin": (row.get("ISIN") or "").strip(),
+                    }
+                    if exch == "NSE" or sym not in mapping:
+                        mapping[sym] = entry
+                    if sym not in search:
+                        search[sym] = entry
+        except Exception as exc:  # pragma: no cover - defensive
+            print(f"[terminal] instrument master load failed: {exc}")
+    _IND_MASTER, _IND_SEARCH = mapping, list(search.values())
+    return _IND_MASTER
+
+
+def _ind_resolve(symbol):
+    """Resolve a terminal symbol (RELIANCE, NIFTY, ^NSEI) to a scrip code."""
+    raw = (symbol or "").strip().upper()
+    if not raw:
+        return None
+    if raw in INDEX_ALIASES:
+        code, name = INDEX_ALIASES[raw]
+        return {
+            "symbol": raw.lstrip("^"),
+            "name": name,
+            "exchange": code.split("_")[0],
+            "scrip": code,
+            "security_id": code.split("_", 1)[1],
+            "lot": "1",
+            "index": True,
+        }
+    resolved = _load_ind_master().get(raw)
+    if resolved:
+        return resolved
+    for suffix in (".NS", ".BO"):
+        if raw.endswith(suffix):
+            return _ind_resolve(raw[: -len(suffix)])
+    return None
+
+
+def _ind_request(method, path, token, params=None, body=None):
+    token = (token or "").strip()
+    if not token:
+        raise RuntimeError("Missing INDmoney access token")
+    response = _requests.request(
+        method,
+        INDSTOCKS_BASE + path,
+        headers={
+            "Authorization": token,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        params=params,
+        json=body,
+        timeout=15,
+    )
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = {"status": "error", "message": response.text[:300]}
+    if response.status_code >= 400:
+        message = (
+            payload.get("message")
+            or payload.get("error")
+            or payload.get("debug_info")
+            or f"HTTP {response.status_code}"
+        )
+        if response.status_code in (401, 403):
+            message = "INDmoney token expired or revoked — paste a fresh access token."
+        raise RuntimeError(message)
+    return payload
+
+
+# Index history/quotes: the REST scrip-code prefix for indices is not
+# documented consistently, so indices are served from the public Yahoo feed
+# and cached briefly. Equities always go through INDstocks.
+YAHOO_INDEX_MAP = {
+    "NIFTY": "^NSEI", "NIFTY50": "^NSEI", "^NSEI": "^NSEI", "NSEI": "^NSEI",
+    "BANKNIFTY": "^NSEBANK", "^NSEBANK": "^NSEBANK", "NIFTYBANK": "^NSEBANK",
+    "SENSEX": "^BSESN", "^BSESN": "^BSESN",
+}
+_IND_INDEX_CACHE = {}
+
+
+def _terminal_yahoo_symbol(symbol):
+    return YAHOO_INDEX_MAP.get((symbol or "").strip().upper())
+
+
+def _terminal_index_quote(symbol):
+    ysym = _terminal_yahoo_symbol(symbol)
+    if not ysym:
+        return None
+    cached = _IND_INDEX_CACHE.get(ysym)
+    if cached and time.time() - cached[0] < 15:
+        return cached[1]
+    try:
+        data = get_stock_data(ysym)
+    except Exception:
+        data = None
+    if not data:
+        return None
+    entry = _ind_resolve(symbol) or {}
+    quote = {
+        "symbol": symbol.lstrip("^"),
+        "name": entry.get("name") or data.get("company") or symbol,
+        "scrip": entry.get("scrip"),
+        "exchange": "NSE" if ysym in ("^NSEI", "^NSEBANK") else "BSE",
+        "ltp": data.get("price"),
+        "change": data.get("change"),
+        "change_pct": data.get("change_pct"),
+        "open": data.get("open"),
+        "high": data.get("high"),
+        "low": data.get("low"),
+        "prev_close": data.get("prev_close"),
+        "volume": data.get("volume"),
+        "w52_high": data.get("fifty_two_week_high"),
+        "w52_low": data.get("fifty_two_week_low"),
+        "depth": None,
+        "source": "Yahoo Finance (index fallback)",
+        "ts": time.time(),
+    }
+    _IND_INDEX_CACHE[ysym] = (time.time(), quote)
+    return quote
+
+
+def _terminal_yahoo_candles(symbol, interval, days):
+    ysym = _terminal_yahoo_symbol(symbol)
+    if not ysym:
+        return []
+    yinterval = {
+        "1minute": "1m", "2minute": "2m", "5minute": "5m", "15minute": "15m",
+        "30minute": "30m", "60minute": "60m", "1day": "1d", "1week": "1wk",
+        "1month": "1mo",
+    }.get(interval, "1d")
+    if yinterval.endswith("m"):
+        period = f"{max(1, min(days, 7))}d"
+    elif yinterval == "1d":
+        period = f"{max(5, min(days, 365))}d"
+    elif yinterval == "1mo":
+        period = "1y"
+    else:
+        period = f"{max(1, min(days // 7 or 1, 52))}wk"
+    try:
+        frame = yf.Ticker(ysym).history(period=period, interval=yinterval, auto_adjust=False)
+    except Exception:
+        return []
+    if frame is None or frame.empty:
+        return []
+    out = []
+    for ts, row in frame.iterrows():
+        try:
+            out.append({
+                "t": int(ts.timestamp() * 1000),
+                "o": float(row["Open"]), "h": float(row["High"]),
+                "l": float(row["Low"]), "c": float(row["Close"]),
+                "v": float(row.get("Volume", 0) or 0),
+            })
+        except Exception:
+            continue
+    return out
+
+
+def _ind_norm_quote(symbol, entry, q):
+    return {
+        "symbol": symbol,
+        "name": entry.get("name") or symbol,
+        "scrip": entry.get("scrip"),
+        "exchange": entry.get("exchange"),
+        "ltp": q.get("live_price"),
+        "change": q.get("day_change"),
+        "change_pct": q.get("day_change_percentage"),
+        "open": q.get("day_open"),
+        "high": q.get("day_high"),
+        "low": q.get("day_low"),
+        "prev_close": q.get("prev_close"),
+        "volume": q.get("volume"),
+        "w52_high": q.get("52week_high"),
+        "w52_low": q.get("52week_low"),
+        "upper_circuit": q.get("upper_circuit"),
+        "lower_circuit": q.get("lower_circuit"),
+        "depth": q.get("market_depth"),
+        "ts": time.time(),
+    }
+
+
 class DashboardHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=HERE, **kwargs)
@@ -975,11 +1578,43 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._handle_fno_stocks()
         elif path == "/api/gex":
             self._handle_gex(params)
+        elif path == "/api/fundamentals":
+            self._handle_fundamentals(params)
+        elif path == "/api/terminal/health":
+            self._handle_terminal_health()
+        elif path == "/api/terminal/search":
+            self._handle_terminal_search(params)
+        elif path == "/api/terminal/watch-universe":
+            self._handle_terminal_watch_universe()
+        elif path == "/api/terminal/quotes":
+            self._handle_terminal_quotes(params)
+        elif path == "/api/terminal/depth":
+            self._handle_terminal_depth(params)
+        elif path == "/api/terminal/candles":
+            self._handle_terminal_candles(params)
+        elif path == "/api/terminal/funds":
+            self._handle_terminal_proxy("/funds")
+        elif path == "/api/terminal/holdings":
+            self._handle_terminal_proxy("/portfolio/holdings")
+        elif path == "/api/terminal/positions":
+            self._handle_terminal_positions(params)
+        elif path == "/api/terminal/orders":
+            self._handle_terminal_proxy("/order-book")
+        elif path == "/api/terminal/trades":
+            self._handle_terminal_proxy("/trade-book", params)
+        elif path == "/api/terminal/option-chain":
+            self._handle_terminal_option_chain(params)
         elif path == "/api/daily-support":
             self._handle_daily_support(params)
         elif path == "/api/daily-support/chart":
             self._handle_daily_support_chart(params)
-        elif path == "/":
+        elif path == "/api/strategy/orb":
+            self._handle_strategy_orb(params)
+        elif path == "/api/strategy/monte-carlo":
+            self._handle_strategy_monte_carlo(params)
+        elif path in ("/", "/terminal"):
+            self._serve_file("terminal.html")
+        elif path == "/legacy":
             self._serve_file("stock_dashboard.html")
         else:
             super().do_GET()
@@ -1018,13 +1653,30 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         except (ValueError, TypeError):
             return default
 
+    def _handle_fundamentals(self, params):
+        ticker = self._get_param(params, "ticker", "").strip()
+        if not ticker:
+            self._send_json({"error": "Missing ticker parameter"}, 400)
+            return
+        period = (self._get_param(params, "range", "1y") or "1y").lower()
+        try:
+            data = _fetch_fundamentals(ticker, period)
+        except Exception as exc:
+            self._send_json({"error": str(exc)}, 502)
+            return
+        self._send_json(data)
+
     def _handle_quote(self, params):
         ticker = self._get_param(params, "ticker", "").upper()
         if not ticker:
             self._send_json({"error": "Missing ticker parameter"}, 400)
             return
         resolved = _resolve_ticker(ticker)
-        data = get_stock_data(resolved)
+        try:
+            data = get_stock_data(resolved)
+        except Exception as exc:
+            self._send_json({"error": str(exc)}, 502)
+            return
         if not data:
             self._send_json({"error": f"No data for {ticker}"}, 404)
             return
@@ -1037,7 +1689,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._send_json({"error": "Missing ticker parameter"}, 400)
             return
         resolved = _resolve_ticker(ticker)
-        news = get_stock_news(resolved, count)
+        try:
+            news = get_stock_news(resolved, count)
+        except Exception as exc:
+            self._send_json({"ticker": ticker, "resolved": resolved, "news": [], "error": str(exc)}, 502)
+            return
         self._send_json({"ticker": ticker, "resolved": resolved, "news": news})
 
     def _handle_backtest(self, params):
@@ -1048,7 +1704,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         stop_loss = self._get_float(params, "stop_loss")
         trailing_stop = self._get_float(params, "trailing_stop")
         risk = self._get_float(params, "risk")
-        api_key = self._get_param(params, "api_key", "").strip() or None
+        api_key = self._get_param(params, "api_key", "").strip() or self._ind_token(params) or None
 
         if not ticker:
             self._send_json({"error": "Missing ticker parameter"}, 400)
@@ -1092,7 +1748,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         stop_loss = self._get_float(params, "stop_loss")
         trailing_stop = self._get_float(params, "trailing_stop")
         risk = self._get_float(params, "risk")
-        api_key = self._get_param(params, "api_key", "").strip() or None
+        api_key = self._get_param(params, "api_key", "").strip() or self._ind_token(params) or None
 
         if not ticker:
             self._send_json({"error": "Missing ticker parameter"}, 400)
@@ -1399,7 +2055,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             return
 
         ticker = self._get_param(params, "ticker", "").strip()
-        api_key = self._get_param(params, "api_key", "").strip() or None
+        api_key = self._get_param(params, "api_key", "").strip() or self._ind_token(params) or None
         max_dist = self._get_float(params, "max_dist", 2.0)
 
         try:
@@ -1441,7 +2097,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             return
 
         ticker = self._get_param(params, "ticker", "").strip()
-        api_key = self._get_param(params, "api_key", "").strip() or None
+        api_key = self._get_param(params, "api_key", "").strip() or self._ind_token(params) or None
         bars = int(self._get_param(params, "bars", "90") or 90)
 
         if not ticker:
@@ -1453,6 +2109,635 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._send_json(chart_data)
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
+
+    def _handle_strategy_orb(self, params):
+        symbol = (self._get_param(params, "symbol", "NIFTY") or "NIFTY").strip().upper()
+        days = int(self._get_param(params, "days", "60") or 60)
+        direction = (self._get_param(params, "direction", "BOTH") or "BOTH").strip().upper()
+        mode = (self._get_param(params, "mode", "standard") or "standard").strip().lower()
+        cutoff_str = (self._get_param(params, "cutoff", "14:30") or "14:30").strip()
+        risk = float(self._get_param(params, "risk", "1000.0") or 1000.0)
+        capital = float(self._get_param(params, "capital", "100000.0") or 100000.0)
+        token = self._ind_token(params)
+
+        try:
+            import datetime as dt_mod
+            from opening_range_backtest import run_opening_range_backtest
+            from monte_carlo_pinescript import fetch_candles_with_fallback
+
+            cutoff_h, cutoff_m = map(int, cutoff_str.split(":"))
+            cutoff_time = dt_mod.time(cutoff_h, cutoff_m)
+
+            df, source = fetch_candles_with_fallback(symbol, token=token, interval="5minute", days=days)
+            if df is None or len(df) < 15:
+                self._send_json({"error": f"Insufficient 5-minute candle data for {symbol} ({source})"}, 400)
+                return
+
+            trades, summary = run_opening_range_backtest(
+                df=df,
+                symbol=symbol,
+                direction=direction,
+                displacement_mode=mode,
+                risk_per_trade_inr=risk,
+                initial_capital=capital,
+                max_entry_time=cutoff_time,
+            )
+
+            today_status = None
+            if not df.empty and isinstance(df.index, pd.DatetimeIndex):
+                last_date = df.index[-1].date()
+                day_df = df[df.index.date == last_date]
+                or_candles = day_df[(day_df.index.time >= dt_mod.time(9, 15)) & (day_df.index.time < dt_mod.time(9, 30))]
+                if len(or_candles) >= 3:
+                    or_h = float(or_candles["High"].max())
+                    or_l = float(or_candles["Low"].min())
+                    latest_candle = day_df.iloc[-1]
+                    today_status = {
+                        "date": str(last_date),
+                        "or_high": round(or_h, 2),
+                        "or_low": round(or_l, 2),
+                        "or_range": round(or_h - or_l, 2),
+                        "latest_time": df.index[-1].strftime("%H:%M"),
+                        "latest_close": round(float(latest_candle["Close"]), 2),
+                        "displaced_bullish": bool(float(latest_candle["Close"]) > or_h),
+                        "displaced_bearish": bool(float(latest_candle["Close"]) < or_l),
+                    }
+
+            self._send_json({
+                "symbol": symbol,
+                "data_source": source,
+                "summary": asdict(summary),
+                "today": today_status,
+                "trades": [asdict(t) for t in trades[-100:]],
+            })
+        except Exception as exc:
+            self._send_json({"error": str(exc)}, 500)
+
+    def _handle_strategy_monte_carlo(self, params):
+        symbol = (self._get_param(params, "symbol", "NIFTY") or "NIFTY").strip().upper()
+        days = int(self._get_param(params, "days", "60") or 60)
+        interval = (self._get_param(params, "interval", "15minute") or "15minute").strip().lower()
+        simulations = int(self._get_param(params, "simulations", "1000") or 1000)
+        simulations = min(5000, max(100, simulations))
+        trail_mode = (self._get_param(params, "trail_mode", "EMA Trail") or "EMA Trail").strip()
+        use_partial = (self._get_param(params, "use_partial", "1") or "1").lower() in ("1", "true", "yes")
+        token = self._ind_token(params)
+
+        try:
+            from monte_carlo_pinescript import (
+                fetch_candles_with_fallback,
+                simulate_pinescript_strategy as simulate_strategy,
+                run_monte_carlo,
+            )
+
+            df, source = fetch_candles_with_fallback(symbol, token=token, interval=interval, days=days)
+            if df is None or len(df) < 30:
+                self._send_json({"error": f"Insufficient {interval} candle data for {symbol} ({source})"}, 400)
+                return
+
+            trades = simulate_strategy(
+                df=df,
+                symbol=symbol,
+                trail_mode=trail_mode,
+                use_partial=use_partial,
+            )
+
+            if not trades:
+                self._send_json({
+                    "error": f"No trades generated for {symbol} on {interval} with mode {trail_mode}",
+                    "data_source": source,
+                }, 400)
+                return
+
+            metrics, curves, max_dd = run_monte_carlo(trades, num_simulations=simulations)
+
+            n_steps = curves.shape[1]
+            step_indices = np.linspace(0, n_steps - 1, min(50, n_steps), dtype=int)
+            p5_band = [round(float(v), 2) for v in np.percentile(curves[:, step_indices], 5, axis=0)]
+            p25_band = [round(float(v), 2) for v in np.percentile(curves[:, step_indices], 25, axis=0)]
+            p50_band = [round(float(v), 2) for v in np.percentile(curves[:, step_indices], 50, axis=0)]
+            p75_band = [round(float(v), 2) for v in np.percentile(curves[:, step_indices], 75, axis=0)]
+            p95_band = [round(float(v), 2) for v in np.percentile(curves[:, step_indices], 95, axis=0)]
+
+            self._send_json({
+                "symbol": symbol,
+                "data_source": source,
+                "trail_mode": trail_mode,
+                "use_partial": use_partial,
+                "metrics": asdict(metrics),
+                "percentiles": {
+                    "steps": list(range(len(step_indices))),
+                    "p5": p5_band,
+                    "p25": p25_band,
+                    "p50": p50_band,
+                    "p75": p75_band,
+                    "p95": p95_band,
+                },
+                "trades": [asdict(t) for t in trades[:50]],
+            })
+        except Exception as exc:
+            self._send_json({"error": str(exc)}, 500)
+
+
+    # ------------------------------------------------------------------
+    # FRIDAY Terminal endpoints
+    # ------------------------------------------------------------------
+    def _ind_token(self, params=None):
+        token = (
+            self.headers.get("X-IND-Token", "")
+            or self.headers.get("X-Api-Key", "")
+            or ""
+        )
+        if not token and params:
+            token = self._get_param(params, "api_key", "") or ""
+        return token.strip()
+
+    def _handle_terminal_health(self):
+        token = self._ind_token()
+        if not token:
+            self._send_json({"ok": False, "error": "Paste an INDmoney access token."}, 401)
+            return
+        try:
+            payload = _ind_request("GET", "/funds", token)
+            self._send_json({"ok": True, "funds": payload.get("data", {}), "source": "INDstocks"})
+            return
+        except Exception as exc:
+            funds_error = str(exc)
+        # Some tokens are scoped for market data only — fall back to a quote
+        # ping so the terminal can still open in read-only trading mode.
+        try:
+            _ind_request(
+                "GET",
+                "/market/quotes/ltp",
+                token,
+                params={"scrip-codes": "NSE_2885"},
+            )
+            self._send_json({
+                "ok": True,
+                "funds": {},
+                "trading": False,
+                "warning": f"Market data OK; account funds unavailable: {funds_error}",
+                "source": "INDstocks",
+            })
+        except Exception:
+            self._send_json({"ok": False, "error": funds_error}, 401)
+
+    def _handle_terminal_search(self, params):
+        query = (self._get_param(params, "q", "") or "").strip().upper()
+        limit = int(self._get_param(params, "limit", "20") or 20)
+        _load_ind_master()
+        ranked = []
+        for alias in INDEX_ALIASES:
+            if not alias.startswith("^") and query and query in alias:
+                entry = _ind_resolve(alias)
+                if entry:
+                    ranked.append((0, {**entry, "index": True}))
+        if query:
+            for entry in _IND_SEARCH or []:
+                symbol = entry["symbol"]
+                name = entry["name"].upper()
+                if symbol == query:
+                    score = 0
+                elif symbol.startswith(query):
+                    score = 1 if entry["exchange"] == "NSE" else 2
+                elif name.startswith(query):
+                    score = 3
+                elif query in symbol:
+                    score = 4
+                elif query in name:
+                    score = 5
+                else:
+                    continue
+                ranked.append((score, entry))
+        ranked.sort(key=lambda item: (item[0], len(item[1].get("symbol", ""))))
+        results, seen = [], set()
+        for _, entry in ranked:
+            key = entry.get("symbol")
+            if key not in seen:
+                seen.add(key)
+                results.append(entry)
+            if len(results) >= limit:
+                break
+        self._send_json({"results": results})
+
+    def _handle_terminal_watch_universe(self):
+        self._send_json({"symbols": _load_watch_universe()})
+
+    def _handle_terminal_quotes(self, params):
+        token = self._ind_token(params)
+        if not token:
+            self._send_json({"error": "Paste an INDmoney access token."}, 401)
+            return
+        raw = (self._get_param(params, "symbols", "") or "").split(",")
+        symbols = [s.strip().upper() for s in raw if s.strip()][:1000]
+        if not symbols:
+            self._send_json({"error": "symbols parameter required"}, 400)
+            return
+        resolved, code_to_symbol, index_symbols, missing = {}, {}, [], []
+        for symbol in symbols:
+            entry = _ind_resolve(symbol)
+            if not entry:
+                missing.append(symbol)
+                continue
+            resolved[symbol] = entry
+            if entry.get("index"):
+                index_symbols.append(symbol)
+            else:
+                code_to_symbol[entry["scrip"]] = symbol
+
+        quotes, warning = {}, None
+        if code_to_symbol:
+            try:
+                payload = _ind_request(
+                    "GET",
+                    "/market/quotes/full",
+                    token,
+                    params={"scrip-codes": ",".join(code_to_symbol.keys())},
+                )
+                data = payload.get("data") or {}
+                for code, symbol in code_to_symbol.items():
+                    if code in data:
+                        quotes[symbol] = _ind_norm_quote(symbol, resolved[symbol], data[code] or {})
+            except Exception as exc:
+                warning = str(exc)
+
+        # Indices come from the public fallback; never let one bad index code
+        # poison the equity batch.
+        for symbol in index_symbols:
+            quote = _terminal_index_quote(symbol)
+            if quote:
+                quotes[symbol] = quote
+
+        result = {"quotes": quotes, "missing": missing, "ts": time.time()}
+        if warning and not quotes:
+            self._send_json({"error": warning, **result}, 502)
+            return
+        if warning:
+            result["warning"] = warning
+        self._send_json(result)
+
+    def _handle_terminal_depth(self, params):
+        token = self._ind_token(params)
+        symbol = (self._get_param(params, "symbol", "") or "").upper()
+        entry = _ind_resolve(symbol)
+        if not entry:
+            self._send_json({"error": f"Unknown symbol {symbol}"}, 404)
+            return
+        try:
+            payload = _ind_request(
+                "GET",
+                "/market/quotes/mkt",
+                token,
+                params={"scrip-codes": entry["scrip"]},
+            )
+            block = (payload.get("data") or {}).get(entry["scrip"], {}) or {}
+            depth = block.get("market_depth") or {}
+            levels = depth.get("depth") or []
+            bids, asks = [], []
+            for level in levels:
+                buy = level.get("buy") or {}
+                sell = level.get("sell") or {}
+                if buy:
+                    bids.append({
+                        "price": float(str(buy.get("price", 0)).replace(",", "")),
+                        "qty": float(str(buy.get("quantity", 0)).replace(",", "")),
+                    })
+                if sell:
+                    asks.append({
+                        "price": float(str(sell.get("price", 0)).replace(",", "")),
+                        "qty": float(str(sell.get("quantity", 0)).replace(",", "")),
+                    })
+            self._send_json({
+                "symbol": symbol,
+                "bids": bids,
+                "asks": asks,
+                "aggregate": depth.get("aggregate") or {},
+            })
+        except Exception as exc:
+            self._send_json({"error": str(exc)}, 502)
+
+    def _handle_terminal_candles(self, params):
+        token = self._ind_token(params)
+        symbol = (self._get_param(params, "symbol", "") or "").upper()
+        entry = _ind_resolve(symbol)
+        if not entry:
+            self._send_json({"error": f"Unknown symbol {symbol}"}, 404)
+            return
+        interval = (self._get_param(params, "interval", "1day") or "1day").strip()
+        allowed = {
+            "1minute", "2minute", "3minute", "4minute", "5minute", "10minute",
+            "15minute", "30minute", "60minute", "120minute", "180minute",
+            "240minute", "1day", "1week", "1month",
+        }
+        if interval not in allowed:
+            interval = "1day"
+        days = int(self._get_param(params, "days", "260") or 260)
+        max_days = 365 if interval in ("1day", "1week", "1month") else (15 if "minute" in interval and interval[:2].isdigit() and int(interval[:2]) >= 60 else 7)
+        days = max(1, min(days, max_days))
+        if entry.get("index"):
+            candles = _terminal_yahoo_candles(symbol, interval, days)
+            self._send_json({
+                "symbol": symbol,
+                "scrip": entry["scrip"],
+                "interval": interval,
+                "source": "Yahoo Finance (index fallback)",
+                "candles": candles,
+            })
+            return
+        now_ms = int(time.time() * 1000)
+        start_ms = now_ms - days * 24 * 3600 * 1000
+        try:
+            payload = _ind_request(
+                "GET",
+                f"/market/historical/{interval}",
+                token,
+                params={
+                    "scrip-codes": entry["scrip"],
+                    "start_time": start_ms,
+                    "end_time": now_ms,
+                },
+            )
+            block = (payload.get("data") or {}).get(entry["scrip"], {}) or {}
+            candles = [
+                {
+                    "t": int(c.get("ts", 0)) * 1000,
+                    "o": float(c.get("o", 0)),
+                    "h": float(c.get("h", 0)),
+                    "l": float(c.get("l", 0)),
+                    "c": float(c.get("c", 0)),
+                    "v": float(c.get("v", 0)),
+                }
+                for c in (block.get("candles") or [])
+                if c.get("c") is not None
+            ]
+            self._send_json({
+                "symbol": symbol,
+                "scrip": entry["scrip"],
+                "interval": interval,
+                "candles": candles,
+            })
+        except Exception as exc:
+            self._send_json({"error": str(exc)}, 502)
+
+    def _handle_terminal_proxy(self, path, params=None):
+        token = self._ind_token(params)
+        if not token:
+            self._send_json({"error": "Paste an INDmoney access token."}, 401)
+            return
+        query = {}
+        if params:
+            for key, values in params.items():
+                if key in ("api_key",):
+                    continue
+                if values:
+                    query[key] = values[0]
+        try:
+            payload = _ind_request("GET", path, token, params=query or None)
+            self._send_json(payload)
+        except Exception as exc:
+            self._send_json({"error": str(exc)}, 502)
+
+    def _fetch_terminal_positions(self, token):
+        """Aggregate the four segment/product position books into one list."""
+        combos = [
+            ("equity", "intraday"), ("equity", "cnc"),
+            ("derivative", "intraday"), ("derivative", "margin"),
+        ]
+        rows, errors = [], []
+        for segment, product in combos:
+            try:
+                payload = _ind_request(
+                    "GET",
+                    "/portfolio/positions",
+                    token,
+                    params={"segment": segment, "product": product},
+                )
+                data = payload.get("data")
+                if isinstance(data, list):
+                    rows.extend(data)
+                elif isinstance(data, dict):
+                    rows.extend(data.get("positions") or [])
+            except Exception as exc:
+                errors.append(f"{segment}/{product}: {exc}")
+        # De-duplicate by position id where available.
+        dedup, seen = [], set()
+        for row in rows:
+            key = row.get("position_id") or (
+                row.get("security_id"), row.get("segment"), row.get("product"),
+                row.get("drv_expiry_date"), row.get("drv_strike_price"),
+                row.get("drv_option_type"),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            dedup.append(row)
+        return dedup, errors
+
+    def _handle_terminal_positions(self, params):
+        token = self._ind_token(params)
+        if not token:
+            self._send_json({"error": "Paste an INDmoney access token."}, 401)
+            return
+        segment = (self._get_param(params, "segment", "") or "").strip()
+        product = (self._get_param(params, "product", "") or "").strip()
+        if segment and product:
+            try:
+                payload = _ind_request(
+                    "GET",
+                    "/portfolio/positions",
+                    token,
+                    params={"segment": segment, "product": product},
+                )
+                self._send_json(payload)
+            except Exception as exc:
+                self._send_json({"error": str(exc)}, 502)
+            return
+        rows, errors = self._fetch_terminal_positions(token)
+        self._send_json({
+            "status": "success" if rows or not errors else "error",
+            "data": rows,
+            "errors": errors,
+        })
+
+    def _handle_terminal_flatten(self, body):
+        """Emergency exit: market-close every non-zero position."""
+        token = self._ind_token()
+        dry_run = bool((body or {}).get("dry_run", True))
+        if not token:
+            self._send_json({"error": "Paste an INDmoney access token."}, 401)
+            return
+        rows, errors = self._fetch_terminal_positions(token)
+        results = []
+        for row in rows:
+            try:
+                net = int(float(row.get("net_qty") or 0))
+            except (TypeError, ValueError):
+                continue
+            if net == 0:
+                continue
+            security_id = str(row.get("security_id") or "").strip()
+            if not security_id:
+                errors.append(f"{row.get('symbol')}: missing security_id")
+                continue
+            payload = {
+                "txn_type": "SELL" if net > 0 else "BUY",
+                "exchange": (row.get("exchange") or "NSE").upper(),
+                "segment": (row.get("segment") or "EQUITY").upper(),
+                "product": (row.get("product") or "INTRADAY").upper(),
+                "order_type": "MARKET",
+                "validity": "DAY",
+                "security_id": security_id,
+                "qty": abs(net),
+                "is_amo": False,
+                "algo_id": "99999",
+                "remarks": "FRIDAY-FLATTEN",
+            }
+            if dry_run:
+                results.append({
+                    "status": "simulated",
+                    "symbol": row.get("symbol"),
+                    "qty": abs(net),
+                    "side": payload["txn_type"],
+                    "request": payload,
+                })
+                continue
+            try:
+                response = _ind_request("POST", "/order", token, body=payload)
+                results.append({
+                    "status": "sent",
+                    "symbol": row.get("symbol"),
+                    "qty": abs(net),
+                    "side": payload["txn_type"],
+                    "response": response,
+                })
+            except Exception as exc:
+                errors.append(f"{row.get('symbol')}: {exc}")
+        self._send_json({
+            "status": "success" if not errors else "partial",
+            "dry_run": dry_run,
+            "orders": results,
+            "errors": errors,
+        })
+
+    def _handle_terminal_option_chain(self, params):
+        token = self._ind_token(params)
+        index = (self._get_param(params, "index", "NIFTY") or "NIFTY").upper()
+        expiry = self._get_param(params, "expiry", "") or None
+        strike_count = int(self._get_param(params, "strike_count", "15") or 15)
+        try:
+            import gex as gex_mod
+            chain = gex_mod.fetch_chain(
+                index,
+                expiry=expiry,
+                strike_count=strike_count,
+                request_get=lambda url, **kwargs: _requests.get(
+                    url,
+                    params=kwargs.get("params"),
+                    headers={"Authorization": token},
+                    timeout=20,
+                ),
+            )
+            lot = 65 if index == "NIFTY" else 25
+            try:
+                lot = int(gex_mod.load_index_meta().get(index, {}).get("lot_size", lot) or lot)
+            except Exception:
+                pass
+            analysis = gex_mod.analyze_chain(chain, lot)
+            self._send_json({"chain": chain, "analysis": analysis})
+        except Exception as exc:
+            self._send_json({"error": str(exc)}, 502)
+
+    def _handle_terminal_order(self, body):
+        token = self._ind_token()
+        if not token:
+            body = body or {}
+            token = str(body.pop("api_key", "") or "").strip()
+        if not token:
+            self._send_json({"error": "Paste an INDmoney access token."}, 401)
+            return
+        body = body or {}
+        symbol = str(body.get("symbol", "") or "").upper().strip()
+        entry = _ind_resolve(symbol)
+        if not entry:
+            self._send_json({"error": f"Unknown symbol {symbol}"}, 404)
+            return
+        try:
+            qty = int(body.get("qty") or 0)
+        except (TypeError, ValueError):
+            qty = 0
+        if qty <= 0:
+            self._send_json({"error": "qty must be greater than zero"}, 400)
+            return
+        order_type = str(body.get("order_type", "LIMIT") or "LIMIT").upper()
+        try:
+            limit_price = float(body.get("limit_price") or 0)
+        except (TypeError, ValueError):
+            limit_price = 0.0
+        if order_type == "LIMIT" and limit_price <= 0:
+            self._send_json({"error": "limit_price required for LIMIT orders"}, 400)
+            return
+        payload = {
+            "txn_type": str(body.get("txn_type", "BUY") or "BUY").upper(),
+            "exchange": str(body.get("exchange") or entry.get("exchange") or "NSE").upper(),
+            "segment": str(body.get("segment") or "EQUITY").upper(),
+            "product": str(body.get("product") or "INTRADAY").upper(),
+            "order_type": order_type,
+            "validity": str(body.get("validity") or "DAY").upper(),
+            "security_id": str(entry.get("security_id") or ""),
+            "qty": qty,
+            "is_amo": bool(body.get("is_amo", False)),
+            "algo_id": "99999",
+            "remarks": str(body.get("remarks") or "FRIDAY-TERMINAL")[:100],
+        }
+        if limit_price > 0:
+            payload["limit_price"] = round(limit_price, 2)
+        if body.get("dry_run"):
+            self._send_json({
+                "status": "success",
+                "dry_run": True,
+                "data": {
+                    "order_id": f"PAPER-{int(time.time())}",
+                    "order_status": "SIMULATED",
+                    "request": payload,
+                },
+            })
+            return
+        try:
+            response = _ind_request("POST", "/order", token, body=payload)
+            self._send_json({**response, "request": payload})
+        except Exception as exc:
+            self._send_json({"status": "error", "error": str(exc)}, 502)
+
+    def _handle_terminal_cancel(self, body):
+        token = self._ind_token()
+        order_id = str((body or {}).get("order_id", "") or "").strip()
+        if not token or not order_id:
+            self._send_json({"error": "token and order_id required"}, 400)
+            return
+        try:
+            response = _ind_request("POST", "/order/cancel", token, body={"order_id": order_id})
+            self._send_json(response)
+        except Exception as exc:
+            self._send_json({"status": "error", "error": str(exc)}, 502)
+
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+        length = int(self.headers.get("Content-Length", "0") or 0)
+        raw = self.rfile.read(length) if length else b"{}"
+        try:
+            body = json.loads(raw.decode() or "{}")
+        except (ValueError, UnicodeDecodeError):
+            self._send_json({"error": "invalid JSON body"}, 400)
+            return
+        if path == "/api/terminal/order":
+            self._handle_terminal_order(body)
+        elif path == "/api/terminal/flatten":
+            self._handle_terminal_flatten(body)
+        elif path == "/api/terminal/order/cancel":
+            self._handle_terminal_cancel(body)
+        else:
+            self.send_error(404)
 
     def log_message(self, format, *args):
         pass

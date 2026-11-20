@@ -121,7 +121,7 @@ def fetch_candles_with_fallback(
     cache_dir = os.path.join(os.path.dirname(__file__), ".cache_candles")
     os.makedirs(cache_dir, exist_ok=True)
     clean_sym = symbol.strip().upper()
-    cache_file = os.path.join(cache_dir, f"{clean_sym}_{interval}_{days}d.parquet")
+    cache_file = os.path.join(cache_dir, f"{clean_sym}_{interval}_{days}d.pkl")
 
     # 1. Try INDmoney API
     scrip = INDSTOCKS_SECURITY_IDS.get(clean_sym)
@@ -132,7 +132,10 @@ def fetch_candles_with_fallback(
         try:
             df = fetch_indstocks_data(scrip, token, interval=interval, days=days)
             if df is not None and len(df) >= 30:
-                df.to_parquet(cache_file)
+                try:
+                    df.to_pickle(cache_file)
+                except Exception:
+                    pass
                 return df, f"INDmoney LIVE API ({scrip})"
         except Exception:
             pass
@@ -140,7 +143,7 @@ def fetch_candles_with_fallback(
     # 2. Check disk cache
     if os.path.exists(cache_file):
         try:
-            df = pd.read_parquet(cache_file)
+            df = pd.read_pickle(cache_file)
             if df is not None and len(df) >= 30:
                 return df, f"Local Cache ({len(df)} candles)"
         except Exception:
@@ -159,7 +162,7 @@ def fetch_candles_with_fallback(
         }
         yf_ticker = ticker_map.get(clean_sym, f"{clean_sym}.NS")
         yf_interval = "5m" if "5" in interval else ("15m" if "15" in interval else "1d")
-        period_str = f"{min(days, 60)}d"
+        period_str = f"{min(days, 59)}d"
         df = yf.download(yf_ticker, period=period_str, interval=yf_interval, progress=False)
         if df is not None and not df.empty and len(df) >= 30:
             if isinstance(df.columns, pd.MultiIndex):
@@ -169,7 +172,10 @@ def fetch_candles_with_fallback(
                 df.index = df.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
             else:
                 df.index = df.index.tz_convert("Asia/Kolkata")
-            df.to_parquet(cache_file)
+            try:
+                df.to_pickle(cache_file)
+            except Exception:
+                pass
             return df, f"Yahoo Finance ({yf_ticker})"
     except Exception as e:
         print(f"[-] Fallback error: {e}")
@@ -202,11 +208,11 @@ def simulate_pinescript_strategy(
     # 1. Indicators
     # Session VWAP anchored to 09:15 daily
     tp = (df["High"] + df["Low"] + df["Close"]) / 3.0
-    pv = tp * df["Volume"]
+    vol = df["Volume"].replace(0, np.nan).fillna(1.0)
     dates = df.index.date
-    cum_pv = pv.groupby(dates).cumsum()
-    cum_vol = df["Volume"].groupby(dates).cumsum()
-    df["VWAP"] = cum_pv / cum_vol.replace(0, np.nan)
+    cum_pv = (tp * vol).groupby(dates).cumsum()
+    cum_vol = vol.groupby(dates).cumsum()
+    df["VWAP"] = cum_pv / cum_vol
 
     # EMA
     df["EMA"] = df["Close"].ewm(span=ema_len, adjust=False).mean()
