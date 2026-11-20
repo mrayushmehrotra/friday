@@ -261,6 +261,13 @@ aside,section{min-height:0;min-width:0}
 .news-item .src{font-size:8px;letter-spacing:.14em;color:var(--amber);text-transform:uppercase;margin-bottom:2px}
 .news-item .ttl{font-size:10px;line-height:1.45;color:var(--text)}
 .news-item .tm{font-size:8px;color:var(--dim);margin-top:2px}
+.badge-dividend{color:var(--up)!important;background:var(--up-soft)!important;border:1px solid rgba(37,208,124,.35)!important}
+.badge-split{color:var(--amber)!important;background:var(--amber-soft)!important;border:1px solid rgba(255,160,40,.35)!important}
+.badge-bonus{color:var(--cyan)!important;background:var(--cyan-soft)!important;border:1px solid rgba(63,214,232,.35)!important}
+.badge-filing{color:#a5b4fc!important;background:rgba(99,102,241,.12)!important;border:1px solid rgba(99,102,241,.3)!important}
+.pdf-btn{transition:background .15s}
+.pdf-btn:hover{background:rgba(63,214,232,.18)!important}
+.wire-card:hover{background:#0a0d12}
 
 /* FA / fundamentals */
 .panel-tools{display:flex;align-items:center;gap:6px}
@@ -304,9 +311,14 @@ aside,section{min-height:0;min-width:0}
 .metric small{font-size:8px;color:var(--dim);margin-left:4px}
 .chain-toolbar{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
 .chain-toolbar select,.chain-toolbar input{height:23px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px}
+#view-OMON.active{display:flex;flex-direction:column}
+#view-OMON .chain-scroll{height:auto;flex:1;min-height:0}
 .chain-scroll{overflow:auto;height:calc(100% - 92px)}
 table.chain{width:100%;border-collapse:collapse;font-size:10px}
 table.chain th{position:sticky;top:0;background:#0b0e12;color:var(--dim);font-size:8px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;padding:5px 6px;border-bottom:1px solid var(--line-2);text-align:right;z-index:1}
+table.chain thead tr:first-child th{top:0}
+table.chain thead tr:nth-child(2) th{top:17px}
+.chain-subhead th{padding:3px 6px!important;font-size:7px!important}
 table.chain td{padding:3px 6px;text-align:right;border-bottom:1px solid #0f1318;white-space:nowrap}
 table.chain tr:hover td{background:#0f1419}
 table.chain tr.atm td{background:rgba(255,160,40,.09)}
@@ -314,6 +326,33 @@ table.chain tr.atm td.strike{color:var(--amber);font-weight:700}
 table.chain td.strike{text-align:center;font-weight:600;color:var(--text);background:#0a0d10}
 .ce-head{color:var(--up)!important}.pe-head{color:var(--down)!important}
 .oi-bar{display:inline-block;height:5px;vertical-align:middle;margin-left:4px;opacity:.5}
+
+/* OMON · IV + Greeks panel */
+.greeks-panel{flex:0 0 auto;border-bottom:1px solid var(--line-2);background:var(--panel);display:flex;flex-direction:column;max-height:172px}
+.gp-head{display:flex;align-items:center;gap:8px;padding:5px 9px;border-bottom:1px solid var(--line);background:var(--panel-2);flex:0 0 auto}
+.gp-tabs{display:flex;gap:2px;margin-left:auto}
+.gp-tab{padding:3px 8px;font-size:8px;letter-spacing:.1em;color:var(--dim);border:1px solid transparent;background:transparent;font-weight:500}
+.gp-tab:hover{color:var(--text)}
+.gp-tab.active{color:var(--amber);border-color:var(--line-2);background:var(--amber-soft)}
+.gp-body{overflow:auto;padding:6px 9px;min-height:0;font-size:10px}
+.gp-empty{color:var(--dim);font-size:10px;padding:8px 0}
+.iv-chart{width:100%;height:110px;display:block}
+.gp-legend{display:flex;gap:12px;align-items:center;font-size:8px;letter-spacing:.08em;color:var(--dim);margin-top:2px}
+.gp-legend i{display:inline-block;width:10px;height:2px;vertical-align:middle;margin-right:4px}
+table.greeks{width:100%;border-collapse:collapse;font-size:9px}
+table.greeks th,table.greeks td{padding:2px 5px;text-align:right;border-bottom:1px solid #12171d;white-space:nowrap}
+table.greeks th{color:var(--dim);font-size:8px;letter-spacing:.06em;font-weight:500}
+table.greeks td:first-child,table.greeks th:first-child{text-align:left}
+table.greeks tr.atm td{background:rgba(255,160,40,.09)}
+.model-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px;align-items:end}
+.model-grid label{display:block;font-size:8px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin-bottom:2px}
+.model-grid input,.model-grid select{height:23px;width:100%;background:#05070a;border:1px solid var(--line-2);padding:0 6px;font-size:10px;color:var(--text)}
+.model-out{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.model-out .metric{min-width:92px;padding:5px 8px}
+.expiry-list{display:flex;flex-wrap:wrap;gap:6px}
+.expiry-chip{border:1px solid var(--line-2);padding:4px 8px;font-size:9px;color:var(--muted);cursor:pointer;background:#070a0d}
+.expiry-chip:hover,.expiry-chip.active{border-color:var(--amber);color:var(--amber);background:var(--amber-soft)}
+.gp-note{font-size:8px;color:var(--dim);letter-spacing:.04em;margin-top:6px;line-height:1.5}
 
 /* positions / orders tables */
 .data-wrap{padding:0}
@@ -635,9 +674,23 @@ table.data tr:hover td{background:#0f1419}
               <div id="depth-body"></div>
             </div>
           </div>
-          <div class="lower-cell">
-            <div class="panel-head"><span class="panel-title">Headlines</span><span class="dim">GOOGLE NEWS</span></div>
-            <div class="lower-body" id="news-body"><div class="empty-mini">Loading headlines…</div></div>
+          <div class="lower-cell" id="feed-panel">
+            <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span class="panel-title" id="feed-title">News &amp; Events</span>
+                <div class="feed-subtabs" id="feed-subtabs" style="display:flex;gap:3px">
+                  <button class="subtab active" data-feed-tab="news" style="height:17px;padding:0 5px;font-size:8px">NEWS</button>
+                  <button class="subtab" data-feed-tab="actions" style="height:17px;padding:0 5px;font-size:8px">ACTIONS</button>
+                  <button class="subtab" data-feed-tab="filings" style="height:17px;padding:0 5px;font-size:8px">FILINGS 📄</button>
+                  <button class="subtab" data-feed-tab="all" style="height:17px;padding:0 5px;font-size:8px">ALL</button>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span class="dim" id="feed-upd" style="font-size:8px">LIVE</span>
+                <button class="btn ghost" id="feed-refresh-btn" title="Refresh news & events" style="height:16px;padding:0 4px;font-size:8px">↻</button>
+              </div>
+            </div>
+            <div class="lower-body" id="news-body" style="overflow-y:auto;max-height:calc(100% - 24px)"><div class="empty-mini">Loading news &amp; corporate events…</div></div>
           </div>
         </div>
       </div>
@@ -654,12 +707,30 @@ table.data tr:hover td{background:#0f1419}
           <button class="btn ghost" id="chain-refresh">↻</button>
           <span class="dim" id="chain-status" style="font-size:9px;margin-left:auto"></span>
         </div>
+        <div class="greeks-panel" id="greeks-panel">
+          <div class="gp-head">
+            <span class="panel-title">IV + GREEKS · <span id="gp-index">NIFTY</span></span>
+            <div class="gp-tabs">
+              <button class="gp-tab active" data-gp="surface">IV SMILE</button>
+              <button class="gp-tab" data-gp="greeks">GREEKS</button>
+              <button class="gp-tab" data-gp="model">BS MODEL</button>
+              <button class="gp-tab" data-gp="expiry">EXPIRY</button>
+            </div>
+          </div>
+          <div class="gp-body" id="greeks-body"><div class="gp-empty">Load a chain to see IV and Greeks.</div></div>
+        </div>
         <div class="chain-scroll">
           <table class="chain" id="chain-table">
-            <thead><tr>
-              <th class="ce-head" colspan="6">CALLS</th><th>STRIKE</th><th class="pe-head" colspan="6">PUTS</th>
-            </tr></thead>
-            <tbody id="chain-body"><tr><td colspan="13" class="empty-mini">Load a chain to see Greeks.</td></tr></tbody>
+            <thead>
+              <tr>
+                <th class="ce-head" colspan="9">CALLS</th><th rowspan="2">STRIKE</th><th class="pe-head" colspan="9">PUTS</th>
+              </tr>
+              <tr class="chain-subhead">
+                <th>LTP</th><th>OI</th><th>PREV</th><th>CHG</th><th>IV</th><th>VEGA</th><th>THETA</th><th>GAMMA</th><th>DELTA</th>
+                <th>DELTA</th><th>GAMMA</th><th>THETA</th><th>VEGA</th><th>IV</th><th>CHG</th><th>PREV</th><th>OI</th><th>LTP</th>
+              </tr>
+            </thead>
+            <tbody id="chain-body"><tr><td colspan="19" class="empty-mini">Load a chain to see Greeks.</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -896,10 +967,30 @@ table.data tr:hover td{background:#0f1419}
         <div id="fa-body" class="fa-body"><div class="empty">Load a symbol to see its fundamentals snapshot.</div></div>
       </div>
 
-      <!-- TOP / NEWS -->
+      <!-- TOP / NEWS & BREAKING MARKET WIRE -->
       <div class="view" id="view-TOP">
-        <div class="panel-head"><span class="panel-title">Top Market Headlines</span><span class="dim" id="top-upd">—</span></div>
-        <div id="top-body"><div class="empty">Loading market wire…</div></div>
+        <div class="panel-head" style="flex-wrap:wrap;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="panel-title">Market Wire · Live Breaking Stream</span>
+            <div class="subtabs" id="wire-subtabs" style="border:none;margin:0">
+              <div class="subtab active" data-wire-sub="all">ALL BREAKING</div>
+              <div class="subtab" data-wire-sub="et">ECONOMIC TIMES</div>
+              <div class="subtab" data-wire-sub="mint">LIVEMINT</div>
+              <div class="subtab" data-wire-sub="bs">BUSINESS STANDARD</div>
+              <div class="subtab" data-wire-sub="mc">MONEYCONTROL</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <span class="dim" id="top-upd">—</span>
+            <button class="btn ghost" id="wire-refresh-btn" style="height:20px;padding:0 6px;font-size:9px">↻ REFRESH WIRE</button>
+          </div>
+        </div>
+        <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px">
+          <span class="dim" style="font-size:9px">FILTER WIRE:</span>
+          <input id="wire-search-input" placeholder="Search by stock e.g. RELIANCE, HDFC, or keyword..." style="flex:1;height:23px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px" />
+          <span class="dim" id="wire-count" style="font-size:9px">0 items</span>
+        </div>
+        <div id="top-body" style="flex:1;overflow-y:auto"><div class="empty">Loading breaking market wire from Economic Times, LiveMint &amp; Moneycontrol…</div></div>
       </div>
 
       <!-- POSITIONS -->
@@ -1113,9 +1204,16 @@ const state = {
   chainAnalysis: null,
   chainIndex: "NIFTY",
   chainExpiry: "",
+  greeksTab: "surface",
+  model: null,
+  modelChainKey: "",
   fundamentals: null,
   faTab: "YOY",
   news: [],
+  corpEvents: null,
+  feedTab: "news",
+  wireSub: "all",
+  wireData: null,
   rail: "watch",
   lastLatency: null,
   bootedAt: Date.now(),
@@ -1440,11 +1538,11 @@ function renderWatch() {
     state.watchNodes = new Map(
       [...body.querySelectorAll(".watch-row")].map((row) => [row.dataset.sym, row])
     );
+    updateQuoteCells(visible);
   } else {
     state.watchNodes.forEach((row, sym) => row.classList.toggle("active", sym === state.symbol));
   }
 
-  updateQuoteCells(visible);
   $("#watch-count").textContent = filter
     ? `${visible.length}/${state.watch.length} symbols`
     : `${state.watch.length} symbols`;
@@ -1764,45 +1862,221 @@ function renderDepth() {
   $("#depth-src").textContent = nowIst();
 }
 
-/* ---------- news ---------- */
-async function loadNews() {
+/* ---------- stock news & corporate events ---------- */
+async function loadNews(refresh = false) {
   const body = $("#news-body");
-  body.innerHTML = `<div class="empty-mini">Loading headlines…</div>`;
+  if (!body) return;
+  body.innerHTML = `<div class="empty-mini">Fetching news &amp; corporate events…</div>`;
+  const sym = state.symbol;
   try {
-    const res = await api(`/api/news?ticker=${encodeURIComponent(state.symbol)}&count=8`, { timeout: 12000 });
-    state.news = res.news || [];
-    if (!state.news.length) { body.innerHTML = `<div class="empty-mini">No recent headlines.</div>`; return; }
-    body.innerHTML = state.news.map((n) => {
-      const title = typeof n === "string" ? n : (n.title || n.headline || "—");
-      const src = typeof n === "string" ? "" : (n.publisher || n.source || "");
-      const link = typeof n === "string" ? "" : (n.link || n.url || "");
-      return `<div class="news-item" ${link ? `data-link="${esc(link)}"` : ""}>
-        ${src ? `<div class="src">${esc(src)}</div>` : ""}
-        <div class="ttl">${esc(title)}</div>
-      </div>`;
-    }).join("");
-    $$("#news-body .news-item").forEach((el) => {
-      el.addEventListener("click", () => {
-        if (el.dataset.link) window.open(el.dataset.link, "_blank", "noopener");
-      });
-    });
+    const [newsRes, eventsRes] = await Promise.allSettled([
+      api(`/api/news?ticker=${encodeURIComponent(sym)}&count=20&refresh=${refresh ? "1" : "0"}`, { timeout: 12000 }),
+      api(`/api/corporate-events?ticker=${encodeURIComponent(sym)}&refresh=${refresh ? "1" : "0"}`, { timeout: 12000 }),
+    ]);
+
+    state.news = newsRes.status === "fulfilled" ? (newsRes.value?.articles || newsRes.value?.news || []) : [];
+    state.corpEvents = eventsRes.status === "fulfilled" ? eventsRes.value : { actions: [], announcements: [] };
+
+    renderFeed();
+    const stamp = $("#feed-upd");
+    if (stamp) stamp.textContent = nowIst();
   } catch (err) {
     body.innerHTML = `<div class="empty-mini">${esc(err.message)}</div>`;
   }
 }
 
-async function loadTopNews() {
+function renderFeed() {
+  const body = $("#news-body");
+  if (!body) return;
+  const tab = state.feedTab || "news";
+  const news = state.news || [];
+  const events = state.corpEvents || { actions: [], announcements: [] };
+  const actions = events.actions || [];
+  const filings = events.announcements || [];
+
+  if (tab === "news") {
+    if (!news.length) {
+      body.innerHTML = `<div class="empty-mini">No stock-specific news found for ${esc(state.symbol)}.</div>`;
+      return;
+    }
+    body.innerHTML = news.map((n) => {
+      const title = n.title || "—";
+      const src = n.source || "Google News";
+      const timeAgo = n.time_ago || "";
+      const link = n.link || "";
+      return `<div class="news-item" ${link ? `data-link="${esc(link)}"` : ""}>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+          <span class="src">${esc(src)}</span>
+          ${timeAgo ? `<span class="dim" style="font-size:8px">${esc(timeAgo)}</span>` : ""}
+        </div>
+        <div class="ttl">${esc(title)}</div>
+      </div>`;
+    }).join("");
+  } else if (tab === "actions") {
+    if (events.is_index) {
+      body.innerHTML = `<div class="empty-mini">${esc(events.note || "Broad-market indices do not have direct corporate actions.")}</div>`;
+      return;
+    }
+    if (!actions.length) {
+      body.innerHTML = `<div class="empty-mini">No recent corporate actions (dividends, splits, bonus) reported on NSE.</div>`;
+      return;
+    }
+    body.innerHTML = actions.map((a) => {
+      const isDiv = a.kind === "DIVIDEND";
+      const isSplit = a.kind === "SPLIT";
+      const isBonus = a.kind === "BONUS";
+      const badgeCls = isDiv ? "badge-dividend" : (isBonus ? "badge-bonus" : (isSplit ? "badge-split" : ""));
+      return `<div class="event-item" style="padding:6px 8px;border-bottom:1px solid #141920">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+          <span class="tag ${badgeCls}">${esc(a.kind)}</span>
+          ${a.details ? `<b class="${isDiv ? "up" : "amber"}" style="font-size:10px">${esc(a.details)}</b>` : ""}
+        </div>
+        <div style="font-size:10px;font-weight:500;color:var(--text);margin:2px 0">${esc(a.subject)}</div>
+        <div style="display:flex;gap:8px;font-size:8px;color:var(--muted)">
+          <span>Ex-Date: <b style="color:var(--text)">${esc(a.ex_date)}</b></span>
+          <span>Record Date: <b style="color:var(--text)">${esc(a.record_date)}</b></span>
+        </div>
+      </div>`;
+    }).join("");
+  } else if (tab === "filings") {
+    if (events.is_index) {
+      body.innerHTML = `<div class="empty-mini">Broad-market indices do not file corporate announcements.</div>`;
+      return;
+    }
+    if (!filings.length) {
+      body.innerHTML = `<div class="empty-mini">No official exchange filings found on NSE.</div>`;
+      return;
+    }
+    body.innerHTML = filings.map((f) => {
+      const pdf = f.pdf_url;
+      return `<div class="event-item" style="padding:6px 8px;border-bottom:1px solid #141920">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+          <span class="tag badge-filing">${esc(f.category || f.desc)}</span>
+          <span class="dim" style="font-size:8px">${esc(f.time_ago || f.date)}</span>
+        </div>
+        <div style="font-size:10px;line-height:1.4;color:var(--text);margin:3px 0">${esc(f.text || f.desc)}</div>
+        ${f.summary ? `<div style="font-size:8px;color:var(--amber);background:var(--amber-soft);padding:2px 4px;border-radius:2px;margin:3px 0">⚡ ${esc(f.summary.slice(0, 160))}…</div>` : ""}
+        ${pdf ? `<div style="margin-top:3px"><a href="${esc(pdf)}" target="_blank" rel="noopener" class="pdf-btn" style="display:inline-block;padding:1px 6px;font-size:8px;color:var(--cyan);border:1px solid var(--cyan-soft);background:rgba(63,214,232,0.06);border-radius:2px;text-decoration:none">VIEW OFFICIAL PDF 📄</a></div>` : ""}
+      </div>`;
+    }).join("");
+  } else if (tab === "all") {
+    let combined = [
+      ...news.map(n => ({ type: "news", timestamp: n.timestamp || 0, dateLabel: n.time_ago, item: n })),
+      ...filings.map(f => ({ type: "filing", timestamp: 0, dateLabel: f.time_ago || f.date, item: f })),
+    ];
+    if (!combined.length) {
+      body.innerHTML = `<div class="empty-mini">No feed items for ${esc(state.symbol)}.</div>`;
+      return;
+    }
+    body.innerHTML = combined.slice(0, 25).map((row) => {
+      if (row.type === "news") {
+        const n = row.item;
+        return `<div class="news-item" ${n.link ? `data-link="${esc(n.link)}"` : ""}>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+            <span class="src">${esc(n.source)}</span>
+            <span class="dim" style="font-size:8px">${esc(n.time_ago)}</span>
+          </div>
+          <div class="ttl">${esc(n.title)}</div>
+        </div>`;
+      } else {
+        const f = row.item;
+        return `<div class="event-item" style="padding:6px 8px;border-bottom:1px solid #141920">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+            <span class="tag badge-filing">${esc(f.category || f.desc)} 📄</span>
+            <span class="dim" style="font-size:8px">${esc(f.time_ago || f.date)}</span>
+          </div>
+          <div style="font-size:10px;line-height:1.4;color:var(--text);margin:2px 0">${esc(f.text || f.desc)}</div>
+          ${f.pdf_url ? `<a href="${esc(f.pdf_url)}" target="_blank" rel="noopener" style="font-size:8px;color:var(--cyan);text-decoration:none">PDF 📄</a>` : ""}
+        </div>`;
+      }
+    }).join("");
+  }
+
+  $$("#news-body .news-item[data-link]").forEach((el) => {
+    el.addEventListener("click", () => {
+      if (el.dataset.link) window.open(el.dataset.link, "_blank", "noopener");
+    });
+  });
+}
+
+/* ---------- breaking market wire ---------- */
+async function loadTopNews(refresh = false) {
   const body = $("#top-body");
-  body.innerHTML = `<div class="empty">Loading market wire…</div>`;
+  if (!body) return;
+  body.innerHTML = `<div class="empty">Loading breaking market wire from Economic Times, LiveMint &amp; Moneycontrol…</div>`;
   try {
-    const res = await api("/api/market-overview", { timeout: 15000 });
-    const headlines = res.headlines || [];
-    body.innerHTML = headlines.map((h) => `<div class="news-item"><div class="src">MARKET WIRE</div><div class="ttl">${esc(h)}</div></div>`).join("")
-      || `<div class="empty">No headlines returned.</div>`;
-    $("#top-upd").textContent = nowIst();
+    const res = await api(`/api/market-wire?limit=60&refresh=${refresh ? "1" : "0"}`, { timeout: 15000 });
+    state.wireData = res.articles || [];
+    renderWire();
+    const stamp = $("#top-upd");
+    if (stamp) stamp.textContent = nowIst();
   } catch (err) {
     body.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
   }
+}
+
+function renderWire() {
+  const body = $("#top-body");
+  if (!body) return;
+  let articles = state.wireData || [];
+  const sub = state.wireSub || "all";
+  if (sub === "et") articles = articles.filter(a => (a.source || "").toLowerCase().includes("economic"));
+  else if (sub === "mint") articles = articles.filter(a => (a.source || "").toLowerCase().includes("mint"));
+  else if (sub === "bs") articles = articles.filter(a => (a.source || "").toLowerCase().includes("business"));
+  else if (sub === "mc") articles = articles.filter(a => (a.source || "").toLowerCase().includes("moneycontrol"));
+
+  const query = ($("#wire-search-input")?.value || "").trim().toUpperCase();
+  if (query) {
+    articles = articles.filter(a =>
+      (a.title || "").toUpperCase().includes(query) ||
+      (a.tagged_symbols || []).some(s => s.includes(query))
+    );
+  }
+
+  const cnt = $("#wire-count");
+  if (cnt) cnt.textContent = `${articles.length} items`;
+
+  if (!articles.length) {
+    body.innerHTML = `<div class="empty">No breaking wire items matching filter.</div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="wire-stream">${articles.map(a => {
+    const isEt = (a.source || "").toLowerCase().includes("economic");
+    const isMint = (a.source || "").toLowerCase().includes("mint");
+    const isBs = (a.source || "").toLowerCase().includes("business");
+    const srcCls = isEt ? "amber" : (isMint ? "cyan" : (isBs ? "up" : ""));
+    const tags = a.tagged_symbols || [];
+
+    return `<div class="wire-card" style="padding:8px 10px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:10px">
+      <div style="flex:0 0 110px;display:flex;flex-direction:column;gap:3px">
+        <span class="tag ${srcCls}" style="font-size:8px;text-align:center">${esc(a.source)}</span>
+        <span class="dim" style="font-size:8px">${esc(a.time_ago || "")}</span>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:500;color:var(--text);line-height:1.45;cursor:pointer" ${a.link ? `data-link="${esc(a.link)}"` : ""}>${esc(a.title)}</div>
+        ${tags.length ? `
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">
+          <span class="dim" style="font-size:8px">MENTIONS:</span>
+          ${tags.map(sym => `<span class="tag buy card-sym" data-wire-sym="${esc(sym)}" style="cursor:pointer;font-weight:bold" title="Click to view chart for ${esc(sym)}">${esc(sym)}</span>`).join("")}
+        </div>` : ""}
+      </div>
+      ${a.link ? `<a href="${esc(a.link)}" target="_blank" rel="noopener" style="font-size:10px;color:var(--muted);text-decoration:none;padding:2px 6px;border:1px solid var(--line);border-radius:2px" title="Read full article">↗</a>` : ""}
+    </div>`;
+  }).join("")}</div>`;
+
+  $$("[data-wire-sym]", body).forEach(b => {
+    b.addEventListener("click", () => {
+      selectSymbol(b.dataset.wireSym);
+      setView("GP");
+    });
+  });
+
+  $$(".wire-card div[data-link]", body).forEach(el => {
+    el.addEventListener("click", () => {
+      window.open(el.dataset.link, "_blank", "noopener");
+    });
+  });
 }
 
 /* ---------- option chain ---------- */
@@ -1864,9 +2138,15 @@ function renderChain() {
       <td>${fmtInt(ce.prev_oi)}</td>
       <td class="${cls((ce.oi || 0) - (ce.prev_oi || 0))}">${fmtInt((ce.oi || 0) - (ce.prev_oi || 0))}</td>
       <td>${pct(ce.iv)}</td>
+      <td>${fmt(ce.vega, 2)}</td>
+      <td>${fmt(ce.theta, 2)}</td>
+      <td>${fmt(ce.gamma, 4)}</td>
       <td>${fmt(ce.delta, 2)}</td>
       <td class="strike opt-cell" title="Click ATM/Strike" data-opt-type="CE" data-opt-strike="${s.strike}" data-opt-px="${ce.ltp || 0}">${fmt(s.strike, 0)}</td>
       <td>${fmt(pe.delta, 2)}</td>
+      <td>${fmt(pe.gamma, 4)}</td>
+      <td>${fmt(pe.theta, 2)}</td>
+      <td>${fmt(pe.vega, 2)}</td>
       <td>${pct(pe.iv)}</td>
       <td class="${cls((pe.oi || 0) - (pe.prev_oi || 0))}">${fmtInt((pe.oi || 0) - (pe.prev_oi || 0))}</td>
       <td>${fmtInt(pe.prev_oi)}</td>
@@ -1897,6 +2177,233 @@ function renderChain() {
       toast("OPTION TICKET", `Pre-filled ticket for ${sym} at ${inr(px)}`, "ok");
     });
   });
+  renderGreeksPanel();
+}
+
+/* ---------- IV + Greeks panel ---------- */
+function normCdf(x) {
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.SQRT2;
+  const t = 1 / (1 + 0.3275911 * x);
+  const erf = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  return 0.5 * (1 + sign * erf);
+}
+function normPdf(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+function blackScholes(S, K, T, r, q, sigma, cp) {
+  S = Number(S); K = Number(K); T = Number(T);
+  r = Number(r); q = Number(q); sigma = Number(sigma);
+  if (!(S > 0) || !(K > 0) || !(T > 0) || !(sigma > 0)) return null;
+  const sq = Math.sqrt(T);
+  const d1 = (Math.log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * sq);
+  const d2 = d1 - sigma * sq;
+  const dr = Math.exp(-r * T), dq = Math.exp(-q * T);
+  const pdf = normPdf(d1);
+  let price, delta, theta, rho;
+  if (cp === "CE") {
+    price = S * dq * normCdf(d1) - K * dr * normCdf(d2);
+    delta = dq * normCdf(d1);
+    theta = (-S * dq * pdf * sigma / (2 * sq) - r * K * dr * normCdf(d2) + q * S * dq * normCdf(d1)) / 365;
+    rho = K * T * dr * normCdf(d2) / 100;
+  } else {
+    price = K * dr * normCdf(-d2) - S * dq * normCdf(-d1);
+    delta = -dq * normCdf(-d1);
+    theta = (-S * dq * pdf * sigma / (2 * sq) + r * K * dr * normCdf(-d2) - q * S * dq * normCdf(-d1)) / 365;
+    rho = -K * T * dr * normCdf(-d2) / 100;
+  }
+  return {
+    price, delta, rho, d1, d2,
+    gamma: dq * pdf / (S * sigma * sq),
+    vega: S * dq * pdf * sq / 100,
+    theta,
+  };
+}
+
+function impliedVol(market, S, K, T, r, q, cp, guess = 0.20) {
+  market = Number(market);
+  if (!(market > 0)) return 0;
+  let sigma = Math.max(0.01, Math.min(Number(guess) || 0.20, 5));
+  for (let i = 0; i < 60; i++) {
+    const g = blackScholes(S, K, T, r, q, sigma, cp);
+    if (!g) break;
+    const diff = g.price - market;
+    if (Math.abs(diff) < 1e-6) return sigma;
+    const vega = g.vega * 100;
+    if (vega <= 1e-8) break;
+    sigma -= diff / vega;
+    sigma = Math.max(1e-4, Math.min(sigma, 5));
+  }
+  let lo = 1e-4, hi = 5;
+  for (let i = 0; i < 100; i++) {
+    const mid = (lo + hi) / 2;
+    const g = blackScholes(S, K, T, r, q, mid, cp);
+    if (!g) break;
+    if (g.price > market) hi = mid; else lo = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+function syncModelFromChain() {
+  const chain = state.chain;
+  if (!chain || !chain.strikes || !chain.strikes.length) return;
+  const key = [chain.index, chain.expiry].join("|");
+  if (state.modelChainKey === key && state.model) return;
+  state.modelChainKey = key;
+  const spot = chain.underlying_ltp || chain.strikes[0].strike;
+  const atm = chain.strikes.reduce(
+    (best, s) => Math.abs(s.strike - spot) < Math.abs(best.strike - spot) ? s : best,
+    chain.strikes[0]
+  );
+  let T = 0.05;
+  const exp = Date.parse(chain.expiry || "");
+  if (Number.isFinite(exp)) T = Math.max(1, (exp - Date.now()) / 86400000) / 365;
+  state.model = {
+    S: +Number(spot).toFixed(2),
+    K: +Number(atm.strike).toFixed(2),
+    T: +T.toFixed(4),
+    r: 6.5,
+    q: 1.0,
+    cp: "CE",
+    premium: +Number((atm.ce || {}).ltp || 0).toFixed(2),
+    iv: +Number((atm.ce || {}).iv || 0).toFixed(2),
+  };
+}
+
+function ivSmileSvg() {
+  const strikes = (state.chain && state.chain.strikes) || [];
+  const ce = strikes.map((s) => ({ x: s.strike, y: Number((s.ce || {}).iv) }))
+    .filter((p) => Number.isFinite(p.y) && p.y > 0);
+  const pe = strikes.map((s) => ({ x: s.strike, y: Number((s.pe || {}).iv) }))
+    .filter((p) => Number.isFinite(p.y) && p.y > 0);
+  const all = ce.concat(pe);
+  if (all.length < 2) return `<div class="gp-empty">No IV values returned by the feed.</div>`;
+  const w = 600, h = 110, pad = { l: 34, r: 34, t: 10, b: 18 };
+  const xs = all.map((p) => p.x), ys = all.map((p) => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.max(0, Math.min(...ys) - 2);
+  const maxY = Math.max(...ys) + 2;
+  const sx = (x) => pad.l + ((x - minX) / (maxX - minX || 1)) * (w - pad.l - pad.r);
+  const sy = (y) => h - pad.b - ((y - minY) / (maxY - minY || 1)) * (h - pad.t - pad.b);
+  const path = (pts) => pts.map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join(" ");
+  const spot = Number((state.chain || {}).underlying_ltp) || ((minX + maxX) / 2);
+  const xSpot = sx(Math.max(minX, Math.min(maxX, spot)));
+  const grid = [0, 1, 2, 3].map((i) => {
+    const y = pad.t + i * (h - pad.t - pad.b) / 3;
+    const val = maxY - i * (maxY - minY) / 3;
+    return `<line x1="${pad.l}" y1="${y.toFixed(1)}" x2="${w - pad.r}" y2="${y.toFixed(1)}" stroke="#1a2028"/>
+      <text x="${pad.l - 4}" y="${(y + 3).toFixed(1)}" fill="#5a6572" font-size="8" text-anchor="end">${val.toFixed(1)}</text>`;
+  }).join("");
+  const dots = (pts, color) => pts.map((p) =>
+    `<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="1.7" fill="${color}"/>`
+  ).join("");
+  return `<svg class="iv-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    ${grid}
+    <line x1="${xSpot.toFixed(1)}" y1="${pad.t}" x2="${xSpot.toFixed(1)}" y2="${h - pad.b}" stroke="var(--amber)" stroke-dasharray="3 3" opacity=".8"/>
+    ${ce.length > 1 ? `<path d="${path(ce)}" fill="none" stroke="var(--up)" stroke-width="1.4"/>` : ""}
+    ${pe.length > 1 ? `<path d="${path(pe)}" fill="none" stroke="var(--down)" stroke-width="1.4"/>` : ""}
+    ${dots(ce, "var(--up)")}${dots(pe, "var(--down)")}
+    <text x="${pad.l}" y="${h - 4}" fill="#5a6572" font-size="8">${fmt(minX, 0)}</text>
+    <text x="${w - pad.r}" y="${h - 4}" fill="#5a6572" font-size="8" text-anchor="end">${fmt(maxX, 0)}</text>
+  </svg>
+  <div class="gp-legend">
+    <span><i style="background:var(--up)"></i>CE IV</span>
+    <span><i style="background:var(--down)"></i>PE IV</span>
+    <span><i style="background:var(--amber)"></i>SPOT ${fmt(spot)}</span>
+    <span>AVG ${pct(state.chainAnalysis ? state.chainAnalysis.avg_iv : null)}</span>
+  </div>`;
+}
+
+function renderGreekTable() {
+  const chain = state.chain;
+  const strikes = (chain && chain.strikes) || [];
+  if (!strikes.length) return `<div class="gp-empty">No strikes loaded.</div>`;
+  const spot = chain.underlying_ltp || 0;
+  let atmIdx = 0;
+  strikes.forEach((s, i) => {
+    if (Math.abs(s.strike - spot) < Math.abs(strikes[atmIdx].strike - spot)) atmIdx = i;
+  });
+  const slice = strikes.slice(Math.max(0, atmIdx - 5), atmIdx + 6);
+  const head = `<tr><th>STRIKE</th><th>CE Δ</th><th>CE Γ</th><th>CE Θ</th><th>CE V</th><th>CE IV</th>
+    <th>PE IV</th><th>PE V</th><th>PE Θ</th><th>PE Γ</th><th>PE Δ</th></tr>`;
+  const rows = slice.map((s) => {
+    const ce = s.ce || {}, pe = s.pe || {};
+    const isAtm = s.strike === strikes[atmIdx].strike;
+    return `<tr class="${isAtm ? "atm" : ""}">
+      <td>${fmt(s.strike, 0)}</td>
+      <td>${fmt(ce.delta, 2)}</td><td>${fmt(ce.gamma, 4)}</td><td>${fmt(ce.theta, 2)}</td>
+      <td>${fmt(ce.vega, 2)}</td><td>${pct(ce.iv)}</td>
+      <td>${pct(pe.iv)}</td><td>${fmt(pe.vega, 2)}</td><td>${fmt(pe.theta, 2)}</td>
+      <td>${fmt(pe.gamma, 4)}</td><td>${fmt(pe.delta, 2)}</td>
+    </tr>`;
+  }).join("");
+  return `<table class="greeks"><thead>${head}</thead><tbody>${rows}</tbody></table>
+    <div class="gp-note">ATM band ±5 strikes · Greeks and IV supplied by INDstocks. Γ is per index point, Θ per day, V per 1 vol point.</div>`;
+}
+
+function renderModel() {
+  const m = state.model;
+  if (!m) return `<div class="gp-empty">Load a chain first.</div>`;
+  const r = Number(m.r) / 100, q = Number(m.q) / 100;
+  const sigma = Number(m.iv) / 100;
+  const g = blackScholes(m.S, m.K, m.T, r, q, sigma, m.cp);
+  const solved = impliedVol(m.premium, m.S, m.K, m.T, r, q, m.cp, sigma || 0.20);
+  const f = (label, value) => `<div class="metric"><label>${label}</label><b>${value}</b></div>`;
+  const inp = (key, label, step = "any") =>
+    `<div><label>${label}</label><input data-model="${key}" type="number" step="${step}" value="${esc(String(m[key]))}"></div>`;
+  return `<div class="model-grid">
+    ${inp("S", "SPOT S", "0.05")}${inp("K", "STRIKE K", "0.05")}${inp("T", "T YEARS", "0.0001")}
+    ${inp("r", "RATE r %", "0.01")}${inp("q", "DIV q %", "0.01")}${inp("premium", "MKT PREMIUM", "0.05")}
+    ${inp("iv", "API IV %", "0.01")}
+    <div><label>TYPE</label><select data-model="cp">
+      <option value="CE"${m.cp === "CE" ? " selected" : ""}>CE</option>
+      <option value="PE"${m.cp === "PE" ? " selected" : ""}>PE</option>
+    </select></div>
+  </div>
+  <div class="model-out">
+    ${f("BS PRICE", fmt(g ? g.price : null))}
+    ${f("SOLVED IV", pct(solved * 100))}
+    ${f("DELTA", fmt(g ? g.delta : null, 3))}
+    ${f("GAMMA", fmt(g ? g.gamma : null, 5))}
+    ${f("VEGA", fmt(g ? g.vega : null, 3))}
+    ${f("THETA", fmt(g ? g.theta : null, 3))}
+    ${f("RHO", fmt(g ? g.rho : null, 3))}
+    ${f("D1 / D2", g ? `${fmt(g.d1, 2)} / ${fmt(g.d2, 2)}` : "—")}
+  </div>
+  <div class="gp-note">Black–Scholes with continuous dividend yield. Edit inputs to see price/Greeks recompute; SOLVED IV is the volatility that matches MKT PREMIUM.</div>`;
+}
+
+function renderExpiry() {
+  const chain = state.chain;
+  if (!chain) return `<div class="gp-empty">Load a chain first.</div>`;
+  const lot = (state.chainAnalysis && state.chainAnalysis.lot_size)
+    || (chain.index === "NIFTY" ? 65 : 25);
+  const days = (d) => {
+    const t = Date.parse(d || "");
+    return Number.isFinite(t) ? Math.max(0, Math.ceil((t - Date.now()) / 86400000)) : null;
+  };
+  const chips = (chain.expiries || []).map((d) =>
+    `<button class="expiry-chip ${d === chain.expiry ? "active" : ""}" data-expiry="${esc(d)}">${esc(d)} · ${fmt(days(d), 0)}D</button>`
+  ).join("");
+  return `<div class="expiry-list">${chips || `<span class="gp-empty">No expiries in master.</span>`}</div>
+    <div class="gp-note">LOT ${lot} · ${esc(chain.name || chain.index)} · Source: INDstocks option chain. Greeks/IV from feed; GEX computed locally from OI × gamma.</div>`;
+}
+
+function renderGreeksPanel() {
+  const body = $("#greeks-body");
+  if (!body) return;
+  const chain = state.chain;
+  $("#gp-index").textContent = (chain && chain.index) || state.chainIndex;
+  if (!chain) {
+    body.innerHTML = `<div class="gp-empty">Load a chain to see IV and Greeks.</div>`;
+    return;
+  }
+  syncModelFromChain();
+  const tab = state.greeksTab || "surface";
+  $$(".gp-tab").forEach((b) => b.classList.toggle("active", b.dataset.gp === tab));
+  if (tab === "greeks") body.innerHTML = renderGreekTable();
+  else if (tab === "model") body.innerHTML = renderModel();
+  else if (tab === "expiry") body.innerHTML = renderExpiry();
+  else body.innerHTML = ivSmileSvg();
 }
 
 /* ---------- positions / orders / funds ---------- */
@@ -3066,6 +3573,33 @@ $("#chain-expiry").addEventListener("change", (e) => { state.chainExpiry = e.tar
 $("#chain-load").addEventListener("click", () => loadChain());
 $("#chain-refresh").addEventListener("click", () => loadChain());
 
+$$(".gp-tab").forEach((b) => b.addEventListener("click", () => {
+  state.greeksTab = b.dataset.gp;
+  renderGreeksPanel();
+}));
+$("#greeks-body").addEventListener("change", (e) => {
+  const key = e.target.dataset.model;
+  if (!key || !state.model) return;
+  state.model[key] = e.target.value;
+  if (key === "cp") {
+    const row = (state.chain.strikes || []).find((s) => Number(s.strike) === Number(state.model.K));
+    const leg = state.model.cp === "PE" ? (row && row.pe) : (row && row.ce);
+    if (leg) {
+      state.model.premium = +Number(leg.ltp || 0).toFixed(2);
+      state.model.iv = +Number(leg.iv || 0).toFixed(2);
+    }
+  }
+  renderGreeksPanel();
+});
+$("#greeks-body").addEventListener("click", (e) => {
+  const chip = e.target.closest(".expiry-chip");
+  if (!chip) return;
+  state.chainExpiry = chip.dataset.expiry;
+  const sel = $("#chain-expiry");
+  if (sel) sel.value = state.chainExpiry;
+  loadChain();
+});
+
 /* ---------- fundamentals controls ---------- */
 const faRange = $("#fa-range");
 if (faRange) faRange.addEventListener("change", () => loadFA());
@@ -3392,6 +3926,29 @@ $("#mc-symbol")?.addEventListener("keydown", (e) => { if (e.key === "Enter") run
 $("#fno-run-btn")?.addEventListener("click", runFnoScan);
 $("#classic-run-btn")?.addEventListener("click", runClassicalBacktest);
 $("#classic-symbol")?.addEventListener("keydown", (e) => { if (e.key === "Enter") runClassicalBacktest(); });
+
+/* ---------- feed subtabs wire-up ---------- */
+$$("#feed-subtabs .subtab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    $$("#feed-subtabs .subtab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    state.feedTab = tab.dataset.feedTab;
+    renderFeed();
+  });
+});
+$("#feed-refresh-btn")?.addEventListener("click", () => loadNews(true));
+
+/* ---------- market wire subtabs wire-up ---------- */
+$$("#wire-subtabs .subtab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    $$("#wire-subtabs .subtab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    state.wireSub = tab.dataset.wireSub;
+    renderWire();
+  });
+});
+$("#wire-refresh-btn")?.addEventListener("click", () => loadTopNews(true));
+$("#wire-search-input")?.addEventListener("input", renderWire);
 
 /* auto-resume saved session */
 (async function init() {

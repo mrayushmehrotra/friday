@@ -123,7 +123,13 @@ def _load_watch_universe():
             try:
                 with open(path) as f:
                     for row in csv.DictReader(f):
-                        symbol = row.get("SYMBOL", "").strip().upper()
+                        raw = (
+                            row.get("SYMBOL")
+                            or row.get("symbol")
+                            or row.get("cash_trading_symbol")
+                            or ""
+                        )
+                        symbol = str(raw).strip().upper()
                         if symbol:
                             symbols.add(symbol)
             except Exception:
@@ -1139,8 +1145,19 @@ def _fund_df_table(frame, limit=12):
 
 def _fetch_yahoo_fundamentals(symbol):
     resolved = _resolve_ticker(symbol)
+    # Guard invalid / renamed symbols before touching yfinance. Its quoteSummary
+    # and history calls print crumbs and "No data found" errors to stderr.
+    try:
+        quote = get_stock_data(resolved)
+    except Exception:
+        quote = None
+    if not quote:
+        raise RuntimeError(f"No Yahoo quote available for {resolved}")
     ticker = yf.Ticker(resolved)
-    info = ticker.info or {}
+    try:
+        info = ticker.info or {}
+    except Exception:
+        info = {}
     top = {}
     for key, label in [
         ("marketCap", "Market Cap"), ("currentPrice", "Current Price"),
@@ -1150,10 +1167,6 @@ def _fetch_yahoo_fundamentals(symbol):
     ]:
         if info.get(key) is not None:
             top[label] = str(info[key])
-    try:
-        quote = get_stock_data(resolved) or {}
-    except Exception:
-        quote = {}
     tables = {
         "quarterly": _fund_df_table(ticker.quarterly_financials),
         "annual": _fund_df_table(ticker.financials),
@@ -1239,6 +1252,8 @@ def _fund_price_history(symbol, period):
     cached = _FUND_PRICE_CACHE.get(key)
     if cached and time.time() - cached[0] < _FUND_TTL:
         return cached[1]
+    if not get_stock_data(key[0]):
+        return []  # do not poison the 10-minute history cache on a transient 429
     try:
         frame = yf.Ticker(_resolve_ticker(key[0])).history(
             period=period, interval="1d", auto_adjust=False
@@ -1554,6 +1569,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._handle_quote(params)
         elif path == "/api/news":
             self._handle_news(params)
+        elif path in ("/api/corporate-events", "/api/events"):
+            self._handle_corporate_events(params)
+        elif path == "/api/market-wire":
+            self._handle_market_wire(params)
         elif path == "/api/backtest":
             self._handle_backtest(params)
         elif path == "/api/compare":
@@ -1683,18 +1702,55 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         self._send_json(data)
 
     def _handle_news(self, params):
-        ticker = self._get_param(params, "ticker", "").upper()
-        count = int(self._get_param(params, "count", "10"))
+        ticker = (self._get_param(params, "ticker", "") or self._get_param(params, "symbol", "")).upper().strip()
+        count = int(self._get_param(params, "count", "15") or 15)
+        refresh = bool(self._get_param(params, "refresh", "0") in ("1", "true"))
         if not ticker:
             self._send_json({"error": "Missing ticker parameter"}, 400)
             return
-        resolved = _resolve_ticker(ticker)
+        clean = ticker.replace(".NS", "").replace(".BO", "")
+        resolved_entry = _ind_resolve(clean)
+        comp_name = resolved_entry.get("name") if resolved_entry else None
         try:
-            news = get_stock_news(resolved, count)
+            import news_events_engine
+            res = news_events_engine.fetch_stock_news(clean, company_name=comp_name, count=count, force_refresh=refresh)
+            articles = res.get("articles", [])
+            # Supply both "news" (legacy array of dicts) and "articles" (modern)
+            self._send_json({
+                "ticker": clean,
+                "symbol": clean,
+                "company": comp_name or clean,
+                "count": len(articles),
+                "articles": articles,
+                "news": articles,
+                "updated_at": res.get("updated_at"),
+            })
         except Exception as exc:
-            self._send_json({"ticker": ticker, "resolved": resolved, "news": [], "error": str(exc)}, 502)
+            self._send_json({"ticker": clean, "symbol": clean, "news": [], "articles": [], "error": str(exc)}, 502)
+
+    def _handle_corporate_events(self, params):
+        ticker = (self._get_param(params, "ticker", "") or self._get_param(params, "symbol", "")).upper().strip()
+        refresh = bool(self._get_param(params, "refresh", "0") in ("1", "true"))
+        if not ticker:
+            self._send_json({"error": "Missing ticker or symbol parameter"}, 400)
             return
-        self._send_json({"ticker": ticker, "resolved": resolved, "news": news})
+        clean = ticker.replace(".NS", "").replace(".BO", "")
+        try:
+            import news_events_engine
+            data = news_events_engine.fetch_corporate_events(clean, force_refresh=refresh)
+            self._send_json(data)
+        except Exception as exc:
+            self._send_json({"error": str(exc), "symbol": clean, "actions": [], "announcements": []}, 502)
+
+    def _handle_market_wire(self, params):
+        limit = int(self._get_param(params, "limit", "60") or 60)
+        refresh = bool(self._get_param(params, "refresh", "0") in ("1", "true"))
+        try:
+            import news_events_engine
+            data = news_events_engine.fetch_market_wire(force_refresh=refresh, limit=limit)
+            self._send_json(data)
+        except Exception as exc:
+            self._send_json({"error": str(exc), "articles": []}, 502)
 
     def _handle_backtest(self, params):
         ticker = self._get_param(params, "ticker", "").upper()

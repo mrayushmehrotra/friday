@@ -2,6 +2,10 @@ import argparse
 import json
 import re
 import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from typing import Dict, List, Optional
 
 try:
@@ -11,6 +15,8 @@ except ImportError:
     sys.exit(1)
 
 INDIAN_INDICES = {"^NSEI", "^BSESN", "^NSEBANK"}
+_CHART_CACHE = {}
+_CHART_TTL = 12  # Yahoo chart quotes are delayed anyway; avoids 429 on 3s watchlist polls
 
 def _resolve_ticker(ticker: str) -> str:
     t = ticker.upper().strip()
@@ -24,41 +30,113 @@ def _resolve_ticker(ticker: str) -> str:
     return t
 
 
-def get_stock_data(ticker: str) -> Optional[Dict]:
-    ticker = _resolve_ticker(ticker)
-    stock = yf.Ticker(ticker)
-    info = stock.info
-    if not info or info.get("regularMarketPrice") is None:
-        return None
+def _chart_quote(ticker: str) -> Optional[Dict]:
+    """Read quote metadata from Yahoo's public chart endpoint.
 
-    price = info.get("regularMarketPrice") or info.get("currentPrice") or info.get("previousClose")
-    prev_close = info.get("regularMarketPreviousClose") or info.get("previousClose")
-    change = price - prev_close if price and prev_close else None
+    yfinance's quoteSummary calls require a crumb/cookie and now fail with
+    `Invalid Crumb` for many sessions. The chart endpoint is open and carries
+    everything the terminal header needs except market cap / P/E, which are
+    optional here. This is now the only quote path; on errors we return no
+    quote rather than falling back to the broken crumb-gated APIs.
+    """
+    quoted = urllib.parse.quote(ticker, safe="")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/120 Safari/537.36",
+        "Accept": "application/json",
+    }
+    payload = None
+    for host in ("query1", "query2"):
+        url = f"https://{host}.finance.yahoo.com/v8/finance/chart/{quoted}?range=5d&interval=1d"
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=12) as response:
+                payload = json.load(response)
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429 and host == "query1":
+                continue  # try the second chart host
+            raise
+    if payload is None:
+        raise LookupError("No response from Yahoo chart API")
+
+    chart = payload.get("chart") or {}
+    error = chart.get("error") or {}
+    if error.get("code") == "Not Found" or not chart.get("result"):
+        raise LookupError(error.get("description") or "Symbol not found on Yahoo Finance")
+
+    result = chart["result"][0]
+    meta = result.get("meta") or {}
+    price = meta.get("regularMarketPrice") or meta.get("previousClose")
+    if price is None:
+        return None
+    quote = (result.get("indicators") or {}).get("quote") or [{}]
+    raw_closes = quote[0].get("close") or []
+    closes = [v for v in raw_closes if v is not None]
+    if raw_closes and raw_closes[-1] is None and closes:
+        # Today's daily bar is still forming; last non-null close is yesterday.
+        prev_close = closes[-1]
+    elif len(closes) >= 2:
+        prev_close = closes[-2]
+    else:
+        prev_close = meta.get("previousClose") or meta.get("chartPreviousClose")
+
+    change = price - prev_close if prev_close is not None else None
     change_pct = (change / prev_close * 100) if change is not None and prev_close else None
 
+    opens = [v for v in (quote[0].get("open") or []) if v is not None]
     return {
         "symbol": ticker.upper(),
-        "company": info.get("longName") or info.get("shortName") or ticker.upper(),
+        "company": meta.get("longName") or meta.get("shortName") or ticker.upper(),
         "price": price,
         "change": round(change, 2) if change is not None else None,
         "change_pct": round(change_pct, 2) if change_pct is not None else None,
         "prev_close": prev_close,
-        "open": info.get("regularMarketOpen"),
-        "high": info.get("regularMarketDayHigh"),
-        "low": info.get("regularMarketDayLow"),
-        "volume": info.get("regularMarketVolume"),
-        "avg_volume": info.get("averageVolume"),
-        "market_cap": info.get("marketCap"),
-        "pe_ratio": info.get("trailingPE"),
-        "dividend_yield": info.get("dividendYield"),
-        "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
-        "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
-        "exchange": info.get("exchange"),
-        "currency": info.get("currency"),
+        "open": opens[-1] if opens else None,
+        "high": meta.get("regularMarketDayHigh"),
+        "low": meta.get("regularMarketDayLow"),
+        "volume": meta.get("regularMarketVolume"),
+        "avg_volume": None,
+        "market_cap": None,
+        "pe_ratio": None,
+        "dividend_yield": None,
+        "fifty_two_week_high": meta.get("fiftyTwoWeekHigh"),
+        "fifty_two_week_low": meta.get("fiftyTwoWeekLow"),
+        "exchange": meta.get("fullExchangeName") or meta.get("exchangeName"),
+        "currency": meta.get("currency"),
     }
 
 
+def get_stock_data(ticker: str) -> Optional[Dict]:
+    ticker = _resolve_ticker(ticker)
+    cached = _CHART_CACHE.get(ticker)
+    if cached and time.time() - cached[0] < cached[2]:
+        return cached[1]
+
+    try:
+        quote = _chart_quote(ticker)
+        if quote:
+            _CHART_CACHE[ticker] = (time.time(), quote, _CHART_TTL)
+            return quote
+    except LookupError:
+        _CHART_CACHE[ticker] = (time.time(), None, 300)
+        return None
+    except urllib.error.HTTPError as exc:
+        # 404 = delisted/renamed, 429 = rate limited, 5xx = upstream issue.
+        # Never fall back to yfinance's crumb-gated quoteSummary: it only
+        # produces the same symbol errors plus noisy HTTP traces.
+        ttl = 300 if exc.code == 404 else 60
+        _CHART_CACHE[ticker] = (time.time(), None, ttl)
+        return None
+    except Exception:
+        _CHART_CACHE[ticker] = (time.time(), None, 30)
+        return None
+    return None
+
+
 def get_stock_news(ticker: str, max_articles: int = 10) -> List[Dict]:
+    if not get_stock_data(ticker):
+        return []
     stock = yf.Ticker(ticker)
     news = stock.news or []
     results = []

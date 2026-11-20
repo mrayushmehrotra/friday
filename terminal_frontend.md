@@ -541,7 +541,8 @@ The server must never write the token to disk or include it in error payloads.
 | --- | --- | --- | --- |
 | `GET` | `/api/terminal/health` | `/funds` → `/market/quotes/ltp` fallback | Validate token |
 | `GET` | `/api/terminal/search?q=&limit=` | local master | Symbol autocomplete |
-| `GET` | `/api/terminal/quotes?symbols=A,B` | `/market/quotes/full` | Batch quotes (max 100) |
+| `GET` | `/api/terminal/watch-universe` | local CSVs | Full watchlist symbol universe |
+| `GET` | `/api/terminal/quotes?symbols=A,B` | `/market/quotes/full` | Batch quotes (max 1000) |
 | `GET` | `/api/terminal/depth?symbol=` | `/market/quotes/mkt` | 5-level book |
 | `GET` | `/api/terminal/candles?symbol=&interval=&days=` | `/market/historical/{interval}` | OHLCV |
 | `GET` | `/api/terminal/funds` | `/funds` | Balances |
@@ -551,7 +552,7 @@ The server must never write the token to disk or include it in error payloads.
 | `GET` | `/api/terminal/trades` | `/trade-book` | Executed trades |
 | `GET` | `/api/terminal/option-chain?index=&expiry=&strike_count=` | `/market/option-chain` | Greeks + GEX |
 | `GET` | `/api/fundamentals?ticker=&range=` | Screener.in + Yahoo | Statements, ratios, shareholding, YoY and price history (`FA`) |
-| `GET` | `/api/quote?ticker=` | Yahoo fallback | Security header / chart fallback |
+| `GET` | `/api/quote?ticker=` | Yahoo chart API → yfinance | Security header / chart fallback |
 | `GET` | `/api/large-deals` | NSE | Bulk & block flows (`BLOCK`) |
 | `POST` | `/api/terminal/order` | `/order` | Place / simulate order |
 | `POST` | `/api/terminal/flatten` | `/order` × n | Emergency close-all (dry-run default) |
@@ -563,6 +564,13 @@ position type. The returned rows carry normalised `symbol`, `net_qty`, `avg_pric
 `pnl`, `security_id`, `exchange`, `segment` and `product`, which the flatten handler uses
 to build opposite-side market orders. Errors from individual segments are returned in
 `errors` without hiding successful segments.
+
+Quote reads use Yahoo's public `/v8/finance/chart` endpoint exclusively because `yfinance`
+quote-summary calls now fail with `Invalid Crumb` and only add noisy traces. `query1` is
+tried first, then `query2` on HTTP 429. Successful quotes are cached for 12s; 404s are
+cached for 5 minutes and 429/5xx for 60s, so delisted/renamed symbols and rate limits do
+not spam the log. Renamed symbols must be updated in the watchlist (for example
+`ZOMATO` → `ETERNAL`, `TATAMOTORS` → `TMPV` / `TMCV` after the demerger).
 
 ### 7.3 Normalised quote contract
 
