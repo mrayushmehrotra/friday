@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import os
 import sys
 import threading
@@ -11,6 +12,14 @@ from urllib.parse import urlparse, parse_qs
 import numpy as np
 import pandas as pd
 import yfinance as yf
+
+# yfinance logs delisted/renamed symbols through a logger with no handler;
+# Python's lastResort handler then prints raw Yahoo errors to stderr. Keep the
+# server console clean unless FRIDAY_DEBUG is explicitly set.
+_yf_log = logging.getLogger("yfinance")
+_yf_log.addHandler(logging.NullHandler())
+_yf_log.setLevel(logging.WARNING if os.environ.get("FRIDAY_DEBUG") else logging.CRITICAL)
+_yf_log.propagate = False
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -42,7 +51,7 @@ def _fetch_headlines(max_items: int = 8) -> list[str]:
         return []
 
 from dataclasses import asdict
-from stock_tools import get_stock_data, get_stock_news, _resolve_ticker
+from stock_tools import get_stock_data, get_stock_news, _resolve_ticker, normalize_symbol
 from concurrent.futures import ThreadPoolExecutor, as_completed, wait
 
 try:
@@ -96,11 +105,13 @@ if os.path.exists(_CSV_PATH):
                 s = row.get("SYMBOL", "").strip()
                 series = row.get("SERIES", row.get(" SERIES", "")).strip()
                 if s and series == "EQ":
-                    ALL_EQ_SYMBOLS.append(s)
+                    s = normalize_symbol(s)
+                    if s not in ALL_EQ_SYMBOLS:
+                        ALL_EQ_SYMBOLS.append(s)
     except Exception:
         pass
 if not ALL_EQ_SYMBOLS:
-    ALL_EQ_SYMBOLS = NIFTY_50[:]
+    ALL_EQ_SYMBOLS = [normalize_symbol(s) for s in NIFTY_50]
 
 
 _WATCH_UNIVERSE_CACHE = None
@@ -1043,7 +1054,7 @@ def _fund_ranges(table):
 
 
 def _fetch_screener_fundamentals(symbol):
-    sym = re.sub(r"\.(NS|BO)$", "", (symbol or "").strip().upper())
+    sym = normalize_symbol(re.sub(r"\.(NS|BO)$", "", (symbol or "").strip().upper()))
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
                       "(KHTML, like Gecko) Chrome/120 Safari/537.36",
@@ -1248,7 +1259,7 @@ def _fund_yoy(tables):
 
 def _fund_price_history(symbol, period):
     period = period if period in ("1y", "3y", "5y", "max") else "1y"
-    key = (re.sub(r"\.(NS|BO)$", "", (symbol or "").strip().upper()), period)
+    key = (normalize_symbol(re.sub(r"\.(NS|BO)$", "", (symbol or "").strip().upper())), period)
     cached = _FUND_PRICE_CACHE.get(key)
     if cached and time.time() - cached[0] < _FUND_TTL:
         return cached[1]
@@ -1272,7 +1283,7 @@ def _fund_price_history(symbol, period):
 
 
 def _fetch_fundamentals(symbol, period="1y"):
-    sym = re.sub(r"\.(NS|BO)$", "", (symbol or "").strip().upper())
+    sym = normalize_symbol(re.sub(r"\.(NS|BO)$", "", (symbol or "").strip().upper()))
     key = (sym, period if period in ("1y", "3y", "5y", "max") else "1y")
     cached = _FUNDAMENTALS_CACHE.get(key)
     if cached and time.time() - cached[0] < _FUND_TTL:
@@ -1577,6 +1588,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._handle_market_filings(params)
         elif path in ("/api/market-actions", "/api/actions"):
             self._handle_market_actions(params)
+        elif path in ("/api/upcoming-events", "/api/calendar", "/api/board-meetings"):
+            self._handle_upcoming_events(params)
         elif path == "/api/backtest":
             self._handle_backtest(params)
         elif path == "/api/compare":
@@ -1779,6 +1792,16 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._send_json(data)
         except Exception as exc:
             self._send_json({"error": str(exc), "actions": []}, 502)
+
+    def _handle_upcoming_events(self, params):
+        limit = int(self._get_param(params, "limit", "100") or 100)
+        refresh = bool(self._get_param(params, "refresh", "0") in ("1", "true"))
+        try:
+            import news_events_engine
+            data = news_events_engine.fetch_upcoming_events(force_refresh=refresh, limit=limit)
+            self._send_json(data)
+        except Exception as exc:
+            self._send_json({"error": str(exc), "events": []}, 502)
 
     def _handle_backtest(self, params):
         ticker = self._get_param(params, "ticker", "").upper()
@@ -2138,7 +2161,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._send_json({"error": "Daily support scanner module not loaded"}, 500)
             return
 
-        ticker = self._get_param(params, "ticker", "").strip()
+        ticker = normalize_symbol(self._get_param(params, "ticker", "").strip())
         api_key = self._get_param(params, "api_key", "").strip() or self._ind_token(params) or None
         max_dist = self._get_float(params, "max_dist", 2.0)
 

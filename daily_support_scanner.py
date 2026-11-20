@@ -31,6 +31,15 @@ if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
 try:
+    from stock_tools import normalize_symbol
+except ImportError:  # pragma: no cover - standalone fallback
+    _LEGACY_SYMBOLS = {"ZOMATO": "ETERNAL", "TATAMOTORS": "TMPV"}
+
+    def normalize_symbol(ticker: str) -> str:
+        return _LEGACY_SYMBOLS.get((ticker or "").strip().upper(), (ticker or "").strip().upper())
+
+
+try:
     from backtest_tools import (
         INDSTOCKS_SECURITY_IDS,
         NIFTY50,
@@ -160,7 +169,7 @@ def load_universe_symbols(universe: str = "nifty50") -> List[str]:
             "INDIGO", "IOC", "IRCTC", "JINDALSTEL", "LICI", "LTIM", "MOTHERSON",
             "NAUKRI", "PIDILITIND", "PNB", "RECLTD", "SHRIRAMFIN", "SIEMENS",
             "TATACOMM", "TATAMTRDVR", "TATAPOWER", "TVSMOTOR", "UNITDSPR",
-            "VEDL", "ZOMATO"
+            "VEDL", "ETERNAL"
         ]
         return list(dict.fromkeys(NIFTY50 + extra))
 
@@ -173,7 +182,7 @@ def fetch_daily_chart(
     period: str = "1y",
 ) -> Tuple[Optional[pd.DataFrame], str]:
     """Fetch daily candles from INDstocks API or fallback to Yahoo Finance."""
-    clean_sym = ticker.replace(".NS", "").replace(".BO", "").strip().upper()
+    clean_sym = normalize_symbol(ticker.replace(".NS", "").replace(".BO", "").strip().upper())
     resolved = clean_sym if clean_sym.endswith(".NS") or clean_sym.startswith("^") else f"{clean_sym}.NS"
 
     # 1. Try project's fetch_data (which queries INDstocks API if token is provided)
@@ -355,7 +364,7 @@ def analyze_daily_support(
 
     Returns DailySupportMatch if analyzed, or None if insufficient data.
     """
-    clean_sym = ticker.replace(".NS", "").replace(".BO", "").strip().upper()
+    clean_sym = normalize_symbol(ticker.replace(".NS", "").replace(".BO", "").strip().upper())
 
     if df_daily is None:
         df, src = fetch_daily_chart(clean_sym, api_key=api_key)

@@ -400,20 +400,30 @@ Left → right: wordmark, command line, link LED, latency, market pill, IST cloc
 
 ### 6.7 Market Intelligence & Top News (`TOP`)
 
-The institutional `TOP` view provides a three-section market intelligence suite:
+The institutional `TOP` view provides a four-section market intelligence and future events calendar suite:
 1. **📰 Breaking News & Wire (`#top-sec-news`)**:
    - Multi-source RSS aggregation from Economic Times, LiveMint, Business Standard, and Moneycontrol.
    - Provider subtabs (`ALL WIRE`, `ET`, `LIVEMINT`, `BS`, `MC`) and live ticker/topic search.
    - Automatic entity tagging to NSE stock symbols with clickable badges that immediately pivot to `GP` chart.
    - External source link (↗) opens the full article in a new tab with `rel="noopener"`.
-2. **📄 Exchange Filings & Results (`#top-sec-filings`)**:
+2. **⚡ Corporate Actions & Upcoming Dividends (`#top-sec-actions`)**:
+   - Exchange-wide dividends, stock splits, bonus issues, and rights offerings from `/api/corporates-corporateActions?index=equities`.
+   - **Future Date Prioritization:** Automatically parses ex-dates and record dates, computes countdowns (`TODAY`, `TOMORROW`, `IN X DAYS`), and sorts upcoming future events at the very top of the table.
+   - Filter pills: `ALL ACTIONS`, `UPCOMING ONLY 🔥 (count)`, `DIVIDENDS 💰`, `STOCK SPLITS ✂️`, `BONUS ISSUES 🎁`, `RIGHTS & AGMS`.
+   - Financial data table with Countdown Badge, Symbol, Company, Action Type, Calculated Benefit/Details (e.g. `₹24.00/sh`, `Ratio 10:1`), Purpose, Ex-Date (accented in green for upcoming), Record Date, and a 1-click `TRADE` action button that selects the stock and pre-fills the order ticket.
+3. **📅 Upcoming Events & Board Meetings Calendar (`#top-sec-calendar`)**:
+   - Live exchange forward-looking event pipeline aggregating `/api/corporate-board-meetings` and `/api/event-calendar` across 0–60 days ahead.
+   - Captures future board meeting dates, quarterly financial results discussions, interim/final dividend agendas, and fund-raising intimations.
+   - Filter pills: `ALL UPCOMING`, `FINANCIAL RESULTS 📊`, `DIVIDEND AGENDAS 💰`, `FUND RAISING 📈`, `THIS WEEK ⚡`, `NEXT WEEK 🗓️`.
+   - Direct link to official prior intimation regulatory notice PDFs on `nsearchives.nseindia.in`.
+4. **📄 Exchange Filings & Results (`#top-sec-filings`)**:
    - Live corporate board filings and quarterly results directly from official NSE JSON endpoints (`/api/corporate-announcements?index=equities`).
    - Category filter pills: `ALL FILINGS`, `RESULTS & EARNINGS`, `BOARD MEETINGS`, `ORDER WINS & CONTRACTS`, `QIP / ALLOTMENTS`, `DIVIDENDS`.
    - Card layout with stock badge (1-click chart switch), category tag, filing timestamp, official description, executive text excerpt, AI voice summary, and a direct link to the official exchange PDF document (`nsearchives.nseindia.in`).
-3. **⚡ Corporate Actions (`#top-sec-actions`)**:
-   - Exchange-wide dividends, stock splits, bonus issues, and rights offerings from `/api/corporates-corporateActions?index=equities`.
-   - Filter pills: `ALL ACTIONS`, `DIVIDENDS 💰`, `STOCK SPLITS ✂️`, `BONUS ISSUES 🎁`, `RIGHTS & AGMS`.
-   - Financial data table with Symbol, Company, Action Type, Calculated Benefit/Details (e.g. `₹24.00/sh`, `Ratio 10:1`), Purpose, Ex-Date, Record Date, and a 1-click `TRADE` action button that selects the stock and pre-fills the order ticket.
+
+In the individual stock feed panel (`#feed-panel` below `GP` chart):
+- **`UPCOMING 📅` Tab:** Displays upcoming board meetings (with purpose, date, countdown `IN X DAYS`, intimation attachment) AND upcoming dividend ex-dates/split dates specifically for the active ticker.
+- **`ACTIONS` Tab:** Automatically sorts upcoming corporate actions at the top with `🔔 IN X DAYS` status pill.
 
 ### 6.8 Option chain (`OMON`)
 

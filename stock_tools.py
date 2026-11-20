@@ -15,11 +15,30 @@ except ImportError:
     sys.exit(1)
 
 INDIAN_INDICES = {"^NSEI", "^BSESN", "^NSEBANK"}
+
+# Renamed tickers: the old security id now trades under the new symbol. Yahoo
+# still answers quoteSummary/history for the legacy name with a 404, which
+# floods the terminal log. Translate before any lookup.
+SYMBOL_ALIASES = {
+    "ZOMATO": "ETERNAL",
+    "ZOMATO.NS": "ETERNAL.NS",
+    "ZOMATO.BO": "ETERNAL.BO",
+    "TATAMOTORS": "TMPV",
+    "TATAMOTORS.NS": "TMPV.NS",
+    "TATAMOTORS.BO": "TMPV.BO",
+}
+
 _CHART_CACHE = {}
 _CHART_TTL = 12  # Yahoo chart quotes are delayed anyway; avoids 429 on 3s watchlist polls
 
+
+def normalize_symbol(ticker: str) -> str:
+    """Translate legacy tickers to their current exchange symbols."""
+    return SYMBOL_ALIASES.get((ticker or "").strip().upper(), (ticker or "").strip().upper())
+
+
 def _resolve_ticker(ticker: str) -> str:
-    t = ticker.upper().strip()
+    t = normalize_symbol(ticker)
     if t in INDIAN_INDICES or t.endswith(".NS") or t.endswith(".BO"):
         return t
     if re.match(r"^[A-Z0-9&.-]{1,20}$", t):

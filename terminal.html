@@ -680,6 +680,7 @@ table.data tr:hover td{background:#0f1419}
                 <span class="panel-title" id="feed-title">News &amp; Events</span>
                 <div class="feed-subtabs" id="feed-subtabs" style="display:flex;gap:3px">
                   <button class="subtab active" data-feed-tab="news" style="height:17px;padding:0 5px;font-size:8px">NEWS</button>
+                  <button class="subtab" data-feed-tab="calendar" style="height:17px;padding:0 5px;font-size:8px">UPCOMING 📅</button>
                   <button class="subtab" data-feed-tab="actions" style="height:17px;padding:0 5px;font-size:8px">ACTIONS</button>
                   <button class="subtab" data-feed-tab="filings" style="height:17px;padding:0 5px;font-size:8px">FILINGS 📄</button>
                   <button class="subtab" data-feed-tab="all" style="height:17px;padding:0 5px;font-size:8px">ALL</button>
@@ -976,8 +977,9 @@ table.data tr:hover td{background:#0f1419}
             <span class="panel-title">Market Intelligence</span>
             <div class="subtabs" id="top-section-tabs" style="border:none;margin:0">
               <div class="subtab active" data-top-sec="news">📰 BREAKING NEWS &amp; WIRE</div>
-              <div class="subtab" data-top-sec="filings">📄 EXCHANGE FILINGS &amp; RESULTS</div>
               <div class="subtab" data-top-sec="actions">⚡ CORPORATE ACTIONS (DIVIDENDS/SPLITS)</div>
+              <div class="subtab" data-top-sec="calendar">📅 UPCOMING EVENTS &amp; BOARD MEETINGS</div>
+              <div class="subtab" data-top-sec="filings">📄 EXCHANGE FILINGS &amp; RESULTS</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
@@ -1002,7 +1004,37 @@ table.data tr:hover td{background:#0f1419}
           <div id="top-body-news" style="flex:1;overflow-y:auto"><div class="empty">Loading breaking market wire from Economic Times, LiveMint &amp; Moneycontrol…</div></div>
         </div>
 
-        <!-- SECTION 2: EXCHANGE FILINGS & RESULTS -->
+        <!-- SECTION 2: CORPORATE ACTIONS & UPCOMING DIVIDENDS -->
+        <div id="top-sec-actions" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
+          <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px;gap:6px;flex-wrap:wrap">
+            <button class="filter-pill active" data-action-filter="all">ALL ACTIONS</button>
+            <button class="filter-pill" data-action-filter="upcoming">UPCOMING ONLY 🔥</button>
+            <button class="filter-pill" data-action-filter="dividend">DIVIDENDS 💰</button>
+            <button class="filter-pill" data-action-filter="split">STOCK SPLITS ✂️</button>
+            <button class="filter-pill" data-action-filter="bonus">BONUS ISSUES 🎁</button>
+            <button class="filter-pill" data-action-filter="rights">RIGHTS &amp; AGMS</button>
+            <input id="actions-search-input" placeholder="Filter by symbol e.g. COLPAL, INFY..." style="margin-left:auto;height:22px;width:200px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px" />
+            <span class="dim" id="actions-count" style="font-size:9px">0 actions</span>
+          </div>
+          <div id="top-body-actions" style="flex:1;overflow-y:auto"><div class="empty">Loading upcoming dividends, splits and bonus issues from NSE…</div></div>
+        </div>
+
+        <!-- SECTION 3: UPCOMING BOARD MEETINGS & EVENTS CALENDAR -->
+        <div id="top-sec-calendar" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
+          <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px;gap:6px;flex-wrap:wrap">
+            <button class="filter-pill active" data-cal-filter="all">ALL UPCOMING</button>
+            <button class="filter-pill" data-cal-filter="results">FINANCIAL RESULTS 📊</button>
+            <button class="filter-pill" data-cal-filter="dividend">DIVIDEND AGENDAS 💰</button>
+            <button class="filter-pill" data-cal-filter="fund_raising">FUND RAISING 📈</button>
+            <button class="filter-pill" data-cal-filter="this_week">THIS WEEK ⚡</button>
+            <button class="filter-pill" data-cal-filter="next_week">NEXT WEEK 🗓️</button>
+            <input id="cal-search-input" placeholder="Search upcoming events by symbol e.g. EMBDL or keyword..." style="margin-left:auto;height:22px;width:240px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px" />
+            <span class="dim" id="cal-count" style="font-size:9px">0 upcoming events</span>
+          </div>
+          <div id="top-body-calendar" style="flex:1;overflow-y:auto"><div class="empty">Loading upcoming board meetings and corporate events from NSE calendar…</div></div>
+        </div>
+
+        <!-- SECTION 4: EXCHANGE FILINGS & RESULTS -->
         <div id="top-sec-filings" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
           <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px;gap:6px;flex-wrap:wrap">
             <button class="filter-pill active" data-filing-filter="all">ALL FILINGS</button>
@@ -1015,20 +1047,6 @@ table.data tr:hover td{background:#0f1419}
             <span class="dim" id="filings-count" style="font-size:9px">0 filings</span>
           </div>
           <div id="top-body-filings" style="flex:1;overflow-y:auto"><div class="empty">Loading official board filings and quarterly results from NSE archives…</div></div>
-        </div>
-
-        <!-- SECTION 3: CORPORATE ACTIONS -->
-        <div id="top-sec-actions" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
-          <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px;gap:6px;flex-wrap:wrap">
-            <button class="filter-pill active" data-action-filter="all">ALL ACTIONS</button>
-            <button class="filter-pill" data-action-filter="dividend">DIVIDENDS 💰</button>
-            <button class="filter-pill" data-action-filter="split">STOCK SPLITS ✂️</button>
-            <button class="filter-pill" data-action-filter="bonus">BONUS ISSUES 🎁</button>
-            <button class="filter-pill" data-action-filter="rights">RIGHTS &amp; AGMS</button>
-            <input id="actions-search-input" placeholder="Filter by symbol e.g. COLPAL, INFY..." style="margin-left:auto;height:22px;width:200px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px" />
-            <span class="dim" id="actions-count" style="font-size:9px">0 actions</span>
-          </div>
-          <div id="top-body-actions" style="flex:1;overflow-y:auto"><div class="empty">Loading upcoming dividends, splits and bonus issues from NSE…</div></div>
         </div>
       </div>
 
@@ -1183,10 +1201,11 @@ const LSK = {
   live: "friday_term_live",
 };
 const QUOTE_BATCH = 200;
+const SYMBOL_ALIASES = { ZOMATO: "ETERNAL", TATAMOTORS: "TMPV" };
 const DEFAULT_WATCH = [
   "NIFTY", "BANKNIFTY", "SENSEX", "RELIANCE", "HDFCBANK", "TCS", "INFY",
   "ICICIBANK", "SBIN", "BHARTIARTL", "ITC", "LT", "AXISBANK", "BAJFINANCE",
-  "MARUTI", "TITAN", "SUNPHARMA", "TATAMOTORS", "ADANIENT", "HINDUNILVR",
+  "MARUTI", "TITAN", "SUNPHARMA", "TMPV", "ADANIENT", "HINDUNILVR",
 ];
 const VIEWS = {
   GP: "GP",
@@ -1258,6 +1277,8 @@ const state = {
   filingsFilter: "all",
   actionsData: null,
   actionsFilter: "all",
+  calendarData: null,
+  calFilter: "all",
   rail: "watch",
   lastLatency: null,
   bootedAt: Date.now(),
@@ -1482,6 +1503,7 @@ function rebuildWatch() {
   const ordered = [], seen = new Set();
   const add = (sym) => {
     sym = (sym || "").trim().toUpperCase();
+    sym = SYMBOL_ALIASES[sym] || sym;
     if (!sym || seen.has(sym) || state.watchHidden.has(sym)) return;
     seen.add(sym);
     ordered.push(sym);
@@ -1937,6 +1959,7 @@ function renderFeed() {
   const events = state.corpEvents || { actions: [], announcements: [] };
   const actions = events.actions || [];
   const filings = events.announcements || [];
+  const boardMeetings = events.board_meetings || [];
 
   if (tab === "news") {
     if (!news.length) {
@@ -1956,6 +1979,50 @@ function renderFeed() {
         <div class="ttl">${esc(title)}</div>
       </div>`;
     }).join("");
+  } else if (tab === "calendar") {
+    if (events.is_index) {
+      body.innerHTML = `<div class="empty-mini">Broad-market indices do not have scheduled board meetings or dividend dates.</div>`;
+      return;
+    }
+    const upActions = actions.filter(a => a.is_upcoming);
+    if (!boardMeetings.length && !upActions.length) {
+      body.innerHTML = `<div class="empty-mini">No upcoming corporate events or board meetings scheduled for ${esc(state.symbol)}.</div>`;
+      return;
+    }
+    let html = "";
+    if (upActions.length) {
+      html += `<div style="padding:4px 8px;background:var(--panel-2);font-size:8px;font-weight:bold;color:var(--up);letter-spacing:.08em">UPCOMING DIVIDENDS &amp; ACTIONS (${upActions.length})</div>`;
+      html += upActions.map(a => `<div class="event-item" style="padding:6px 8px;border-bottom:1px solid #141920;background:rgba(0,229,155,0.04)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;gap:4px;align-items:center">
+            <span class="tag up">${esc(a.kind)}</span>
+            <span class="tag up" style="font-size:8px;font-weight:bold">🔔 ${esc(a.rel_date || "UPCOMING")}</span>
+          </div>
+          <b class="up" style="font-size:10px">${esc(a.details || "")}</b>
+        </div>
+        <div style="font-size:10px;font-weight:500;color:var(--text);margin:2px 0">${esc(a.subject)}</div>
+        <div style="font-size:8px;color:var(--muted)">Ex-Date: <b style="color:var(--up)">${esc(a.ex_date)}</b> · Record Date: ${esc(a.record_date)}</div>
+      </div>`).join("");
+    }
+    if (boardMeetings.length) {
+      html += `<div style="padding:4px 8px;background:var(--panel-2);font-size:8px;font-weight:bold;color:var(--cyan);letter-spacing:.08em">SCHEDULED BOARD MEETINGS &amp; AGENDAS (${boardMeetings.length})</div>`;
+      html += boardMeetings.map(bm => {
+        const isUp = bm.is_upcoming;
+        return `<div class="event-item" style="padding:6px 8px;border-bottom:1px solid #141920;${isUp ? "background:rgba(63,214,232,0.04)" : ""}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="display:flex;gap:4px">
+              <span class="tag ${isUp ? "cyan" : "dim"}">${isUp ? "UPCOMING" : "PAST"}</span>
+              <span class="tag ${isUp ? "cyan" : ""}" style="font-size:8px;font-weight:bold">${esc(bm.rel_date)}</span>
+            </div>
+            <span style="font-weight:600;font-size:9px;color:var(--text)">${esc(bm.date)}</span>
+          </div>
+          <div style="font-size:10px;font-weight:600;color:var(--amber);margin:3px 0">${esc(bm.purpose)}</div>
+          ${bm.desc ? `<div style="font-size:9px;color:var(--muted);line-height:1.35;margin-bottom:3px">${esc(bm.desc)}</div>` : ""}
+          ${bm.attachment ? `<a href="${esc(bm.attachment)}" target="_blank" rel="noopener" style="font-size:8px;color:var(--cyan);text-decoration:none">VIEW NOTICE PDF 📄 ↗</a>` : ""}
+        </div>`;
+      }).join("");
+    }
+    body.innerHTML = html;
   } else if (tab === "actions") {
     if (events.is_index) {
       body.innerHTML = `<div class="empty-mini">${esc(events.note || "Broad-market indices do not have direct corporate actions.")}</div>`;
@@ -1970,14 +2037,17 @@ function renderFeed() {
       const isSplit = a.kind === "SPLIT";
       const isBonus = a.kind === "BONUS";
       const badgeCls = isDiv ? "badge-dividend" : (isBonus ? "badge-bonus" : (isSplit ? "badge-split" : ""));
-      return `<div class="event-item" style="padding:6px 8px;border-bottom:1px solid #141920">
+      return `<div class="event-item" style="padding:6px 8px;border-bottom:1px solid #141920;${a.is_upcoming ? "background:rgba(0,229,155,0.04)" : ""}">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-          <span class="tag ${badgeCls}">${esc(a.kind)}</span>
+          <div style="display:flex;gap:4px;align-items:center">
+            <span class="tag ${badgeCls}">${esc(a.kind)}</span>
+            ${a.is_upcoming ? `<span class="tag up" style="font-size:8px;font-weight:bold">🔔 ${esc(a.rel_date || "UPCOMING")}</span>` : `<span class="dim" style="font-size:8px">${esc(a.rel_date || "")}</span>`}
+          </div>
           ${a.details ? `<b class="${isDiv ? "up" : "amber"}" style="font-size:10px">${esc(a.details)}</b>` : ""}
         </div>
         <div style="font-size:10px;font-weight:500;color:var(--text);margin:2px 0">${esc(a.subject)}</div>
         <div style="display:flex;gap:8px;font-size:8px;color:var(--muted)">
-          <span>Ex-Date: <b style="color:var(--text)">${esc(a.ex_date)}</b></span>
+          <span>Ex-Date: <b style="color:${a.is_upcoming ? "var(--up)" : "var(--text)"}">${esc(a.ex_date)}</b></span>
           <span>Record Date: <b style="color:var(--text)">${esc(a.record_date)}</b></span>
         </div>
       </div>`;
@@ -2086,7 +2156,7 @@ async function loadTopNews(refresh = false) {
     if (refresh || !state.actionsData) {
       body.innerHTML = `<div class="empty">Loading upcoming dividends, splits and bonus issues from NSE…</div>`;
       try {
-        const res = await api(`/api/market-actions?limit=150&refresh=${refresh ? "1" : "0"}`, { timeout: 15000 });
+        const res = await api(`/api/market-actions?limit=250&refresh=${refresh ? "1" : "0"}`, { timeout: 15000 });
         state.actionsData = res.actions || [];
         renderMarketActions();
         const stamp = $("#top-upd");
@@ -2096,6 +2166,23 @@ async function loadTopNews(refresh = false) {
       }
     } else {
       renderMarketActions();
+    }
+  } else if (sec === "calendar") {
+    const body = $("#top-body-calendar");
+    if (!body) return;
+    if (refresh || !state.calendarData) {
+      body.innerHTML = `<div class="empty">Loading upcoming board meetings and corporate events from NSE calendar…</div>`;
+      try {
+        const res = await api(`/api/upcoming-events?limit=100&refresh=${refresh ? "1" : "0"}`, { timeout: 15000 });
+        state.calendarData = res.events || [];
+        renderCalendar();
+        const stamp = $("#top-upd");
+        if (stamp) stamp.textContent = nowIst();
+      } catch (err) {
+        body.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+      }
+    } else {
+      renderCalendar();
     }
   }
 }
@@ -2233,8 +2320,18 @@ function renderMarketActions() {
   const body = $("#top-body-actions");
   if (!body) return;
   let actions = state.actionsData || [];
+
+  // Update upcoming badge count on filter pill
+  const upPill = $('[data-action-filter="upcoming"]');
+  if (upPill) {
+    const rawAll = state.actionsData || [];
+    const upCnt = rawAll.filter(a => a.is_upcoming).length;
+    upPill.textContent = `UPCOMING ONLY 🔥 (${upCnt})`;
+  }
+
   const filt = state.actionsFilter || "all";
-  if (filt === "dividend") actions = actions.filter(a => (a.kind || "").toUpperCase() === "DIVIDEND" || (a.subject || "").toLowerCase().includes("dividend"));
+  if (filt === "upcoming") actions = actions.filter(a => a.is_upcoming);
+  else if (filt === "dividend") actions = actions.filter(a => (a.kind || "").toUpperCase() === "DIVIDEND" || (a.subject || "").toLowerCase().includes("dividend"));
   else if (filt === "split") actions = actions.filter(a => (a.kind || "").toUpperCase() === "SPLIT" || (a.subject || "").toLowerCase().includes("split"));
   else if (filt === "bonus") actions = actions.filter(a => (a.kind || "").toUpperCase() === "BONUS" || (a.subject || "").toLowerCase().includes("bonus"));
   else if (filt === "rights") actions = actions.filter(a => (a.kind || "").toUpperCase() === "RIGHTS" || (a.kind || "").toUpperCase() === "AGM" || (a.subject || "").toLowerCase().includes("rights") || (a.subject || "").toLowerCase().includes("agm"));
@@ -2258,6 +2355,7 @@ function renderMarketActions() {
   }
 
   body.innerHTML = `<div class="data-wrap"><table class="data"><thead><tr>
+    <th>Countdown</th>
     <th>Symbol</th>
     <th>Company</th>
     <th>Type</th>
@@ -2267,19 +2365,21 @@ function renderMarketActions() {
     <th>Record Date</th>
     <th>Action</th>
   </tr></thead><tbody>${actions.map(a => {
+    const isUp = a.is_upcoming;
     const isDiv = (a.kind || "").toUpperCase() === "DIVIDEND";
     const isSplit = (a.kind || "").toUpperCase() === "SPLIT";
     const isBonus = (a.kind || "").toUpperCase() === "BONUS";
     const kindCls = isDiv ? "up" : (isSplit ? "cyan" : (isBonus ? "amber" : ""));
     const detailColor = isDiv ? "var(--up)" : (isSplit ? "var(--cyan)" : (isBonus ? "var(--amber)" : "var(--text)"));
 
-    return `<tr>
+    return `<tr style="${isUp ? "background:rgba(0, 229, 155, 0.04)" : ""}">
+      <td><span class="tag ${isUp ? "up" : "dim"}" style="font-size:9px;font-weight:${isUp ? "bold" : "normal"}">${isUp ? "🔔 " : ""}${esc(a.rel_date || (isUp ? "UPCOMING" : "PAST"))}</span></td>
       <td><span class="tag buy card-sym" data-action-sym="${esc(a.symbol)}" style="cursor:pointer;font-weight:bold" title="View chart for ${esc(a.symbol)}">${esc(a.symbol)}</span></td>
       <td><div style="font-weight:500;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(a.company)}">${esc(a.company)}</div></td>
       <td><span class="tag ${kindCls}" style="font-size:9px">${esc(a.kind)}</span></td>
       <td><b style="color:${detailColor}">${esc(a.details || "—")}</b></td>
       <td><div style="font-size:10px;color:var(--muted);max-width:320px;line-height:1.3" title="${esc(a.subject)}">${esc(a.subject)}</div></td>
-      <td><span style="font-weight:600;color:var(--text)">${esc(a.ex_date)}</span></td>
+      <td><span style="font-weight:600;color:${isUp ? "var(--up)" : "var(--text)"}">${esc(a.ex_date)}</span></td>
       <td><span class="dim">${esc(a.record_date)}</span></td>
       <td><button class="btn buy" style="height:18px;padding:0 6px;font-size:8px" data-action-trade="${esc(a.symbol)}">TRADE</button></td>
     </tr>`;
@@ -2295,6 +2395,90 @@ function renderMarketActions() {
   $$("[data-action-trade]", body).forEach(b => {
     b.addEventListener("click", () => {
       selectSymbol(b.dataset.actionTrade);
+      setSide("BUY");
+    });
+  });
+}
+
+function renderCalendar() {
+  const body = $("#top-body-calendar");
+  if (!body) return;
+  let events = state.calendarData || [];
+  const filt = state.calFilter || "all";
+
+  if (filt === "results") {
+    events = events.filter(e => (e.event_type || "") === "RESULTS" || (e.purpose || "").toLowerCase().includes("result") || (e.desc || "").toLowerCase().includes("result") || (e.desc || "").toLowerCase().includes("financial"));
+  } else if (filt === "dividend") {
+    events = events.filter(e => (e.event_type || "") === "DIVIDEND" || (e.purpose || "").toLowerCase().includes("dividend") || (e.desc || "").toLowerCase().includes("dividend"));
+  } else if (filt === "fund_raising") {
+    events = events.filter(e => (e.event_type || "") === "FUND_RAISING" || (e.purpose || "").toLowerCase().includes("fund") || (e.desc || "").toLowerCase().includes("fund") || (e.desc || "").toLowerCase().includes("capital"));
+  } else if (filt === "this_week") {
+    events = events.filter(e => (e.days_left || 0) <= 7);
+  } else if (filt === "next_week") {
+    events = events.filter(e => (e.days_left || 0) > 7 && (e.days_left || 0) <= 14);
+  }
+
+  const query = ($("#cal-search-input")?.value || "").trim().toUpperCase();
+  if (query) {
+    events = events.filter(e =>
+      (e.symbol || "").toUpperCase().includes(query) ||
+      (e.company || "").toUpperCase().includes(query) ||
+      (e.purpose || "").toUpperCase().includes(query) ||
+      (e.desc || "").toUpperCase().includes(query)
+    );
+  }
+
+  const cnt = $("#cal-count");
+  if (cnt) cnt.textContent = `${events.length} upcoming events`;
+
+  if (!events.length) {
+    body.innerHTML = `<div class="empty">No upcoming events or board meetings matching filter.</div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="data-wrap"><table class="data"><thead><tr>
+    <th>Countdown</th>
+    <th>Symbol</th>
+    <th>Company</th>
+    <th>Event Type</th>
+    <th>Meeting Date</th>
+    <th>Agenda / Purpose</th>
+    <th>Official Notice</th>
+    <th>Action</th>
+  </tr></thead><tbody>${events.map(e => {
+    const isToday = e.days_left === 0;
+    const isTomorrow = e.days_left === 1;
+    const dueCls = isToday ? "up" : (isTomorrow ? "cyan" : (e.days_left <= 7 ? "amber" : "dim"));
+    const type = e.event_type || "BOARD_MEETING";
+    const typeCls = type === "RESULTS" ? "amber" : (type === "DIVIDEND" ? "up" : (type === "FUND_RAISING" ? "cyan" : ""));
+
+    return `<tr style="${isToday || isTomorrow ? "background:rgba(0, 229, 155, 0.04)" : ""}">
+      <td><span class="tag ${dueCls}" style="font-size:9px;font-weight:bold">${esc(e.rel_date || "UPCOMING")}</span></td>
+      <td><span class="tag buy card-sym" data-cal-sym="${esc(e.symbol)}" style="cursor:pointer;font-weight:bold" title="View chart for ${esc(e.symbol)}">${esc(e.symbol)}</span></td>
+      <td><div style="font-weight:500;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(e.company)}">${esc(e.company)}</div></td>
+      <td><span class="tag ${typeCls}" style="font-size:8px">${esc(type.replace("_", " "))}</span></td>
+      <td><span style="font-weight:600;color:var(--text)">${esc(e.date)}</span></td>
+      <td>
+        <div style="font-weight:600;font-size:11px;color:var(--amber)">${esc(e.purpose)}</div>
+        ${e.desc ? `<div style="font-size:10px;color:var(--muted);max-width:380px;line-height:1.3;margin-top:2px" title="${esc(e.desc)}">${esc(e.desc)}</div>` : ""}
+      </td>
+      <td>
+        ${e.pdf_url ? `<a href="${esc(e.pdf_url)}" target="_blank" rel="noopener" class="btn ghost" style="height:20px;padding:0 6px;font-size:8px;color:var(--cyan);border-color:var(--cyan)" title="View official PDF intimation">📄 PDF ↗</a>` : `<span class="dim" style="font-size:8px">—</span>`}
+      </td>
+      <td><button class="btn buy" style="height:18px;padding:0 6px;font-size:8px" data-cal-trade="${esc(e.symbol)}">TRADE</button></td>
+    </tr>`;
+  }).join("")}</tbody></table></div>`;
+
+  $$("[data-cal-sym]", body).forEach(b => {
+    b.addEventListener("click", () => {
+      selectSymbol(b.dataset.calSym);
+      setView("GP");
+    });
+  });
+
+  $$("[data-cal-trade]", body).forEach(b => {
+    b.addEventListener("click", () => {
+      selectSymbol(b.dataset.calTrade);
       setSide("BUY");
     });
   });
@@ -3610,6 +3794,7 @@ $$("#view-tabs .view-tab").forEach((b) => b.addEventListener("click", () => setV
 /* ---------- select symbol ---------- */
 async function selectSymbol(sym, initial = false) {
   sym = (sym || "").trim().toUpperCase();
+  sym = SYMBOL_ALIASES[sym] || sym;
   if (!sym) return;
   state.symbol = sym;
   state.quote = state.quotes[sym] || state.quote;
@@ -3767,7 +3952,8 @@ $("#watch-list").addEventListener("click", (e) => {
   if (row) selectSymbol(row.dataset.sym);
 });
 function addWatch() {
-  const sym = ($("#watch-input").value || "").trim().toUpperCase();
+  let sym = ($("#watch-input").value || "").trim().toUpperCase();
+  sym = SYMBOL_ALIASES[sym] || sym;
   if (!sym) return;
   state.watchHidden.delete(sym);
   if (!state.watch.includes(sym)) {
@@ -4168,8 +4354,9 @@ $$("#top-section-tabs .subtab").forEach(tab => {
     tab.classList.add("active");
     state.topSec = tab.dataset.topSec;
     $("#top-sec-news")?.classList.toggle("hide", state.topSec !== "news");
-    $("#top-sec-filings")?.classList.toggle("hide", state.topSec !== "filings");
     $("#top-sec-actions")?.classList.toggle("hide", state.topSec !== "actions");
+    $("#top-sec-calendar")?.classList.toggle("hide", state.topSec !== "calendar");
+    $("#top-sec-filings")?.classList.toggle("hide", state.topSec !== "filings");
     loadTopNews(false);
   });
 });
@@ -4187,17 +4374,6 @@ $$("#wire-subtabs .subtab").forEach(tab => {
 $("#wire-refresh-btn")?.addEventListener("click", () => loadTopNews(true));
 $("#wire-search-input")?.addEventListener("input", renderWire);
 
-/* ---------- filings filters wire-up ---------- */
-$$("[data-filing-filter]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    $$("[data-filing-filter]").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    state.filingsFilter = btn.dataset.filingFilter;
-    renderMarketFilings();
-  });
-});
-$("#filings-search-input")?.addEventListener("input", renderMarketFilings);
-
 /* ---------- corporate actions filters wire-up ---------- */
 $$("[data-action-filter]").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -4208,6 +4384,28 @@ $$("[data-action-filter]").forEach(btn => {
   });
 });
 $("#actions-search-input")?.addEventListener("input", renderMarketActions);
+
+/* ---------- upcoming events & calendar filters wire-up ---------- */
+$$("[data-cal-filter]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    $$("[data-cal-filter]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.calFilter = btn.dataset.calFilter;
+    renderCalendar();
+  });
+});
+$("#cal-search-input")?.addEventListener("input", renderCalendar);
+
+/* ---------- filings filters wire-up ---------- */
+$$("[data-filing-filter]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    $$("[data-filing-filter]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.filingsFilter = btn.dataset.filingFilter;
+    renderMarketFilings();
+  });
+});
+$("#filings-search-input")?.addEventListener("input", renderMarketFilings);
 
 /* auto-resume saved session */
 (async function init() {

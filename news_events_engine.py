@@ -29,6 +29,15 @@ from typing import Dict, List, Optional, Tuple
 
 import requests
 
+try:
+    from stock_tools import normalize_symbol
+except ImportError:  # pragma: no cover - standalone fallback
+    _LEGACY_SYMBOLS = {"ZOMATO": "ETERNAL", "TATAMOTORS": "TMPV"}
+
+    def normalize_symbol(ticker: str) -> str:
+        return _LEGACY_SYMBOLS.get((ticker or "").strip().upper(), (ticker or "").strip().upper())
+
+
 # In-memory TTL caches
 _EVENTS_CACHE: Dict[str, Tuple[float, dict]] = {}
 _NEWS_CACHE: Dict[str, Tuple[float, dict]] = {}
@@ -168,11 +177,46 @@ def tag_text(text: str) -> List[str]:
     return tags
 
 
+def parse_nse_date(d_str: Optional[str]) -> Optional[datetime.date]:
+    """Parse NSE date strings like '23-Nov-2026', '23-11-2026', '2026-11-23'."""
+    if not d_str or str(d_str).strip() in ("-", "—", "None", ""):
+        return None
+    cleaned = str(d_str).strip().split()[0]
+    for fmt in ("%d-%b-%Y", "%d-%m-%Y", "%Y-%m-%d", "%d-%b-%y"):
+        try:
+            return datetime.datetime.strptime(cleaned, fmt).date()
+        except ValueError:
+            pass
+    return None
+
+
+def calculate_relative_date(d_str: Optional[str]) -> Tuple[bool, int, str]:
+    """
+    Returns (is_upcoming, days_left, rel_label).
+    e.g. (True, 2, 'IN 2 DAYS'), (True, 0, 'TODAY'), (False, -1, '1d ago').
+    """
+    d = parse_nse_date(d_str)
+    if not d:
+        return (False, -9999, "—")
+    today = datetime.datetime.now().date()
+    delta = (d - today).days
+    is_upcoming = delta >= 0
+    if delta == 0:
+        rel = "TODAY"
+    elif delta == 1:
+        rel = "TOMORROW"
+    elif delta > 1:
+        rel = f"IN {delta} DAYS"
+    else:
+        rel = f"{abs(delta)}d ago"
+    return (is_upcoming, delta, rel)
+
+
 # ----------------------------------------------------------------------
 # Pipeline 1: Official Exchange Corporate Events (NSE Actions & Filings)
 # ----------------------------------------------------------------------
 def fetch_corporate_events(symbol: str, force_refresh: bool = False) -> dict:
-    clean_sym = symbol.upper().replace(".NS", "").replace(".BO", "").strip()
+    clean_sym = normalize_symbol(symbol.upper().replace(".NS", "").replace(".BO", "").strip())
     if clean_sym in ("NIFTY", "BANKNIFTY", "SENSEX", "^NSEI", "^NSEBANK"):
         return {
             "symbol": clean_sym,
@@ -191,6 +235,7 @@ def fetch_corporate_events(symbol: str, force_refresh: bool = False) -> dict:
     s = _get_nse_session()
     actions_raw = []
     announcements_raw = []
+    board_meetings_raw = []
 
     # 1. Fetch Corporate Actions (Dividends, Splits, Bonus, Rights)
     try:
@@ -218,9 +263,22 @@ def fetch_corporate_events(symbol: str, force_refresh: bool = False) -> dict:
     except Exception as exc:
         print(f"[events] NSE announcements error for {clean_sym}: {exc}")
 
+    # 3. Fetch Board Meetings (Upcoming and recent)
+    try:
+        url_bm = f"https://www.nseindia.com/api/corporate-board-meetings?index=equities&symbol={urllib.parse.quote(clean_sym)}"
+        r = s.get(
+            url_bm,
+            headers={"Referer": "https://www.nseindia.com/companies-listing/corporate-filings-board-meetings"},
+            timeout=10,
+        )
+        if r.status_code == 200 and isinstance(r.json(), list):
+            board_meetings_raw = r.json()
+    except Exception as exc:
+        print(f"[events] NSE board meetings error for {clean_sym}: {exc}")
+
     # Parse and structure Corporate Actions
     parsed_actions = []
-    for a in (actions_raw or [])[:25]:
+    for a in (actions_raw or []):
         subj = _clean_str(a.get("subject", ""))
         subj_l = subj.lower()
         kind = "ACTION"
@@ -244,16 +302,61 @@ def fetch_corporate_events(symbol: str, force_refresh: bool = False) -> dict:
             else (f"Ratio {ratio_match.group(1)}" if ratio_match else "")
         )
 
+        ex_date_str = a.get("exDate") or "—"
+        is_up, delta, rel = calculate_relative_date(ex_date_str)
+
         parsed_actions.append({
             "kind": kind,
             "subject": subj,
             "details": details,
-            "ex_date": a.get("exDate") or "—",
+            "ex_date": ex_date_str,
             "record_date": a.get("recDate") or "—",
             "bc_start": a.get("bcStartDate") or "—",
             "bc_end": a.get("bcEndDate") or "—",
             "company": a.get("comp") or clean_sym,
+            "is_upcoming": is_up,
+            "days_left": delta,
+            "rel_date": rel,
         })
+
+    # Sort actions: upcoming first (earliest upcoming date first), then past (newest first)
+    act_up = [x for x in parsed_actions if x["is_upcoming"]]
+    act_up.sort(key=lambda x: x["days_left"])
+    act_past = [x for x in parsed_actions if not x["is_upcoming"]]
+    act_past.sort(key=lambda x: x["days_left"], reverse=True)
+    parsed_actions = act_up + act_past
+
+    # Parse and structure Board Meetings
+    parsed_board_meetings = []
+    for bm in (board_meetings_raw or []):
+        bm_date_str = bm.get("bm_date") or ""
+        is_up, delta, rel = calculate_relative_date(bm_date_str)
+        purpose_str = _clean_str(bm.get("bm_purpose") or "Board Meeting")
+        desc_str = _clean_str(bm.get("bm_desc") or "")
+
+        att = bm.get("attachment")
+        pdf_url = None
+        if att and isinstance(att, str) and att.strip() and att.strip() != "-":
+            att = att.strip()
+            pdf_url = att if (att.startswith("http://") or att.startswith("https://")) else f"https://nsearchives.nseindia.in/corporate/{att}"
+
+        parsed_board_meetings.append({
+            "symbol": clean_sym,
+            "company": bm.get("sm_name") or clean_sym,
+            "date": bm_date_str,
+            "is_upcoming": is_up,
+            "days_left": delta,
+            "rel_date": rel,
+            "purpose": purpose_str,
+            "desc": desc_str[:280] + ("…" if len(desc_str) > 280 else ""),
+            "attachment": pdf_url,
+        })
+
+    bm_up = [b for b in parsed_board_meetings if b["is_upcoming"]]
+    bm_up.sort(key=lambda x: x["days_left"])
+    bm_past = [b for b in parsed_board_meetings if not b["is_upcoming"]]
+    bm_past.sort(key=lambda x: x["days_left"], reverse=True)
+    parsed_board_meetings = bm_up + bm_past
 
     # Parse and structure Corporate Filings & Announcements
     parsed_announcements = []
@@ -297,7 +400,11 @@ def fetch_corporate_events(symbol: str, force_refresh: bool = False) -> dict:
     result = {
         "symbol": clean_sym,
         "actions_count": len(parsed_actions),
+        "upcoming_actions_count": len(act_up),
         "actions": parsed_actions,
+        "board_meetings_count": len(parsed_board_meetings),
+        "upcoming_bm_count": len(bm_up),
+        "board_meetings": parsed_board_meetings,
         "announcements_count": len(parsed_announcements),
         "announcements": parsed_announcements,
         "source": "NSE Official Corporate Filings",
@@ -313,7 +420,7 @@ def fetch_corporate_events(symbol: str, force_refresh: bool = False) -> dict:
 def fetch_stock_news(
     symbol: str, company_name: Optional[str] = None, count: int = 15, force_refresh: bool = False
 ) -> dict:
-    clean_sym = symbol.upper().replace(".NS", "").replace(".BO", "").strip()
+    clean_sym = normalize_symbol(symbol.upper().replace(".NS", "").replace(".BO", "").strip())
     now = time.time()
     if not force_refresh and clean_sym in _NEWS_CACHE:
         cached_ts, data = _NEWS_CACHE[clean_sym]
@@ -604,7 +711,7 @@ def fetch_market_filings(force_refresh: bool = False, limit: int = 100) -> dict:
 # ----------------------------------------------------------------------
 # Pipeline 5: Market-Wide Corporate Actions (Dividends, Splits, Bonus)
 # ----------------------------------------------------------------------
-def fetch_market_actions(force_refresh: bool = False, limit: int = 150) -> dict:
+def fetch_market_actions(force_refresh: bool = False, limit: int = 250) -> dict:
     now = time.time()
     if not force_refresh and "actions" in _MARKET_ACTIONS_CACHE:
         cached_ts, data = _MARKET_ACTIONS_CACHE["actions"]
@@ -615,25 +722,25 @@ def fetch_market_actions(force_refresh: bool = False, limit: int = 150) -> dict:
     raw_actions = []
     try:
         now_dt = datetime.datetime.now()
-        from_d = (now_dt - datetime.timedelta(days=14)).strftime("%d-%m-%Y")
-        to_d = (now_dt + datetime.timedelta(days=45)).strftime("%d-%m-%Y")
+        from_d = (now_dt - datetime.timedelta(days=30)).strftime("%d-%m-%Y")
+        to_d = (now_dt + datetime.timedelta(days=90)).strftime("%d-%m-%Y")
         url = f"https://www.nseindia.com/api/corporates-corporateActions?index=equities&from_date={from_d}&to_date={to_d}"
         r = s.get(
             url,
             headers={"Referer": "https://www.nseindia.com/companies-listing/corporate-filings-actions"},
             timeout=12,
         )
-        if r.status_code == 200:
+        if r.status_code == 200 and isinstance(r.json(), list):
             raw_actions = r.json()
         elif r.status_code != 200:
             r_fb = s.get("https://www.nseindia.com/api/corporates-corporateActions?index=equities", timeout=12)
-            if r_fb.status_code == 200:
+            if r_fb.status_code == 200 and isinstance(r_fb.json(), list):
                 raw_actions = r_fb.json()
     except Exception as exc:
         print(f"[actions] Error fetching market corporate actions: {exc}")
 
     parsed = []
-    for a in (raw_actions or [])[:limit]:
+    for a in (raw_actions or []):
         subj = _clean_str(a.get("subject", ""))
         subj_l = subj.lower()
         kind = "ACTION"
@@ -657,23 +764,189 @@ def fetch_market_actions(force_refresh: bool = False, limit: int = 150) -> dict:
         )
 
         sym = (a.get("symbol") or "").strip().upper()
+        ex_date_str = a.get("exDate") or "—"
+        is_up, delta, rel = calculate_relative_date(ex_date_str)
+
         parsed.append({
             "symbol": sym,
             "company": a.get("comp") or sym,
             "kind": kind,
             "subject": subj,
             "details": details,
-            "ex_date": a.get("exDate") or "—",
+            "ex_date": ex_date_str,
             "record_date": a.get("recDate") or "—",
             "series": a.get("series") or "EQ",
+            "is_upcoming": is_up,
+            "days_left": delta,
+            "rel_date": rel,
         })
 
+    # Sort: UPCOMING actions first (earliest upcoming date first), then past actions (newest first)
+    act_up = [x for x in parsed if x["is_upcoming"]]
+    act_up.sort(key=lambda x: x["days_left"])
+    act_past = [x for x in parsed if not x["is_upcoming"]]
+    act_past.sort(key=lambda x: x["days_left"], reverse=True)
+    sorted_actions = act_up + act_past
+    final_actions = sorted_actions[:limit]
+
     result = {
-        "count": len(parsed),
-        "actions": parsed,
+        "count": len(final_actions),
+        "upcoming_count": len(act_up),
+        "actions": final_actions,
         "updated_at": datetime.datetime.now().strftime("%H:%M:%S IST"),
     }
     _MARKET_ACTIONS_CACHE["actions"] = (now, result)
+    return result
+
+
+_UPCOMING_EVENTS_CACHE: Dict[str, Tuple[float, dict]] = {}
+
+
+# ----------------------------------------------------------------------
+# Pipeline 6: Upcoming Corporate Events & Board Meetings Calendar (NSE)
+# ----------------------------------------------------------------------
+def fetch_upcoming_events(force_refresh: bool = False, limit: int = 100) -> dict:
+    now = time.time()
+    if not force_refresh and "upcoming" in _UPCOMING_EVENTS_CACHE:
+        cached_ts, data = _UPCOMING_EVENTS_CACHE["upcoming"]
+        if now - cached_ts < CACHE_TTL_EVENTS:
+            return data
+
+    s = _get_nse_session()
+    now_dt = datetime.datetime.now()
+    today = now_dt.date()
+    from_d = today.strftime("%d-%m-%Y")
+    to_d = (today + datetime.timedelta(days=60)).strftime("%d-%m-%Y")
+
+    raw_bm = []
+    raw_cal = []
+
+    # 1. Fetch upcoming corporate board meetings
+    try:
+        url_bm = f"https://www.nseindia.com/api/corporate-board-meetings?index=equities&from_date={from_d}&to_date={to_d}"
+        r = s.get(
+            url_bm,
+            headers={"Referer": "https://www.nseindia.com/companies-listing/corporate-filings-board-meetings"},
+            timeout=12,
+        )
+        if r.status_code == 200 and isinstance(r.json(), list):
+            raw_bm = r.json()
+        elif r.status_code != 200:
+            r_fb = s.get("https://www.nseindia.com/api/corporate-board-meetings?index=equities", timeout=12)
+            if r_fb.status_code == 200 and isinstance(r_fb.json(), list):
+                raw_bm = r_fb.json()
+    except Exception as exc:
+        print(f"[calendar] Error fetching upcoming board meetings: {exc}")
+
+    # 2. Fetch event calendar
+    try:
+        url_cal = f"https://www.nseindia.com/api/event-calendar?index=equities&from_date={from_d}&to_date={to_d}"
+        r = s.get(url_cal, headers={"Referer": "https://www.nseindia.com/"}, timeout=12)
+        if r.status_code == 200 and isinstance(r.json(), list):
+            raw_cal = r.json()
+        elif r.status_code != 200:
+            r_fb = s.get("https://www.nseindia.com/api/event-calendar?index=equities", timeout=12)
+            if r_fb.status_code == 200 and isinstance(r_fb.json(), list):
+                raw_cal = r_fb.json()
+    except Exception as exc:
+        print(f"[calendar] Error fetching event calendar: {exc}")
+
+    parsed = []
+    seen = set()
+
+    for m in raw_bm:
+        sym = (m.get("bm_symbol") or "").strip().upper()
+        d_str = m.get("bm_date") or ""
+        is_up, delta, rel = calculate_relative_date(d_str)
+        if not is_up:
+            continue
+        purpose = _clean_str(m.get("bm_purpose") or "Board Meeting")
+        key = (sym, d_str, purpose[:20].lower())
+        if key in seen:
+            continue
+        seen.add(key)
+
+        desc = _clean_str(m.get("bm_desc") or "")
+        purp_l = (purpose + " " + desc).lower()
+        evt_type = "BOARD_MEETING"
+        if "result" in purp_l or "financial" in purp_l:
+            evt_type = "RESULTS"
+        elif "dividend" in purp_l:
+            evt_type = "DIVIDEND"
+        elif "fund" in purp_l or "raising" in purp_l or "capital" in purp_l:
+            evt_type = "FUND_RAISING"
+        elif "split" in purp_l or "sub-division" in purp_l:
+            evt_type = "SPLIT"
+
+        att = m.get("attachment")
+        pdf_url = None
+        if att and isinstance(att, str) and att.strip() and att.strip() != "-":
+            att = att.strip()
+            pdf_url = (
+                att
+                if (att.startswith("http://") or att.startswith("https://"))
+                else f"https://nsearchives.nseindia.com/corporate/{att}"
+            )
+
+        parsed.append({
+            "symbol": sym,
+            "company": m.get("sm_name") or sym,
+            "date": d_str,
+            "days_left": delta,
+            "rel_date": rel,
+            "is_upcoming": True,
+            "event_type": evt_type,
+            "purpose": purpose,
+            "desc": desc[:300] + ("…" if len(desc) > 300 else ""),
+            "pdf_url": pdf_url,
+            "origin": "Board Meeting Intimation",
+        })
+
+    for c in raw_cal:
+        sym = (c.get("symbol") or "").strip().upper()
+        d_str = c.get("date") or ""
+        is_up, delta, rel = calculate_relative_date(d_str)
+        if not is_up:
+            continue
+        purpose = _clean_str(c.get("purpose") or "Corporate Event")
+        key = (sym, d_str, purpose[:20].lower())
+        if key in seen:
+            continue
+        seen.add(key)
+
+        desc = _clean_str(c.get("bm_desc") or "")
+        purp_l = (purpose + " " + desc).lower()
+        evt_type = "CORPORATE_EVENT"
+        if "result" in purp_l or "financial" in purp_l:
+            evt_type = "RESULTS"
+        elif "dividend" in purp_l:
+            evt_type = "DIVIDEND"
+        elif "fund" in purp_l or "raising" in purp_l or "capital" in purp_l:
+            evt_type = "FUND_RAISING"
+
+        parsed.append({
+            "symbol": sym,
+            "company": c.get("company") or sym,
+            "date": d_str,
+            "days_left": delta,
+            "rel_date": rel,
+            "is_upcoming": True,
+            "event_type": evt_type,
+            "purpose": purpose,
+            "desc": desc[:300] + ("…" if len(desc) > 300 else ""),
+            "pdf_url": None,
+            "origin": "NSE Event Calendar",
+        })
+
+    # Sort upcoming events: earliest upcoming date first
+    parsed.sort(key=lambda x: x["days_left"])
+
+    result = {
+        "count": len(parsed[:limit]),
+        "events": parsed[:limit],
+        "updated_at": datetime.datetime.now().strftime("%H:%M:%S IST"),
+    }
+    _UPCOMING_EVENTS_CACHE["upcoming"] = (now, result)
     return result
 
 
