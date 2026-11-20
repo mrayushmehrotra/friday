@@ -1573,6 +1573,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._handle_corporate_events(params)
         elif path == "/api/market-wire":
             self._handle_market_wire(params)
+        elif path in ("/api/market-filings", "/api/filings"):
+            self._handle_market_filings(params)
+        elif path in ("/api/market-actions", "/api/actions"):
+            self._handle_market_actions(params)
         elif path == "/api/backtest":
             self._handle_backtest(params)
         elif path == "/api/compare":
@@ -1653,11 +1657,15 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.wfile.write(f.read())
 
     def _send_json(self, data, status=200):
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        self.wfile.write(json.dumps(data, indent=2, default=str).encode())
+        payload = json.dumps(data, indent=2, default=str).encode()
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(payload)
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            self.close_connection = True
 
     def _get_param(self, params, key, default=None):
         vals = params.get(key, [])
@@ -1751,6 +1759,26 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._send_json(data)
         except Exception as exc:
             self._send_json({"error": str(exc), "articles": []}, 502)
+
+    def _handle_market_filings(self, params):
+        limit = int(self._get_param(params, "limit", "100") or 100)
+        refresh = bool(self._get_param(params, "refresh", "0") in ("1", "true"))
+        try:
+            import news_events_engine
+            data = news_events_engine.fetch_market_filings(force_refresh=refresh, limit=limit)
+            self._send_json(data)
+        except Exception as exc:
+            self._send_json({"error": str(exc), "filings": []}, 502)
+
+    def _handle_market_actions(self, params):
+        limit = int(self._get_param(params, "limit", "150") or 150)
+        refresh = bool(self._get_param(params, "refresh", "0") in ("1", "true"))
+        try:
+            import news_events_engine
+            data = news_events_engine.fetch_market_actions(force_refresh=refresh, limit=limit)
+            self._send_json(data)
+        except Exception as exc:
+            self._send_json({"error": str(exc), "actions": []}, 502)
 
     def _handle_backtest(self, params):
         ticker = self._get_param(params, "ticker", "").upper()
@@ -2799,6 +2827,16 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         pass
 
 
+class QuietThreadingHTTPServer(ThreadingHTTPServer):
+    """Browsers abort 3s watchlist polls on navigation; that is not a server bug."""
+
+    def handle_error(self, request, client_address):
+        exc = sys.exc_info()[0]
+        if exc in (BrokenPipeError, ConnectionResetError):
+            return
+        super().handle_error(request, client_address)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Stock Dashboard Server")
     parser.add_argument("--port", type=int, default=PORT, help=f"Port (default: {PORT})")
@@ -2819,7 +2857,7 @@ def main():
         except Exception as e:
             print(f"Telegram watcher failed to start: {e}")
 
-    server = ThreadingHTTPServer(("0.0.0.0", args.port), DashboardHandler)
+    server = QuietThreadingHTTPServer(("0.0.0.0", args.port), DashboardHandler)
     print(f"Stock dashboard running at http://localhost:{args.port}")
     try:
         server.serve_forever()

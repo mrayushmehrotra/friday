@@ -799,6 +799,8 @@ table.data tr:hover td{background:#0f1419}
             <button class="filter-pill active" data-nse-filter="all">ALL DEALS</button>
             <button class="filter-pill" data-nse-filter="bulk">BULK ONLY</button>
             <button class="filter-pill" data-nse-filter="block">BLOCK ONLY</button>
+            <button class="filter-pill" data-nse-filter="buy_only">BUY ONLY</button>
+            <button class="filter-pill" data-nse-filter="sell_only">SELL ONLY</button>
             <button class="filter-pill" data-nse-filter="net_buy">NET BUYERS</button>
             <input id="nse-search-input" placeholder="Search symbol or client…" style="height:23px;width:180px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px;margin-left:6px" />
             <button class="btn ghost" id="blk-refresh" style="margin-left:auto">↻ REFRESH NSE</button>
@@ -967,30 +969,67 @@ table.data tr:hover td{background:#0f1419}
         <div id="fa-body" class="fa-body"><div class="empty">Load a symbol to see its fundamentals snapshot.</div></div>
       </div>
 
-      <!-- TOP / NEWS & BREAKING MARKET WIRE -->
+      <!-- TOP / NEWS, FILINGS & CORPORATE ACTIONS TERMINAL -->
       <div class="view" id="view-TOP">
-        <div class="panel-head" style="flex-wrap:wrap;gap:6px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="panel-title">Market Wire · Live Breaking Stream</span>
+        <div class="panel-head" style="flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="panel-title">Market Intelligence</span>
+            <div class="subtabs" id="top-section-tabs" style="border:none;margin:0">
+              <div class="subtab active" data-top-sec="news">📰 BREAKING NEWS &amp; WIRE</div>
+              <div class="subtab" data-top-sec="filings">📄 EXCHANGE FILINGS &amp; RESULTS</div>
+              <div class="subtab" data-top-sec="actions">⚡ CORPORATE ACTIONS (DIVIDENDS/SPLITS)</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+            <span class="dim" id="top-upd">—</span>
+            <button class="btn ghost" id="top-refresh-btn" style="height:20px;padding:0 6px;font-size:9px">↻ REFRESH FEED</button>
+          </div>
+        </div>
+
+        <!-- SECTION 1: BREAKING NEWS WIRE -->
+        <div id="top-sec-news" style="display:flex;flex-direction:column;flex:1;min-height:0">
+          <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px;gap:6px">
             <div class="subtabs" id="wire-subtabs" style="border:none;margin:0">
-              <div class="subtab active" data-wire-sub="all">ALL BREAKING</div>
+              <div class="subtab active" data-wire-sub="all">ALL WIRE</div>
               <div class="subtab" data-wire-sub="et">ECONOMIC TIMES</div>
               <div class="subtab" data-wire-sub="mint">LIVEMINT</div>
               <div class="subtab" data-wire-sub="bs">BUSINESS STANDARD</div>
               <div class="subtab" data-wire-sub="mc">MONEYCONTROL</div>
             </div>
+            <input id="wire-search-input" placeholder="Search news by stock (e.g. RELIANCE, HDFC) or topic..." style="flex:1;height:22px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px" />
+            <span class="dim" id="wire-count" style="font-size:9px">0 items</span>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-            <span class="dim" id="top-upd">—</span>
-            <button class="btn ghost" id="wire-refresh-btn" style="height:20px;padding:0 6px;font-size:9px">↻ REFRESH WIRE</button>
+          <div id="top-body-news" style="flex:1;overflow-y:auto"><div class="empty">Loading breaking market wire from Economic Times, LiveMint &amp; Moneycontrol…</div></div>
+        </div>
+
+        <!-- SECTION 2: EXCHANGE FILINGS & RESULTS -->
+        <div id="top-sec-filings" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
+          <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px;gap:6px;flex-wrap:wrap">
+            <button class="filter-pill active" data-filing-filter="all">ALL FILINGS</button>
+            <button class="filter-pill" data-filing-filter="results">RESULTS &amp; EARNINGS</button>
+            <button class="filter-pill" data-filing-filter="board">BOARD MEETINGS</button>
+            <button class="filter-pill" data-filing-filter="order">ORDER WINS &amp; CONTRACTS</button>
+            <button class="filter-pill" data-filing-filter="allotment">QIP / ALLOTMENTS</button>
+            <button class="filter-pill" data-filing-filter="dividend">DIVIDENDS</button>
+            <input id="filings-search-input" placeholder="Filter by symbol e.g. SHALPAINTS or keyword..." style="margin-left:auto;height:22px;width:220px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px" />
+            <span class="dim" id="filings-count" style="font-size:9px">0 filings</span>
           </div>
+          <div id="top-body-filings" style="flex:1;overflow-y:auto"><div class="empty">Loading official board filings and quarterly results from NSE archives…</div></div>
         </div>
-        <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px">
-          <span class="dim" style="font-size:9px">FILTER WIRE:</span>
-          <input id="wire-search-input" placeholder="Search by stock e.g. RELIANCE, HDFC, or keyword..." style="flex:1;height:23px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px" />
-          <span class="dim" id="wire-count" style="font-size:9px">0 items</span>
+
+        <!-- SECTION 3: CORPORATE ACTIONS -->
+        <div id="top-sec-actions" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
+          <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px;gap:6px;flex-wrap:wrap">
+            <button class="filter-pill active" data-action-filter="all">ALL ACTIONS</button>
+            <button class="filter-pill" data-action-filter="dividend">DIVIDENDS 💰</button>
+            <button class="filter-pill" data-action-filter="split">STOCK SPLITS ✂️</button>
+            <button class="filter-pill" data-action-filter="bonus">BONUS ISSUES 🎁</button>
+            <button class="filter-pill" data-action-filter="rights">RIGHTS &amp; AGMS</button>
+            <input id="actions-search-input" placeholder="Filter by symbol e.g. COLPAL, INFY..." style="margin-left:auto;height:22px;width:200px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px" />
+            <span class="dim" id="actions-count" style="font-size:9px">0 actions</span>
+          </div>
+          <div id="top-body-actions" style="flex:1;overflow-y:auto"><div class="empty">Loading upcoming dividends, splits and bonus issues from NSE…</div></div>
         </div>
-        <div id="top-body" style="flex:1;overflow-y:auto"><div class="empty">Loading breaking market wire from Economic Times, LiveMint &amp; Moneycontrol…</div></div>
       </div>
 
       <!-- POSITIONS -->
@@ -1212,8 +1251,13 @@ const state = {
   news: [],
   corpEvents: null,
   feedTab: "news",
+  topSec: "news",
   wireSub: "all",
   wireData: null,
+  filingsData: null,
+  filingsFilter: "all",
+  actionsData: null,
+  actionsFilter: "all",
   rail: "watch",
   lastLatency: null,
   bootedAt: Date.now(),
@@ -1999,24 +2043,65 @@ function renderFeed() {
   });
 }
 
-/* ---------- breaking market wire ---------- */
+/* ---------- market intelligence (wire, filings, corporate actions) ---------- */
 async function loadTopNews(refresh = false) {
-  const body = $("#top-body");
-  if (!body) return;
-  body.innerHTML = `<div class="empty">Loading breaking market wire from Economic Times, LiveMint &amp; Moneycontrol…</div>`;
-  try {
-    const res = await api(`/api/market-wire?limit=60&refresh=${refresh ? "1" : "0"}`, { timeout: 15000 });
-    state.wireData = res.articles || [];
-    renderWire();
-    const stamp = $("#top-upd");
-    if (stamp) stamp.textContent = nowIst();
-  } catch (err) {
-    body.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+  const sec = state.topSec || "news";
+  if (sec === "news") {
+    const body = $("#top-body-news");
+    if (!body) return;
+    if (refresh || !state.wireData) {
+      body.innerHTML = `<div class="empty">Loading breaking market wire from Economic Times, LiveMint &amp; Moneycontrol…</div>`;
+      try {
+        const res = await api(`/api/market-wire?limit=60&refresh=${refresh ? "1" : "0"}`, { timeout: 15000 });
+        state.wireData = res.articles || [];
+        renderWire();
+        const stamp = $("#top-upd");
+        if (stamp) stamp.textContent = nowIst();
+      } catch (err) {
+        body.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+      }
+    } else {
+      renderWire();
+    }
+  } else if (sec === "filings") {
+    const body = $("#top-body-filings");
+    if (!body) return;
+    if (refresh || !state.filingsData) {
+      body.innerHTML = `<div class="empty">Loading official board filings and quarterly results from NSE archives…</div>`;
+      try {
+        const res = await api(`/api/market-filings?limit=100&refresh=${refresh ? "1" : "0"}`, { timeout: 15000 });
+        state.filingsData = res.filings || [];
+        renderMarketFilings();
+        const stamp = $("#top-upd");
+        if (stamp) stamp.textContent = nowIst();
+      } catch (err) {
+        body.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+      }
+    } else {
+      renderMarketFilings();
+    }
+  } else if (sec === "actions") {
+    const body = $("#top-body-actions");
+    if (!body) return;
+    if (refresh || !state.actionsData) {
+      body.innerHTML = `<div class="empty">Loading upcoming dividends, splits and bonus issues from NSE…</div>`;
+      try {
+        const res = await api(`/api/market-actions?limit=150&refresh=${refresh ? "1" : "0"}`, { timeout: 15000 });
+        state.actionsData = res.actions || [];
+        renderMarketActions();
+        const stamp = $("#top-upd");
+        if (stamp) stamp.textContent = nowIst();
+      } catch (err) {
+        body.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+      }
+    } else {
+      renderMarketActions();
+    }
   }
 }
 
 function renderWire() {
-  const body = $("#top-body");
+  const body = $("#top-body-news");
   if (!body) return;
   let articles = state.wireData || [];
   const sub = state.wireSub || "all";
@@ -2075,6 +2160,142 @@ function renderWire() {
   $$(".wire-card div[data-link]", body).forEach(el => {
     el.addEventListener("click", () => {
       window.open(el.dataset.link, "_blank", "noopener");
+    });
+  });
+}
+
+function renderMarketFilings() {
+  const body = $("#top-body-filings");
+  if (!body) return;
+  let filings = state.filingsData || [];
+  const filt = state.filingsFilter || "all";
+  if (filt === "results") filings = filings.filter(f => (f.category || "").toUpperCase() === "RESULTS" || (f.desc || "").toLowerCase().includes("result") || (f.desc || "").toLowerCase().includes("financial"));
+  else if (filt === "board") filings = filings.filter(f => (f.category || "").toUpperCase() === "BOARD" || (f.desc || "").toLowerCase().includes("meeting") || (f.desc || "").toLowerCase().includes("board"));
+  else if (filt === "order") filings = filings.filter(f => (f.category || "").toUpperCase() === "ORDER" || (f.desc || "").toLowerCase().includes("order") || (f.desc || "").toLowerCase().includes("contract"));
+  else if (filt === "allotment") filings = filings.filter(f => (f.category || "").toUpperCase() === "ALLOTMENT" || (f.desc || "").toLowerCase().includes("allot") || (f.desc || "").toLowerCase().includes("qip"));
+  else if (filt === "dividend") filings = filings.filter(f => (f.category || "").toUpperCase() === "DIVIDEND" || (f.desc || "").toLowerCase().includes("dividend"));
+
+  const query = ($("#filings-search-input")?.value || "").trim().toUpperCase();
+  if (query) {
+    filings = filings.filter(f =>
+      (f.symbol || "").toUpperCase().includes(query) ||
+      (f.company || "").toUpperCase().includes(query) ||
+      (f.desc || "").toUpperCase().includes(query) ||
+      (f.text || "").toUpperCase().includes(query)
+    );
+  }
+
+  const cnt = $("#filings-count");
+  if (cnt) cnt.textContent = `${filings.length} filings`;
+
+  if (!filings.length) {
+    body.innerHTML = `<div class="empty">No exchange filings matching filter.</div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="wire-stream">${filings.map(f => {
+    const cat = (f.category || "").toUpperCase();
+    const catCls = cat === "RESULTS" ? "amber" : (cat === "BOARD" ? "cyan" : (cat === "ORDER" || cat === "DIVIDEND" ? "up" : ""));
+    return `<div class="filing-card" style="padding:10px 12px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px">
+      <div style="flex:0 0 110px;display:flex;flex-direction:column;gap:4px">
+        <span class="tag buy card-sym" data-filing-sym="${esc(f.symbol)}" style="cursor:pointer;font-weight:bold;text-align:center;font-size:10px" title="Load chart for ${esc(f.symbol)}">${esc(f.symbol)}</span>
+        <span class="tag ${catCls}" style="font-size:8px;text-align:center">${esc(f.category)}</span>
+        <span class="dim" style="font-size:8px;text-align:center">${esc(f.time_ago || f.date)}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:600;color:var(--text)">${esc(f.company || f.symbol)}</span>
+          ${f.industry ? `<span class="dim" style="font-size:9px">(${esc(f.industry)})</span>` : ""}
+          <span class="dim" style="font-size:9px;margin-left:auto">${esc(f.date)}</span>
+        </div>
+        <div style="font-size:11px;font-weight:500;color:var(--amber);margin-top:2px;line-height:1.4">${esc(f.desc)}</div>
+        ${f.text ? `<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45;background:rgba(255,255,255,0.02);padding:6px 8px;border-left:2px solid var(--line-2)">${esc(f.text)}</div>` : ""}
+        ${f.summary ? `<div style="font-size:10px;color:var(--cyan);margin-top:4px"><b style="font-size:9px">SUMMARY:</b> ${esc(f.summary)}</div>` : ""}
+      </div>
+      ${f.pdf_url ? `
+        <div style="flex:0 0 auto">
+          <a href="${esc(f.pdf_url)}" target="_blank" rel="noopener" class="btn ghost" style="height:24px;padding:0 8px;font-size:9px;display:inline-flex;align-items:center;gap:4px;color:var(--cyan);border-color:var(--cyan)" title="Open official exchange filing PDF">
+            <span>📄 PDF</span> ↗
+          </a>
+        </div>` : ""}
+    </div>`;
+  }).join("")}</div>`;
+
+  $$("[data-filing-sym]", body).forEach(b => {
+    b.addEventListener("click", () => {
+      selectSymbol(b.dataset.filingSym);
+      setView("GP");
+    });
+  });
+}
+
+function renderMarketActions() {
+  const body = $("#top-body-actions");
+  if (!body) return;
+  let actions = state.actionsData || [];
+  const filt = state.actionsFilter || "all";
+  if (filt === "dividend") actions = actions.filter(a => (a.kind || "").toUpperCase() === "DIVIDEND" || (a.subject || "").toLowerCase().includes("dividend"));
+  else if (filt === "split") actions = actions.filter(a => (a.kind || "").toUpperCase() === "SPLIT" || (a.subject || "").toLowerCase().includes("split"));
+  else if (filt === "bonus") actions = actions.filter(a => (a.kind || "").toUpperCase() === "BONUS" || (a.subject || "").toLowerCase().includes("bonus"));
+  else if (filt === "rights") actions = actions.filter(a => (a.kind || "").toUpperCase() === "RIGHTS" || (a.kind || "").toUpperCase() === "AGM" || (a.subject || "").toLowerCase().includes("rights") || (a.subject || "").toLowerCase().includes("agm"));
+
+  const query = ($("#actions-search-input")?.value || "").trim().toUpperCase();
+  if (query) {
+    actions = actions.filter(a =>
+      (a.symbol || "").toUpperCase().includes(query) ||
+      (a.company || "").toUpperCase().includes(query) ||
+      (a.subject || "").toUpperCase().includes(query) ||
+      (a.details || "").toUpperCase().includes(query)
+    );
+  }
+
+  const cnt = $("#actions-count");
+  if (cnt) cnt.textContent = `${actions.length} actions`;
+
+  if (!actions.length) {
+    body.innerHTML = `<div class="empty">No corporate actions matching filter.</div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="data-wrap"><table class="data"><thead><tr>
+    <th>Symbol</th>
+    <th>Company</th>
+    <th>Type</th>
+    <th>Benefit / Details</th>
+    <th>Subject / Purpose</th>
+    <th>Ex-Date</th>
+    <th>Record Date</th>
+    <th>Action</th>
+  </tr></thead><tbody>${actions.map(a => {
+    const isDiv = (a.kind || "").toUpperCase() === "DIVIDEND";
+    const isSplit = (a.kind || "").toUpperCase() === "SPLIT";
+    const isBonus = (a.kind || "").toUpperCase() === "BONUS";
+    const kindCls = isDiv ? "up" : (isSplit ? "cyan" : (isBonus ? "amber" : ""));
+    const detailColor = isDiv ? "var(--up)" : (isSplit ? "var(--cyan)" : (isBonus ? "var(--amber)" : "var(--text)"));
+
+    return `<tr>
+      <td><span class="tag buy card-sym" data-action-sym="${esc(a.symbol)}" style="cursor:pointer;font-weight:bold" title="View chart for ${esc(a.symbol)}">${esc(a.symbol)}</span></td>
+      <td><div style="font-weight:500;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(a.company)}">${esc(a.company)}</div></td>
+      <td><span class="tag ${kindCls}" style="font-size:9px">${esc(a.kind)}</span></td>
+      <td><b style="color:${detailColor}">${esc(a.details || "—")}</b></td>
+      <td><div style="font-size:10px;color:var(--muted);max-width:320px;line-height:1.3" title="${esc(a.subject)}">${esc(a.subject)}</div></td>
+      <td><span style="font-weight:600;color:var(--text)">${esc(a.ex_date)}</span></td>
+      <td><span class="dim">${esc(a.record_date)}</span></td>
+      <td><button class="btn buy" style="height:18px;padding:0 6px;font-size:8px" data-action-trade="${esc(a.symbol)}">TRADE</button></td>
+    </tr>`;
+  }).join("")}</tbody></table></div>`;
+
+  $$("[data-action-sym]", body).forEach(b => {
+    b.addEventListener("click", () => {
+      selectSymbol(b.dataset.actionSym);
+      setView("GP");
+    });
+  });
+
+  $$("[data-action-trade]", body).forEach(b => {
+    b.addEventListener("click", () => {
+      selectSymbol(b.dataset.actionTrade);
+      setSide("BUY");
     });
   });
 }
@@ -2960,6 +3181,8 @@ function renderNseDeals() {
   const filter = state.blkFilter || "all";
   if (filter === "bulk") all = bulk;
   else if (filter === "block") all = block;
+  else if (filter === "buy_only") all = all.filter(g => (Number(g.buy_qty) || 0) > 0 && (Number(g.sell_qty) || 0) === 0);
+  else if (filter === "sell_only") all = all.filter(g => (Number(g.sell_qty) || 0) > 0 && (Number(g.buy_qty) || 0) === 0);
   else if (filter === "net_buy") all = all.filter(g => Number(g.net_val) > 0);
 
   const query = ($("#nse-search-input")?.value || "").trim().toUpperCase();
@@ -3938,6 +4161,20 @@ $$("#feed-subtabs .subtab").forEach(tab => {
 });
 $("#feed-refresh-btn")?.addEventListener("click", () => loadNews(true));
 
+/* ---------- market intelligence & top news wire-up ---------- */
+$$("#top-section-tabs .subtab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    $$("#top-section-tabs .subtab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    state.topSec = tab.dataset.topSec;
+    $("#top-sec-news")?.classList.toggle("hide", state.topSec !== "news");
+    $("#top-sec-filings")?.classList.toggle("hide", state.topSec !== "filings");
+    $("#top-sec-actions")?.classList.toggle("hide", state.topSec !== "actions");
+    loadTopNews(false);
+  });
+});
+$("#top-refresh-btn")?.addEventListener("click", () => loadTopNews(true));
+
 /* ---------- market wire subtabs wire-up ---------- */
 $$("#wire-subtabs .subtab").forEach(tab => {
   tab.addEventListener("click", () => {
@@ -3949,6 +4186,28 @@ $$("#wire-subtabs .subtab").forEach(tab => {
 });
 $("#wire-refresh-btn")?.addEventListener("click", () => loadTopNews(true));
 $("#wire-search-input")?.addEventListener("input", renderWire);
+
+/* ---------- filings filters wire-up ---------- */
+$$("[data-filing-filter]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    $$("[data-filing-filter]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.filingsFilter = btn.dataset.filingFilter;
+    renderMarketFilings();
+  });
+});
+$("#filings-search-input")?.addEventListener("input", renderMarketFilings);
+
+/* ---------- corporate actions filters wire-up ---------- */
+$$("[data-action-filter]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    $$("[data-action-filter]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.actionsFilter = btn.dataset.actionFilter;
+    renderMarketActions();
+  });
+});
+$("#actions-search-input")?.addEventListener("input", renderMarketActions);
 
 /* auto-resume saved session */
 (async function init() {

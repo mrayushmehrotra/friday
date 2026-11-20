@@ -18,6 +18,7 @@ Pipelines:
 import datetime
 import email.utils
 import html
+import os
 import re
 import threading
 import time
@@ -235,7 +236,7 @@ def fetch_corporate_events(symbol: str, force_refresh: bool = False) -> dict:
             kind = "AGM"
 
         # Extract amount if present
-        amount_match = re.search(r"(?:rs\.?|inr|₹)\s*([\d\.]+)", subj_l)
+        amount_match = re.search(r"(?:rs\.?|re\.?|inr|₹)\s*([\d\.]+)", subj_l)
         ratio_match = re.search(r"(\d+:\d+)", subj_l)
         details = (
             f"₹{amount_match.group(1)}/share"
@@ -423,7 +424,8 @@ def fetch_stock_news(
                 "origin": "Yahoo Finance",
             })
     except Exception as exc:
-        print(f"[news] Yahoo news error for {clean_sym}: {exc}")
+        if os.getenv("FRIDAY_DEBUG"):
+            print(f"[news] Yahoo news error for {clean_sym}: {exc}")
 
     # Sort newest first
     articles.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
@@ -512,6 +514,169 @@ def fetch_market_wire(force_refresh: bool = False, limit: int = 50) -> dict:
     return result
 
 
+_MARKET_FILINGS_CACHE: Dict[str, Tuple[float, dict]] = {}
+_MARKET_ACTIONS_CACHE: Dict[str, Tuple[float, dict]] = {}
+
+
+# ----------------------------------------------------------------------
+# Pipeline 4: Market-Wide Corporate Filings & Announcements (NSE Live)
+# ----------------------------------------------------------------------
+def fetch_market_filings(force_refresh: bool = False, limit: int = 100) -> dict:
+    now = time.time()
+    if not force_refresh and "filings" in _MARKET_FILINGS_CACHE:
+        cached_ts, data = _MARKET_FILINGS_CACHE["filings"]
+        if now - cached_ts < CACHE_TTL_WIRE:
+            return data
+
+    s = _get_nse_session()
+    raw_ann = []
+    try:
+        now_dt = datetime.datetime.now()
+        from_d = (now_dt - datetime.timedelta(days=4)).strftime("%d-%m-%Y")
+        to_d = now_dt.strftime("%d-%m-%Y")
+        url = f"https://www.nseindia.com/api/corporate-announcements?index=equities&from_date={from_d}&to_date={to_d}"
+        r = s.get(
+            url,
+            headers={"Referer": "https://www.nseindia.com/companies-listing/corporate-filings-announcements"},
+            timeout=12,
+        )
+        if r.status_code == 200:
+            raw_ann = r.json()
+        elif r.status_code != 200:
+            r_fb = s.get("https://www.nseindia.com/api/corporate-announcements?index=equities", timeout=12)
+            if r_fb.status_code == 200:
+                raw_ann = r_fb.json()
+    except Exception as exc:
+        print(f"[filings] Error fetching market filings: {exc}")
+
+    parsed = []
+    for m in (raw_ann or [])[:limit]:
+        pdf = m.get("attchmntFile")
+        pdf_url = None
+        if pdf and isinstance(pdf, str) and pdf.strip() and pdf.strip() != "-":
+            pdf = pdf.strip()
+            if pdf.startswith("http://") or pdf.startswith("https://"):
+                pdf_url = pdf
+            else:
+                pdf_url = f"https://nsearchives.nseindia.com/corporate/{pdf}"
+
+        date_str = m.get("an_dt") or m.get("sort_date") or ""
+        desc_str = _clean_str(m.get("desc") or "Filing")
+        text_str = _clean_str(m.get("attchmntText") or "")
+        summary_str = _clean_str(m.get("voiceSummary") or "")
+        sym = (m.get("symbol") or "").strip().upper()
+
+        cat = "FILING"
+        desc_l = desc_str.lower()
+        if "result" in desc_l or "financial" in desc_l:
+            cat = "RESULTS"
+        elif "meeting" in desc_l or "board" in desc_l:
+            cat = "BOARD"
+        elif "dividend" in desc_l:
+            cat = "DIVIDEND"
+        elif "allotment" in desc_l or "qip" in desc_l:
+            cat = "ALLOTMENT"
+        elif "order" in desc_l or "contract" in desc_l:
+            cat = "ORDER"
+
+        parsed.append({
+            "symbol": sym,
+            "company": m.get("sm_name") or sym,
+            "category": cat,
+            "desc": desc_str,
+            "text": text_str[:280] + ("…" if len(text_str) > 280 else ""),
+            "summary": summary_str,
+            "date": date_str,
+            "time_ago": _format_time_ago(date_str),
+            "pdf_url": pdf_url,
+            "industry": m.get("smIndustry") or "",
+        })
+
+    result = {
+        "count": len(parsed),
+        "filings": parsed,
+        "updated_at": datetime.datetime.now().strftime("%H:%M:%S IST"),
+    }
+    _MARKET_FILINGS_CACHE["filings"] = (now, result)
+    return result
+
+
+# ----------------------------------------------------------------------
+# Pipeline 5: Market-Wide Corporate Actions (Dividends, Splits, Bonus)
+# ----------------------------------------------------------------------
+def fetch_market_actions(force_refresh: bool = False, limit: int = 150) -> dict:
+    now = time.time()
+    if not force_refresh and "actions" in _MARKET_ACTIONS_CACHE:
+        cached_ts, data = _MARKET_ACTIONS_CACHE["actions"]
+        if now - cached_ts < CACHE_TTL_EVENTS:
+            return data
+
+    s = _get_nse_session()
+    raw_actions = []
+    try:
+        now_dt = datetime.datetime.now()
+        from_d = (now_dt - datetime.timedelta(days=14)).strftime("%d-%m-%Y")
+        to_d = (now_dt + datetime.timedelta(days=45)).strftime("%d-%m-%Y")
+        url = f"https://www.nseindia.com/api/corporates-corporateActions?index=equities&from_date={from_d}&to_date={to_d}"
+        r = s.get(
+            url,
+            headers={"Referer": "https://www.nseindia.com/companies-listing/corporate-filings-actions"},
+            timeout=12,
+        )
+        if r.status_code == 200:
+            raw_actions = r.json()
+        elif r.status_code != 200:
+            r_fb = s.get("https://www.nseindia.com/api/corporates-corporateActions?index=equities", timeout=12)
+            if r_fb.status_code == 200:
+                raw_actions = r_fb.json()
+    except Exception as exc:
+        print(f"[actions] Error fetching market corporate actions: {exc}")
+
+    parsed = []
+    for a in (raw_actions or [])[:limit]:
+        subj = _clean_str(a.get("subject", ""))
+        subj_l = subj.lower()
+        kind = "ACTION"
+        if "dividend" in subj_l:
+            kind = "DIVIDEND"
+        elif "split" in subj_l:
+            kind = "SPLIT"
+        elif "bonus" in subj_l:
+            kind = "BONUS"
+        elif "rights" in subj_l:
+            kind = "RIGHTS"
+        elif "agm" in subj_l or "egm" in subj_l:
+            kind = "AGM"
+
+        amount_match = re.search(r"(?:rs\.?|re\.?|inr|₹)\s*([\d\.]+)", subj_l)
+        ratio_match = re.search(r"(\d+:\d+)", subj_l)
+        details = (
+            f"₹{amount_match.group(1)}/sh"
+            if amount_match
+            else (f"Ratio {ratio_match.group(1)}" if ratio_match else "")
+        )
+
+        sym = (a.get("symbol") or "").strip().upper()
+        parsed.append({
+            "symbol": sym,
+            "company": a.get("comp") or sym,
+            "kind": kind,
+            "subject": subj,
+            "details": details,
+            "ex_date": a.get("exDate") or "—",
+            "record_date": a.get("recDate") or "—",
+            "series": a.get("series") or "EQ",
+        })
+
+    result = {
+        "count": len(parsed),
+        "actions": parsed,
+        "updated_at": datetime.datetime.now().strftime("%H:%M:%S IST"),
+    }
+    _MARKET_ACTIONS_CACHE["actions"] = (now, result)
+    return result
+
+
 if __name__ == "__main__":
     print("Testing News & Corporate Events Engine...")
     e = fetch_corporate_events("RELIANCE")
@@ -519,6 +684,8 @@ if __name__ == "__main__":
     n = fetch_stock_news("RELIANCE", "Reliance Industries Limited", count=5)
     print(f"RELIANCE News: {len(n['articles'])} articles")
     w = fetch_market_wire(limit=10)
-    print(f"Market Wire: {len(w['articles'])} articles, tagged samples:")
-    for a in w["articles"][:3]:
-        print("  •", a["source"], a["tagged_symbols"], a["title"][:70])
+    print(f"Market Wire: {len(w['articles'])} articles")
+    mf = fetch_market_filings(limit=5)
+    print(f"Market Filings: {len(mf['filings'])} filings")
+    ma = fetch_market_actions(limit=5)
+    print(f"Market Actions: {len(ma['actions'])} actions")

@@ -398,12 +398,22 @@ Left → right: wordmark, command line, link LED, latency, market pill, IST cloc
 - Header row `8px` uppercase dim.
 - If depth is unavailable, show `Depth unavailable.` — do not collapse the panel.
 
-### 6.7 Headlines
+### 6.7 Market Intelligence & Top News (`TOP`)
 
-- Two-line item: source in amber uppercase `8px`, headline in `10px/1.45` text.
-- Click opens the article in a new tab (`noopener`).
-- Strip HTML from RSS titles and escape before insertion.
-- Cap at 8 items in the chart lower panel, 20 in the full `TOP` view.
+The institutional `TOP` view provides a three-section market intelligence suite:
+1. **📰 Breaking News & Wire (`#top-sec-news`)**:
+   - Multi-source RSS aggregation from Economic Times, LiveMint, Business Standard, and Moneycontrol.
+   - Provider subtabs (`ALL WIRE`, `ET`, `LIVEMINT`, `BS`, `MC`) and live ticker/topic search.
+   - Automatic entity tagging to NSE stock symbols with clickable badges that immediately pivot to `GP` chart.
+   - External source link (↗) opens the full article in a new tab with `rel="noopener"`.
+2. **📄 Exchange Filings & Results (`#top-sec-filings`)**:
+   - Live corporate board filings and quarterly results directly from official NSE JSON endpoints (`/api/corporate-announcements?index=equities`).
+   - Category filter pills: `ALL FILINGS`, `RESULTS & EARNINGS`, `BOARD MEETINGS`, `ORDER WINS & CONTRACTS`, `QIP / ALLOTMENTS`, `DIVIDENDS`.
+   - Card layout with stock badge (1-click chart switch), category tag, filing timestamp, official description, executive text excerpt, AI voice summary, and a direct link to the official exchange PDF document (`nsearchives.nseindia.in`).
+3. **⚡ Corporate Actions (`#top-sec-actions`)**:
+   - Exchange-wide dividends, stock splits, bonus issues, and rights offerings from `/api/corporates-corporateActions?index=equities`.
+   - Filter pills: `ALL ACTIONS`, `DIVIDENDS 💰`, `STOCK SPLITS ✂️`, `BONUS ISSUES 🎁`, `RIGHTS & AGMS`.
+   - Financial data table with Symbol, Company, Action Type, Calculated Benefit/Details (e.g. `₹24.00/sh`, `Ratio 10:1`), Purpose, Ex-Date, Record Date, and a 1-click `TRADE` action button that selects the stock and pre-fills the order ticket.
 
 ### 6.8 Option chain (`OMON`)
 
@@ -446,6 +456,10 @@ Left → right: wordmark, command line, link LED, latency, market pill, IST cloc
 - Loads `/api/large-deals`; reads `GROUPED_BULK_DEALS_DATA` and
   `GROUPED_BLOCK_DEALS_DATA`, merges and sorts by total value, caps at 40 rows.
 - Columns: Symbol, Type, Buy Qty, Sell Qty, Net Qty, Buy Val, Sell Val, Net Val, Clients.
+- Filter pills: `ALL DEALS`, `BULK ONLY`, `BLOCK ONLY`, `BUY ONLY` (buy_qty > 0 and
+  sell_qty = 0), `SELL ONLY` (sell_qty > 0 and buy_qty = 0) and `NET BUYERS`. These are
+  grouped-stock filters, so `BUY ONLY` / `SELL ONLY` mean the stock had deals only on that
+  side during the session.
 - Net qty/value are semantically coloured; client count appears on hover with up to four
   client names. Footer: `NSE · <as_on_date> · HH:MM:SS`.
 - Loading / empty / error states are mandatory; stale NSE snapshots are labelled by date.
