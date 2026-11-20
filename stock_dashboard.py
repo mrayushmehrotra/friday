@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -1001,6 +1002,11 @@ _FUNDAMENTALS_CACHE = {}
 _FUND_PRICE_CACHE = {}
 _FUND_TTL = 600  # 10 minutes
 
+# Bullish-put screens are expensive (~44 INDstocks calls). Cache per token so a
+# pasted terminal token never reuses the stale .env snapshot in assets/.
+_FNO_SCAN_CACHE = {}
+_FNO_SCAN_TTL = 300
+
 
 def _fund_clean(node):
     return re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip() if node else ""
@@ -1590,6 +1596,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._handle_market_actions(params)
         elif path in ("/api/upcoming-events", "/api/calendar", "/api/board-meetings"):
             self._handle_upcoming_events(params)
+        elif path in ("/api/earnings-alerts", "/api/earnings", "/api/nearest-earnings"):
+            self._handle_earnings_alerts(params)
         elif path == "/api/backtest":
             self._handle_backtest(params)
         elif path == "/api/compare":
@@ -1802,6 +1810,16 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._send_json(data)
         except Exception as exc:
             self._send_json({"error": str(exc), "events": []}, 502)
+
+    def _handle_earnings_alerts(self, params):
+        limit = int(self._get_param(params, "limit", "100") or 100)
+        refresh = bool(self._get_param(params, "refresh", "0") in ("1", "true"))
+        try:
+            import news_events_engine
+            data = news_events_engine.fetch_earnings_alerts(force_refresh=refresh, limit=limit)
+            self._send_json(data)
+        except Exception as exc:
+            self._send_json({"error": str(exc), "earnings": []}, 502)
 
     def _handle_backtest(self, params):
         ticker = self._get_param(params, "ticker", "").upper()
@@ -2098,38 +2116,54 @@ class DashboardHandler(SimpleHTTPRequestHandler):
     def _handle_fno_strategy(self, params):
         json_path = os.path.join(HERE, "assets", "bullish_stocks_with_cheap_puts.json")
         refresh = self._get_param(params, "refresh", "0").lower() in ("1", "true", "yes")
-        days = int(self._get_param(params, "days", "5") or 5)
-        max_premium = float(self._get_param(params, "max_premium", "20.0") or 20.0)
-        max_lot_cost = float(self._get_param(params, "max_lot_cost", "5000.0") or 5000.0)
+        try:
+            days = max(2, min(int(self._get_param(params, "days", "5") or 5), 10))
+            max_premium = max(0.05, float(self._get_param(params, "max_premium", "20.0") or 20.0))
+            max_lot_cost = max(100.0, float(self._get_param(params, "max_lot_cost", "5000.0") or 5000.0))
+        except (TypeError, ValueError) as exc:
+            self._send_json({"error": f"Invalid scan parameters: {exc}"}, 400)
+            return
         mode = self._get_param(params, "mode", "higher_closes")
 
-        # Return cached JSON if default parameters and no refresh requested
-        if (
-            not refresh
-            and os.path.exists(json_path)
-            and days == 5
-            and abs(max_premium - 20.0) < 1e-4
-            and abs(max_lot_cost - 5000.0) < 1e-4
-            and mode == "higher_closes"
-        ):
+        token = self._ind_token()
+        token_key = hashlib.sha256(token.encode("utf-8")).hexdigest()[:12] if token else "env"
+        cache_key = (token_key, days, max_premium, max_lot_cost, mode)
+        cached = _FNO_SCAN_CACHE.get(cache_key)
+        if cached and not refresh and time.time() - cached[0] < _FNO_SCAN_TTL:
+            self._send_json(cached[1])
+            return
+        if refresh:
+            _FNO_SCAN_CACHE.pop(cache_key, None)
+
+        # The committed JSON snapshot is only a fallback for .env-token runs and
+        # must be fresh. A pasted terminal token always runs a live screen.
+        if not token and not refresh and os.path.exists(json_path):
             try:
                 with open(json_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                self._send_json(data)
-                return
+                    snapshot = json.load(f)
+                ts = snapshot.get("screen_timestamp")
+                if ts:
+                    age = (datetime.datetime.now() - datetime.datetime.fromisoformat(ts)).total_seconds()
+                    if 0 <= age < 3600:
+                        self._send_json(snapshot)
+                        return
             except Exception:
                 pass
 
         try:
             from bullish_put_filter import BullishPutFilter
             scanner = BullishPutFilter(
+                token=token or None,
                 consecutive_days=days,
                 max_put_premium=max_premium,
                 max_lot_investment=max_lot_cost,
                 bullish_mode=mode,
             )
             data = scanner.run_screen()
+            data.setdefault("stocks", data.get("results", []))
+            data["source"] = "live" if token else "env-token"
             scanner.save_results(data)
+            _FNO_SCAN_CACHE[cache_key] = (time.time(), data)
             self._send_json(data)
         except Exception as e:
             self._send_json({"error": str(e)}, 500)

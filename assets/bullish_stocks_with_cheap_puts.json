@@ -1,5 +1,5 @@
 {
-  "screen_timestamp": "2026-11-19T13:12:18.004620",
+  "screen_timestamp": "2026-11-21T01:13:25.509647",
   "criteria": {
     "consecutive_bullish_days": 5,
     "bullish_mode": "higher_closes",
@@ -9,5 +9,7 @@
   "total_fno_stocks_scanned": 218,
   "total_bullish_stocks_found": 0,
   "qualifying_stocks_count": 0,
-  "results": []
+  "results": [],
+  "stocks": [],
+  "source": "live"
 }

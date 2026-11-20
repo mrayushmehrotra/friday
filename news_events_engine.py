@@ -397,6 +397,56 @@ def fetch_corporate_events(symbol: str, force_refresh: bool = False) -> dict:
             "company": m.get("sm_name") or clean_sym,
         })
 
+    nearest_earnings = None
+    # 1. Check if any upcoming board meeting intimates financial results
+    for bm in bm_up:
+        purp_l = (bm.get("purpose", "") + " " + bm.get("desc", "")).lower()
+        if "result" in purp_l or "financial" in purp_l or "audited" in purp_l or "quarterly" in purp_l:
+            period_match = re.search(r'(?:period|quarter|half year|ended)\s+([A-Za-z]+\s+\d{1,2},?\s*\d{4}|[A-Za-z]+\s+\d{4})', purp_l)
+            period_str = period_match.group(1).title() if period_match else ""
+            nearest_earnings = {
+                "source": "NSE Board Meeting Intimation (SEBI LODR)",
+                "date": bm.get("date"),
+                "days_left": bm.get("days_left"),
+                "rel_date": bm.get("rel_date"),
+                "purpose": bm.get("purpose"),
+                "desc": bm.get("desc"),
+                "period": period_str,
+                "has_dividend": "dividend" in purp_l,
+                "pdf_url": bm.get("attachment"),
+            }
+            break
+
+    # 2. Fallback to consensus tracking (yfinance)
+    if not nearest_earnings:
+        try:
+            import yfinance as yf
+            t = yf.Ticker(f"{clean_sym}.NS")
+            cal = getattr(t, "calendar", None)
+            if isinstance(cal, dict) and cal.get("Earnings Date"):
+                ed = cal["Earnings Date"][0]
+                if isinstance(ed, (datetime.date, datetime.datetime)):
+                    today_d = datetime.datetime.now().date()
+                    ed_date = ed if isinstance(ed, datetime.date) else ed.date()
+                    d_left = (ed_date - today_d).days
+                    if d_left >= 0:
+                        rel_l = "TODAY" if d_left == 0 else ("TOMORROW" if d_left == 1 else f"IN {d_left} DAYS")
+                        eps_est = cal.get("Earnings Average")
+                        nearest_earnings = {
+                            "source": "Consensus Earnings Calendar",
+                            "date": ed_date.strftime("%d-%b-%Y"),
+                            "days_left": d_left,
+                            "rel_date": rel_l,
+                            "purpose": "Quarterly Financial Results",
+                            "desc": f"Consensus release date tracking for {clean_sym}",
+                            "period": "",
+                            "has_dividend": False,
+                            "pdf_url": None,
+                            "eps_estimate": eps_est,
+                        }
+        except Exception:
+            pass
+
     result = {
         "symbol": clean_sym,
         "actions_count": len(parsed_actions),
@@ -407,6 +457,7 @@ def fetch_corporate_events(symbol: str, force_refresh: bool = False) -> dict:
         "board_meetings": parsed_board_meetings,
         "announcements_count": len(parsed_announcements),
         "announcements": parsed_announcements,
+        "nearest_earnings": nearest_earnings,
         "source": "NSE Official Corporate Filings",
         "cached_at": datetime.datetime.now().strftime("%H:%M:%S IST"),
     }
@@ -947,6 +998,166 @@ def fetch_upcoming_events(force_refresh: bool = False, limit: int = 100) -> dict
         "updated_at": datetime.datetime.now().strftime("%H:%M:%S IST"),
     }
     _UPCOMING_EVENTS_CACHE["upcoming"] = (now, result)
+    return result
+
+
+_EARNINGS_ALERTS_CACHE: Dict[str, Tuple[float, dict]] = {}
+
+
+# ----------------------------------------------------------------------
+# Pipeline 7: Nearest Earnings Releases & Financial Results Alerts
+# ----------------------------------------------------------------------
+def fetch_earnings_alerts(force_refresh: bool = False, limit: int = 100) -> dict:
+    now = time.time()
+    if not force_refresh and "alerts" in _EARNINGS_ALERTS_CACHE:
+        cached_ts, data = _EARNINGS_ALERTS_CACHE["alerts"]
+        if now - cached_ts < CACHE_TTL_EVENTS:
+            return data
+
+    s = _get_nse_session()
+    now_dt = datetime.datetime.now()
+    today = now_dt.date()
+    from_d = today.strftime("%d-%m-%Y")
+    to_d = (today + datetime.timedelta(days=90)).strftime("%d-%m-%Y")
+
+    raw_bm = []
+    raw_cal = []
+
+    # 1. Fetch upcoming corporate board meetings
+    try:
+        url_bm = f"https://www.nseindia.com/api/corporate-board-meetings?index=equities&from_date={from_d}&to_date={to_d}"
+        r = s.get(
+            url_bm,
+            headers={"Referer": "https://www.nseindia.com/companies-listing/corporate-filings-board-meetings"},
+            timeout=12,
+        )
+        if r.status_code == 200 and isinstance(r.json(), list):
+            raw_bm = r.json()
+        elif r.status_code != 200:
+            r_fb = s.get("https://www.nseindia.com/api/corporate-board-meetings?index=equities", timeout=12)
+            if r_fb.status_code == 200 and isinstance(r_fb.json(), list):
+                raw_bm = r_fb.json()
+    except Exception as exc:
+        print(f"[earnings] Error fetching board meetings: {exc}")
+
+    # 2. Fetch event calendar
+    try:
+        url_cal = f"https://www.nseindia.com/api/event-calendar?index=equities&from_date={from_d}&to_date={to_d}"
+        r = s.get(url_cal, headers={"Referer": "https://www.nseindia.com/"}, timeout=12)
+        if r.status_code == 200 and isinstance(r.json(), list):
+            raw_cal = r.json()
+        elif r.status_code != 200:
+            r_fb = s.get("https://www.nseindia.com/api/event-calendar?index=equities", timeout=12)
+            if r_fb.status_code == 200 and isinstance(r_fb.json(), list):
+                raw_cal = r_fb.json()
+    except Exception as exc:
+        print(f"[earnings] Error fetching event calendar: {exc}")
+
+    earnings = []
+    seen = set()
+
+    for m in raw_bm:
+        sym = (m.get("bm_symbol") or "").strip().upper()
+        d_str = m.get("bm_date") or ""
+        d = parse_nse_date(d_str)
+        if not d:
+            continue
+        delta = (d - today).days
+        if delta < 0:
+            continue
+        purpose = _clean_str(m.get("bm_purpose") or "Board Meeting")
+        desc = _clean_str(m.get("bm_desc") or "")
+        purp_l = (purpose + " " + desc).lower()
+        if not ("result" in purp_l or "financial" in purp_l or "audited" in purp_l or "quarterly" in purp_l):
+            continue
+
+        key = (sym, str(d))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        rel = "TODAY" if delta == 0 else ("TOMORROW" if delta == 1 else f"IN {delta} DAYS")
+        has_div = "dividend" in purp_l
+        period_match = re.search(r'(?:period|quarter|half year|ended)\s+([A-Za-z]+\s+\d{1,2},?\s*\d{4}|[A-Za-z]+\s+\d{4})', purp_l)
+        period_str = period_match.group(1).title() if period_match else ""
+
+        att = m.get("attachment")
+        pdf_url = None
+        if att and isinstance(att, str) and att.strip() and att.strip() != "-":
+            att = att.strip()
+            pdf_url = (
+                att
+                if (att.startswith("http://") or att.startswith("https://"))
+                else f"https://nsearchives.nseindia.com/corporate/{att}"
+            )
+
+        earnings.append({
+            "symbol": sym,
+            "company": m.get("sm_name") or sym,
+            "date": d_str,
+            "date_parsed": str(d),
+            "days_left": delta,
+            "rel_date": rel,
+            "purpose": purpose,
+            "desc": desc[:300] + ("…" if len(desc) > 300 else ""),
+            "period": period_str,
+            "has_dividend": has_div,
+            "pdf_url": pdf_url,
+            "source": "NSE Prior Intimation (SEBI LODR)",
+        })
+
+    for c in raw_cal:
+        sym = (c.get("symbol") or "").strip().upper()
+        d_str = c.get("date") or ""
+        d = parse_nse_date(d_str)
+        if not d:
+            continue
+        delta = (d - today).days
+        if delta < 0:
+            continue
+        purpose = _clean_str(c.get("purpose") or "Financial Results")
+        desc = _clean_str(c.get("bm_desc") or "")
+        purp_l = (purpose + " " + desc).lower()
+        if not ("result" in purp_l or "financial" in purp_l):
+            continue
+
+        key = (sym, str(d))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        rel = "TODAY" if delta == 0 else ("TOMORROW" if delta == 1 else f"IN {delta} DAYS")
+        has_div = "dividend" in purp_l
+        period_match = re.search(r'(?:period|quarter|half year|ended)\s+([A-Za-z]+\s+\d{1,2},?\s*\d{4}|[A-Za-z]+\s+\d{4})', purp_l)
+        period_str = period_match.group(1).title() if period_match else ""
+
+        earnings.append({
+            "symbol": sym,
+            "company": c.get("company") or sym,
+            "date": d_str,
+            "date_parsed": str(d),
+            "days_left": delta,
+            "rel_date": rel,
+            "purpose": purpose,
+            "desc": desc[:300] + ("…" if len(desc) > 300 else ""),
+            "period": period_str,
+            "has_dividend": has_div,
+            "pdf_url": None,
+            "source": "NSE Event Calendar",
+        })
+
+    # Sort upcoming releases: earliest release date first
+    earnings.sort(key=lambda x: x["days_left"])
+
+    result = {
+        "count": len(earnings[:limit]),
+        "this_week_count": len([e for e in earnings if 0 <= e["days_left"] <= 7]),
+        "today_tomorrow_count": len([e for e in earnings if 0 <= e["days_left"] <= 1]),
+        "with_dividend_count": len([e for e in earnings if e.get("has_dividend")]),
+        "alerts": earnings[:limit],
+        "updated_at": datetime.datetime.now().strftime("%H:%M:%S IST"),
+    }
+    _EARNINGS_ALERTS_CACHE["alerts"] = (now, result)
     return result
 
 

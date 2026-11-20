@@ -400,7 +400,7 @@ Left → right: wordmark, command line, link LED, latency, market pill, IST cloc
 
 ### 6.7 Market Intelligence & Top News (`TOP`)
 
-The institutional `TOP` view provides a four-section market intelligence and future events calendar suite:
+The institutional `TOP` view provides a five-section market intelligence and future events calendar suite:
 1. **📰 Breaking News & Wire (`#top-sec-news`)**:
    - Multi-source RSS aggregation from Economic Times, LiveMint, Business Standard, and Moneycontrol.
    - Provider subtabs (`ALL WIRE`, `ET`, `LIVEMINT`, `BS`, `MC`) and live ticker/topic search.
@@ -418,10 +418,17 @@ The institutional `TOP` view provides a four-section market intelligence and fut
    - Direct link to official prior intimation regulatory notice PDFs on `nsearchives.nseindia.in`.
 4. **📄 Exchange Filings & Results (`#top-sec-filings`)**:
    - Live corporate board filings and quarterly results directly from official NSE JSON endpoints (`/api/corporate-announcements?index=equities`).
+   - **Pinned Nearest Earnings Banner (`#filings-earnings-banner`):** High-visibility pinned alert ticker at the very top of the filings section showing immediate upcoming results dates (e.g. `BCSSL (23-Nov · IN 2D)`, `HDBFS (23-Nov)`), with 1-click ticker jump and a `VIEW ALL EARNINGS →` shortcut.
    - Category filter pills: `ALL FILINGS`, `RESULTS & EARNINGS`, `BOARD MEETINGS`, `ORDER WINS & CONTRACTS`, `QIP / ALLOTMENTS`, `DIVIDENDS`.
    - Card layout with stock badge (1-click chart switch), category tag, filing timestamp, official description, executive text excerpt, AI voice summary, and a direct link to the official exchange PDF document (`nsearchives.nseindia.in`).
+5. **🚨 Nearest Earnings Alerts (`#top-sec-earnings`)**:
+   - Dedicated forward-looking earnings release hub aggregating official NSE SEBI LODR Regulation 29 prior intimations and institutional consensus reporting calendars.
+   - **KPI Strip:** Real-time metrics for `UPCOMING RELEASES`, `TODAY / TOMORROW`, `THIS WEEK (≤ 7 DAYS)`, and `DIVIDEND PROPOSALS`.
+   - Filter pills: `ALL EARNINGS`, `TODAY / TOMORROW ⚡`, `THIS WEEK (≤ 7D) 🔥`, `WITH DIVIDEND 💰`.
+   - Financial results table with Countdown Badge (`⚡ TODAY`, `🔔 TOMORROW`, `IN X DAYS`), Symbol tag, Company Name, Release/Board Date, Period Ended (e.g. `September 2026`), Agenda & Highlights (with prominent `DIVIDEND PROPOSAL 💰` badge when dividend is considered), official SEBI LODR notice PDF link, and 1-click `TRADE` button.
 
 In the individual stock feed panel (`#feed-panel` below `GP` chart):
+- **🚨 Stock-Specific Nearest Earnings Alert Box:** Pinned at the top of the feed whenever an upcoming results date is tracked for the active stock (e.g., `BCSSL releasing financial results (September 2026) IN 2 DAYS` with prior intimation PDF, or `INDUSINDBK · Consensus EPS Est: ₹13.69`).
 - **`UPCOMING 📅` Tab:** Displays upcoming board meetings (with purpose, date, countdown `IN X DAYS`, intimation attachment) AND upcoming dividend ex-dates/split dates specifically for the active ticker.
 - **`ACTIONS` Tab:** Automatically sorts upcoming corporate actions at the top with `🔔 IN X DAYS` status pill.
 

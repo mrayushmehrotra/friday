@@ -841,7 +841,7 @@ table.data tr:hover td{background:#0f1419}
         <div class="subtabs" id="bt-subtabs">
           <div class="subtab active" data-bt-sub="orb">15m OPENING RANGE DISPLACEMENT (ORB)</div>
           <div class="subtab" data-bt-sub="mc">VWAP x EMA MONTE CARLO (PINESCRIPT v6)</div>
-          <div class="subtab" data-bt-sub="fno">BULLISH PUT SCANNER (F&amp;O)</div>
+          <div class="subtab" data-bt-sub="fno">BULLISH PUT SCANNER (₹5K / ₹4K)</div>
           <div class="subtab" data-bt-sub="classic">CLASSICAL STRATEGIES &amp; ICT FVG</div>
         </div>
 
@@ -910,6 +910,13 @@ table.data tr:hover td{background:#0f1419}
 
         <!-- FNO SUBTAB -->
         <div id="bt-sub-fno" class="hide" style="height:calc(100% - 62px);overflow:auto;padding:10px">
+          <div class="filter-bar" style="border:1px solid var(--line-2);margin-bottom:6px;flex-wrap:wrap">
+            <span class="dim" style="font-size:9px">PUT STRATEGY:</span>
+            <button class="filter-pill active" data-put-budget="5000">BULLISH 5D · PUT ≤ ₹5K</button>
+            <button class="filter-pill" data-put-budget="4000">BULLISH 5D · PUT ≤ ₹4K</button>
+            <button class="filter-pill" data-put-budget="both">BOTH · SPLIT LIST</button>
+            <span class="dim" id="fno-strategy-note" style="font-size:9px;margin-left:auto">5 straight higher closes · cheapest eligible PE</span>
+          </div>
           <div class="filter-bar" style="border:1px solid var(--line-2);margin-bottom:10px">
             <span class="dim" style="font-size:9px">CONSECUTIVE CLOSES:</span>
             <select id="fno-days" style="height:23px;background:#05070a;border:1px solid var(--line-2);font-size:10px">
@@ -917,7 +924,7 @@ table.data tr:hover td{background:#0f1419}
               <option value="4">4 Days</option>
               <option value="5" selected>5 Days</option>
             </select>
-            <span class="dim" style="font-size:9px">MAX PUT PREMIUM:</span>
+            <span class="dim" style="font-size:9px">MAX PUT PREMIUM/UNIT:</span>
             <input id="fno-premium" value="20" style="height:23px;width:45px;background:#05070a;border:1px solid var(--line-2);text-align:center;font-size:10px" />
             <span class="dim" style="font-size:9px">MAX LOT COST:</span>
             <input id="fno-cost" value="5000" style="height:23px;width:65px;background:#05070a;border:1px solid var(--line-2);text-align:center;font-size:10px" />
@@ -980,6 +987,7 @@ table.data tr:hover td{background:#0f1419}
               <div class="subtab" data-top-sec="actions">⚡ CORPORATE ACTIONS (DIVIDENDS/SPLITS)</div>
               <div class="subtab" data-top-sec="calendar">📅 UPCOMING EVENTS &amp; BOARD MEETINGS</div>
               <div class="subtab" data-top-sec="filings">📄 EXCHANGE FILINGS &amp; RESULTS</div>
+              <div class="subtab" data-top-sec="earnings">🚨 NEAREST EARNINGS ALERTS</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
@@ -1036,6 +1044,14 @@ table.data tr:hover td{background:#0f1419}
 
         <!-- SECTION 4: EXCHANGE FILINGS & RESULTS -->
         <div id="top-sec-filings" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
+          <!-- Pinned Nearest Earnings Alert Strip in Filings -->
+          <div id="filings-earnings-banner" style="background:rgba(255,149,0,0.06);border-bottom:1px solid rgba(255,149,0,0.25);padding:5px 10px;display:flex;align-items:center;gap:10px;font-size:10px">
+            <span class="amber" style="font-weight:700;display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9px">🚨 NEAREST EARNINGS:</span>
+            <div id="filings-earnings-ticker" style="display:flex;gap:12px;overflow-x:auto;white-space:nowrap;flex:1;align-items:center">
+              <span class="dim" style="font-size:9px">Scanning upcoming financial results intimations...</span>
+            </div>
+            <button class="btn ghost" id="filings-view-all-earnings" style="height:18px;padding:0 6px;font-size:8px;margin-left:auto;white-space:nowrap;color:var(--amber);border-color:rgba(255,149,0,0.4)">VIEW ALL EARNINGS &rarr;</button>
+          </div>
           <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px;gap:6px;flex-wrap:wrap">
             <button class="filter-pill active" data-filing-filter="all">ALL FILINGS</button>
             <button class="filter-pill" data-filing-filter="results">RESULTS &amp; EARNINGS</button>
@@ -1047,6 +1063,27 @@ table.data tr:hover td{background:#0f1419}
             <span class="dim" id="filings-count" style="font-size:9px">0 filings</span>
           </div>
           <div id="top-body-filings" style="flex:1;overflow-y:auto"><div class="empty">Loading official board filings and quarterly results from NSE archives…</div></div>
+        </div>
+
+        <!-- SECTION 5: NEAREST EARNINGS ALERTS & FINANCIAL RESULTS -->
+        <div id="top-sec-earnings" class="hide" style="display:flex;flex-direction:column;flex:1;min-height:0">
+          <!-- Summary Metric Cards Bar -->
+          <div class="chain-metrics" id="earnings-metrics" style="border-bottom:1px solid var(--line);background:var(--panel-2)">
+            <div class="metric"><label>UPCOMING RELEASES</label><b id="earn-cnt-total" class="cyan">0</b></div>
+            <div class="metric"><label>TODAY / TOMORROW</label><b id="earn-cnt-today" class="up">0</b></div>
+            <div class="metric"><label>THIS WEEK (&le; 7 DAYS)</label><b id="earn-cnt-week" class="amber">0</b></div>
+            <div class="metric"><label>DIVIDEND PROPOSALS</label><b id="earn-cnt-dividend" class="up">0</b></div>
+            <div class="metric"><label>REGULATORY SOURCE</label><b class="dim" style="font-size:9px">NSE SEBI LODR 29/33</b></div>
+          </div>
+          <div class="filter-bar" style="border-bottom:1px solid var(--line);background:var(--panel-2);padding:4px 8px;gap:6px;flex-wrap:wrap">
+            <button class="filter-pill active" data-earn-filter="all">ALL EARNINGS</button>
+            <button class="filter-pill" data-earn-filter="today_tomorrow">TODAY / TOMORROW ⚡</button>
+            <button class="filter-pill" data-earn-filter="this_week">THIS WEEK (&le; 7D) 🔥</button>
+            <button class="filter-pill" data-earn-filter="with_dividend">WITH DIVIDEND 💰</button>
+            <input id="earnings-search-input" placeholder="Search earnings by symbol e.g. INDUSINDBK, BCSSL, PATANJALI..." style="margin-left:auto;height:22px;width:240px;background:#05070a;border:1px solid var(--line-2);padding:0 7px;font-size:10px" />
+            <span class="dim" id="earnings-count" style="font-size:9px">0 releases</span>
+          </div>
+          <div id="top-body-earnings" style="flex:1;overflow-y:auto"><div class="empty">Loading nearest financial results &amp; earnings alerts from NSE…</div></div>
         </div>
       </div>
 
@@ -1279,6 +1316,8 @@ const state = {
   actionsFilter: "all",
   calendarData: null,
   calFilter: "all",
+  earningsData: null,
+  earningsFilter: "all",
   rail: "watch",
   lastLatency: null,
   bootedAt: Date.now(),
@@ -1291,6 +1330,8 @@ const state = {
   nseDeals: null,
   trendlyneDeals: null,
   btSub: "orb",
+  putBudget: "5000",
+  fnoData: null,
 };
 
 /* ---------- utils ---------- */
@@ -2106,6 +2147,32 @@ function renderFeed() {
     }).join("");
   }
 
+  if (events.nearest_earnings) {
+    const ne = events.nearest_earnings;
+    const isSoon = (ne.days_left || 0) <= 7;
+    const badgeCls = (ne.days_left || 0) <= 1 ? "up" : (isSoon ? "amber" : "cyan");
+    const earnBanner = `<div class="earnings-alert-box" style="margin:4px 2px 6px 2px;padding:6px 8px;background:rgba(255,149,0,0.08);border:1px solid rgba(255,149,0,0.35);border-radius:2px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:5px;align-items:center">
+          <span style="color:var(--amber);font-size:9px;font-weight:700">🚨 EARNINGS ALERT</span>
+          <span class="tag ${badgeCls}" style="font-size:8px;font-weight:700">${esc(ne.rel_date || "UPCOMING")}</span>
+          ${ne.has_dividend ? `<span class="tag up" style="font-size:8px">DIVIDEND 💰</span>` : ""}
+        </div>
+        <span style="font-size:9px;font-weight:600;color:var(--text)">${esc(ne.date)}</span>
+      </div>
+      <div style="font-size:10px;font-weight:600;color:var(--text);margin-top:3px">
+        ${esc(state.symbol)} releasing financial results ${ne.period ? `(${esc(ne.period)})` : ""}
+        ${ne.eps_estimate ? `<span class="dim" style="font-size:9px">· Consensus EPS: ₹${esc(ne.eps_estimate)}</span>` : ""}
+      </div>
+      ${ne.desc ? `<div style="font-size:9px;color:var(--muted);margin-top:2px;line-height:1.3" title="${esc(ne.desc)}">${esc(ne.desc.slice(0, 160))}${ne.desc.length > 160 ? "…" : ""}</div>` : ""}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <span class="dim" style="font-size:8px">${esc(ne.source)}</span>
+        ${ne.pdf_url ? `<a href="${esc(ne.pdf_url)}" target="_blank" rel="noopener" style="font-size:8px;color:var(--cyan);text-decoration:none;font-weight:600">LODR NOTICE PDF ↗</a>` : ""}
+      </div>
+    </div>`;
+    body.innerHTML = earnBanner + body.innerHTML;
+  }
+
   $$("#news-body .news-item[data-link]").forEach((el) => {
     el.addEventListener("click", () => {
       if (el.dataset.link) window.open(el.dataset.link, "_blank", "noopener");
@@ -2113,7 +2180,7 @@ function renderFeed() {
   });
 }
 
-/* ---------- market intelligence (wire, filings, corporate actions) ---------- */
+/* ---------- market intelligence (wire, filings, corporate actions, nearest earnings) ---------- */
 async function loadTopNews(refresh = false) {
   const sec = state.topSec || "news";
   if (sec === "news") {
@@ -2136,6 +2203,7 @@ async function loadTopNews(refresh = false) {
   } else if (sec === "filings") {
     const body = $("#top-body-filings");
     if (!body) return;
+    renderFilingsEarningsTicker();
     if (refresh || !state.filingsData) {
       body.innerHTML = `<div class="empty">Loading official board filings and quarterly results from NSE archives…</div>`;
       try {
@@ -2183,6 +2251,24 @@ async function loadTopNews(refresh = false) {
       }
     } else {
       renderCalendar();
+    }
+  } else if (sec === "earnings") {
+    const body = $("#top-body-earnings");
+    if (!body) return;
+    if (refresh || !state.earningsData) {
+      body.innerHTML = `<div class="empty">Loading nearest financial results &amp; earnings alerts from NSE…</div>`;
+      try {
+        const res = await api(`/api/earnings-alerts?limit=100&refresh=${refresh ? "1" : "0"}`, { timeout: 15000 });
+        state.earningsData = res.alerts || [];
+        renderEarningsAlerts();
+        renderFilingsEarningsTicker();
+        const stamp = $("#top-upd");
+        if (stamp) stamp.textContent = nowIst();
+      } catch (err) {
+        body.innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+      }
+    } else {
+      renderEarningsAlerts();
     }
   }
 }
@@ -2483,6 +2569,140 @@ function renderCalendar() {
     });
   });
 }
+
+async function renderFilingsEarningsTicker() {
+  const ticker = $("#filings-earnings-ticker");
+  if (!ticker) return;
+  if (!state.earningsData) {
+    try {
+      const res = await api(`/api/earnings-alerts?limit=15`);
+      state.earningsData = res.alerts || [];
+    } catch (e) {}
+  }
+  const alerts = (state.earningsData || []).slice(0, 10);
+  if (!alerts.length) {
+    ticker.innerHTML = `<span class="dim" style="font-size:9px">No upcoming results intimation filed today on NSE.</span>`;
+    return;
+  }
+  ticker.innerHTML = alerts.map(a => {
+    const isToday = a.days_left === 0;
+    const isTomorrow = a.days_left === 1;
+    const dueCls = isToday ? "up" : (isTomorrow ? "cyan" : "amber");
+    return `<div style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:2px 6px;border-radius:2px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,149,0,0.18)" data-earn-sym="${esc(a.symbol)}" title="${esc(a.company)} · ${esc(a.purpose)}">
+      <b class="card-sym" style="color:var(--cyan);font-size:9px">${esc(a.symbol)}</b>
+      <span class="tag ${dueCls}" style="font-size:8px;padding:0 3px">${esc(a.rel_date || a.date)}</span>
+      <span class="dim" style="font-size:8px">${esc(a.date)}</span>
+      ${a.has_dividend ? `<span style="font-size:8px" title="Dividend Proposal">💰</span>` : ""}
+    </div>`;
+  }).join("");
+
+  $$("[data-earn-sym]", ticker).forEach(el => {
+    el.addEventListener("click", () => {
+      selectSymbol(el.dataset.earnSym);
+      setView("GP");
+    });
+  });
+}
+
+function renderEarningsAlerts() {
+  const body = $("#top-body-earnings");
+  if (!body) return;
+
+  const raw = state.earningsData || [];
+  const sTotal = $("#earn-cnt-total");
+  const sToday = $("#earn-cnt-today");
+  const sWeek = $("#earn-cnt-week");
+  const sDiv = $("#earn-cnt-dividend");
+
+  const todayCnt = raw.filter(e => (e.days_left || 0) <= 1).length;
+  const weekCnt = raw.filter(e => (e.days_left || 0) <= 7).length;
+  const divCnt = raw.filter(e => e.has_dividend).length;
+
+  if (sTotal) sTotal.textContent = raw.length;
+  if (sToday) sToday.textContent = todayCnt;
+  if (sWeek) sWeek.textContent = weekCnt;
+  if (sDiv) sDiv.textContent = divCnt;
+
+  let alerts = [...raw];
+  const filt = state.earningsFilter || "all";
+
+  if (filt === "today_tomorrow") {
+    alerts = alerts.filter(e => (e.days_left || 0) <= 1);
+  } else if (filt === "this_week") {
+    alerts = alerts.filter(e => (e.days_left || 0) <= 7);
+  } else if (filt === "with_dividend") {
+    alerts = alerts.filter(e => e.has_dividend);
+  }
+
+  const query = ($("#earnings-search-input")?.value || "").trim().toUpperCase();
+  if (query) {
+    alerts = alerts.filter(e =>
+      (e.symbol || "").toUpperCase().includes(query) ||
+      (e.company || "").toUpperCase().includes(query) ||
+      (e.purpose || "").toUpperCase().includes(query) ||
+      (e.period || "").toUpperCase().includes(query) ||
+      (e.desc || "").toUpperCase().includes(query)
+    );
+  }
+
+  const cntEl = $("#earnings-count");
+  if (cntEl) cntEl.textContent = `${alerts.length} releases`;
+
+  if (!alerts.length) {
+    body.innerHTML = `<div class="empty">No earnings releases matching filter.</div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="data-wrap"><table class="data"><thead><tr>
+    <th>Countdown</th>
+    <th>Symbol</th>
+    <th>Company Name</th>
+    <th>Release / Board Date</th>
+    <th>Period Ended</th>
+    <th>Agenda &amp; Highlights</th>
+    <th>LODR Notice</th>
+    <th>Action</th>
+  </tr></thead><tbody>${alerts.map(e => {
+    const isToday = e.days_left === 0;
+    const isTomorrow = e.days_left === 1;
+    const isThisWeek = (e.days_left || 0) <= 7;
+    const dueCls = isToday ? "up" : (isTomorrow ? "cyan" : (isThisWeek ? "amber" : "dim"));
+
+    return `<tr style="${isToday || isTomorrow ? "background:rgba(0, 229, 155, 0.04)" : ""}">
+      <td><span class="tag ${dueCls}" style="font-size:9px;font-weight:bold">${isToday ? "⚡ TODAY" : (isTomorrow ? "🔔 TOMORROW" : esc(e.rel_date || "UPCOMING"))}</span></td>
+      <td><span class="tag buy card-sym" data-earn-sym="${esc(e.symbol)}" style="cursor:pointer;font-weight:bold" title="Open chart for ${esc(e.symbol)}">${esc(e.symbol)}</span></td>
+      <td><div style="font-weight:500;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(e.company)}">${esc(e.company)}</div></td>
+      <td><span style="font-weight:600;color:var(--text);font-size:11px">${esc(e.date)}</span></td>
+      <td><span class="tag cyan" style="font-size:8px">${esc(e.period || "Quarterly Results")}</span></td>
+      <td>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <span style="font-weight:600;font-size:11px;color:var(--amber)">${esc(e.purpose)}</span>
+          ${e.has_dividend ? `<span class="tag up" style="font-size:8px;font-weight:bold">DIVIDEND PROPOSAL 💰</span>` : ""}
+        </div>
+        ${e.desc ? `<div style="font-size:10px;color:var(--muted);max-width:380px;line-height:1.3;margin-top:2px" title="${esc(e.desc)}">${esc(e.desc)}</div>` : ""}
+      </td>
+      <td>
+        ${e.pdf_url ? `<a href="${esc(e.pdf_url)}" target="_blank" rel="noopener" class="btn ghost" style="height:20px;padding:0 6px;font-size:8px;color:var(--cyan);border-color:var(--cyan)" title="View official SEBI LODR intimation PDF">📄 PDF ↗</a>` : `<span class="dim" style="font-size:8px">—</span>`}
+      </td>
+      <td><button class="btn buy" style="height:18px;padding:0 6px;font-size:8px" data-earn-trade="${esc(e.symbol)}">TRADE</button></td>
+    </tr>`;
+  }).join("")}</tbody></table></div>`;
+
+  $$("[data-earn-sym]", body).forEach(b => {
+    b.addEventListener("click", () => {
+      selectSymbol(b.dataset.earnSym);
+      setView("GP");
+    });
+  });
+
+  $$("[data-earn-trade]", body).forEach(b => {
+    b.addEventListener("click", () => {
+      selectSymbol(b.dataset.earnTrade);
+      setSide("BUY");
+    });
+  });
+}
+
 
 /* ---------- option chain ---------- */
 async function loadChain(silent = false) {
@@ -3620,46 +3840,127 @@ async function runMonteCarlo() {
   }
 }
 
+function applyPutBudgetUI() {
+  $$("[data-put-budget]").forEach(b => b.classList.toggle("active", b.dataset.putBudget === state.putBudget));
+  const cost = $("#fno-cost");
+  if (cost) cost.value = state.putBudget === "4000" ? "4000" : "5000";
+  const note = $("#fno-strategy-note");
+  if (note) {
+    note.textContent = state.putBudget === "both"
+      ? "5 straight higher closes · split by ≤₹4K and ₹4–5K lot cost"
+      : state.putBudget === "4000"
+        ? "5 straight higher closes · PE lot cost ≤ ₹4,000"
+        : "5 straight higher closes · PE lot cost ≤ ₹5,000";
+  }
+}
+
+function fnoLotCost(st) {
+  return Number(st.best_put_lot_cost ?? st.lot_cost ?? (Number(st.lot_size || 0) * Number(st.best_put_premium ?? st.put_premium ?? 0)));
+}
+
+function fnoTableHtml(list, title, subtitle) {
+  if (!list.length) return `<div class="empty">No stocks in this bucket.</div>`;
+  return `
+    <div class="panel-head" style="margin-top:8px">
+      <span class="panel-title">${esc(title)}</span>
+      <span class="dim">${list.length} stocks · ${esc(subtitle || "")}</span>
+    </div>
+    <div class="data-wrap"><table class="data"><thead><tr>
+      <th>Symbol</th><th>Spot LTP</th><th>5D Gain</th><th>Streak</th><th>PE Strike</th>
+      <th>PE Premium</th><th>Lot</th><th>Lot Cost</th><th>PE OI</th><th>Elite Puts</th><th>Action</th>
+    </tr></thead><tbody>${list.map(st => {
+      const sym = st.symbol || st.ticker;
+      const cost = fnoLotCost(st);
+      const strike = st.best_put_strike ?? st.selected_put?.strike;
+      const prem = st.best_put_premium ?? st.selected_put?.premium;
+      const otm = Number(st.best_put_otm_pct || 0);
+      const peList = st.all_eligible_puts || [];
+      return `<tr>
+        <td><b class="card-sym" data-fno-sym="${esc(sym)}">${esc(sym)}</b><div class="dim" style="font-size:8px">${esc(st.company_name || "")}</div></td>
+        <td>${inr(st.spot_ltp ?? st.price ?? st.ltp)}</td>
+        <td class="up"><b>+${fmt(st.bullish_gain_pct ?? 0, 2)}%</b></td>
+        <td class="up">${fmtInt(st.bullish_streak_days)} days ▲</td>
+        <td>${inr(strike)}<div class="dim" style="font-size:8px">${otm < 0 ? fmt(otm, 1) + "% OTM" : "ATM/ITM"}</div></td>
+        <td class="down">${inr(prem)}</td>
+        <td>${fmtInt(st.lot_size)}</td>
+        <td class="amber"><b>${inr(cost)}</b></td>
+        <td>${fmtInt(st.best_put_oi)}</td>
+        <td><details style="font-size:9px"><summary>${fmtInt(st.total_eligible_put_strikes || peList.length || 1)}</summary>${peList.slice(0, 8).map(p => `${inr(p.strike)} · ${inr(p.put_price)} · ${inr(p.lot_cost)}`).join("<br>") || "—"}</details></td>
+        <td><button class="btn buy" style="height:18px;padding:0 6px;font-size:8px" data-fno-trade="${esc(sym)}">TRADE</button></td>
+      </tr>`;
+    }).join("")}</tbody></table></div>
+  `;
+}
+
+function renderFnoResults() {
+  const resEl = $("#fno-results");
+  const data = state.fnoData;
+  if (!resEl || !data) return;
+  const stocks = data.results || data.stocks || [];
+  const criteria = data.criteria || {};
+  const head = `
+    <div class="panel-head">
+      <span class="panel-title">5-Day Bullish + Cheap Put Strategy</span>
+      <span class="dim">${fmtInt(data.qualifying_stocks_count ?? stocks.length)} matches · ${fmtInt(data.total_bullish_stocks_found ?? 0)} bullish · ${fmtInt(data.total_fno_stocks_scanned ?? 0)} scanned · ${esc(data.screen_timestamp || "")}</span>
+    </div>
+    <div class="filter-bar" style="border:1px solid var(--line-2);margin-bottom:4px">
+      <span class="dim" style="font-size:9px">FILTER:</span>
+      <span>${fmtInt(criteria.consecutive_bullish_days)} straight ${esc(criteria.bullish_mode || "higher_closes")}</span>
+      <span style="margin-left:10px">PE/unit &lt; ${inr(criteria.max_put_premium_inr)}</span>
+      <span style="margin-left:10px">Lot cost ≤ ${inr(criteria.max_lot_investment_inr)}</span>
+      <span style="margin-left:auto" class="dim">${esc(data.source || "")}</span>
+    </div>`;
+  let body;
+  if (!stocks.length) {
+    body = `<div class="empty">No F&amp;O stocks currently match 5 straight higher closes with a cheap put. Try 3–4 days or loosen the premium filter.</div>`;
+  } else if (state.putBudget === "both") {
+    const under4 = stocks.filter(s => fnoLotCost(s) <= 4000);
+    const fourToFive = stocks.filter(s => fnoLotCost(s) > 4000 && fnoLotCost(s) <= 5000);
+    body = fnoTableHtml(under4, "PUT LOT COST ≤ ₹4,000", "tight budget") + fnoTableHtml(fourToFive, "PUT LOT COST ₹4,001 – ₹5,000", "standard budget");
+  } else if (state.putBudget === "4000") {
+    body = fnoTableHtml(stocks.filter(s => fnoLotCost(s) <= 4000), "PUT LOT COST ≤ ₹4,000", "tight budget");
+  } else {
+    body = fnoTableHtml(stocks, "PUT LOT COST ≤ ₹5,000", "standard budget");
+  }
+  resEl.innerHTML = head + body;
+
+  $$("[data-fno-sym]", resEl).forEach(b => {
+    b.addEventListener("click", () => { selectSymbol(b.dataset.fnoSym); setView("GP"); });
+  });
+  $$("[data-fno-trade]", resEl).forEach(b => {
+    b.addEventListener("click", () => { selectSymbol(b.dataset.fnoTrade); setSide("BUY"); $("#t-qty").focus(); });
+  });
+}
+
 async function runFnoScan() {
   const days = $("#fno-days")?.value || "5";
   const prem = $("#fno-premium")?.value || "20";
   const cost = $("#fno-cost")?.value || "5000";
   const resEl = $("#fno-results");
-  resEl.innerHTML = `<div class="empty">Scanning F&amp;O universe for stocks with ${days} consecutive higher closes &amp; cheap puts…</div>`;
+  resEl.innerHTML = `<div class="empty">Scanning F&amp;O universe for ${days} straight higher closes &amp; cheap puts (lot ≤ ${inr(Number(cost))})…</div>`;
 
   try {
-    const res = await api(`/api/fno-strategy?days=${days}&max_premium=${prem}&max_lot_cost=${cost}`);
-    const stocks = res.stocks || res.bullish_stocks || [];
-    if (!stocks.length) {
-      resEl.innerHTML = `<div class="empty">No F&amp;O stocks currently matching ${days} consecutive closes. Try relaxing parameters.</div>`;
-      return;
-    }
-
-    resEl.innerHTML = `
-      <div class="panel-head"><span class="panel-title">Bullish F&amp;O Candidates with Cheap Puts</span><span class="dim">${stocks.length} matches</span></div>
-      <div class="data-wrap"><table class="data"><thead><tr>
-        <th>Symbol</th><th>LTP</th><th>Streak</th><th>Put Strike</th><th>Put LTP</th><th>Lot Size</th><th>Max Lot Cost</th><th>Action</th>
-      </tr></thead><tbody>${stocks.map(st => `<tr>
-        <td><b class="card-sym" data-fno-sym="${esc(st.symbol || st.ticker)}">${esc(st.symbol || st.ticker)}</b></td>
-        <td>${inr(st.price || st.ltp)}</td>
-        <td class="up"><b>${st.consecutive_days || days} days ▲</b></td>
-        <td>${inr(st.put_strike || st.selected_put?.strike)}</td>
-        <td class="down">${inr(st.put_premium || st.selected_put?.premium)}</td>
-        <td>${fmtInt(st.lot_size)}</td>
-        <td class="amber">${inr(st.lot_cost || (st.lot_size * (st.put_premium || 0)))}</td>
-        <td><button class="btn buy" style="height:18px;padding:0 6px;font-size:8px" data-fno-trade="${esc(st.symbol || st.ticker)}">TRADE</button></td>
-      </tr>`).join("")}</tbody></table></div>
-    `;
-
-    $$("[data-fno-sym]", resEl).forEach(b => {
-      b.addEventListener("click", () => { selectSymbol(b.dataset.fnoSym); setView("GP"); });
-    });
-    $$("[data-fno-trade]", resEl).forEach(b => {
-      b.addEventListener("click", () => { selectSymbol(b.dataset.fnoTrade); setSide("BUY"); $("#t-qty").focus(); });
-    });
+    const res = await api(`/api/fno-strategy?days=${days}&max_premium=${prem}&max_lot_cost=${cost}&refresh=1`, { timeout: 120000 });
+    if (res.error) throw new Error(res.error);
+    state.fnoData = res;
+    renderFnoResults();
   } catch (err) {
+    state.fnoData = null;
     resEl.innerHTML = `<div class="empty">F&amp;O scan failed: ${esc(err.message)}</div>`;
   }
+}
+
+function openFnoPreset(budget) {
+  state.putBudget = budget;
+  applyPutBudgetUI();
+  $$("#bt-subtabs .subtab").forEach(t => t.classList.toggle("active", t.dataset.btSub === "fno"));
+  $$("#center .view").forEach(v => v.classList.remove("active"));
+  $("#bt-sub-orb")?.classList.add("hide");
+  $("#bt-sub-mc")?.classList.add("hide");
+  $("#bt-sub-fno")?.classList.remove("hide");
+  $("#bt-sub-classic")?.classList.add("hide");
+  state.btSub = "fno";
+  setView("BT");
 }
 
 async function runClassicalBacktest() {
@@ -4025,7 +4326,10 @@ const COMMANDS = [
   { code: "BT", label: "Quantitative strategy studio", hint: "BT <GO>", run: () => setView("BT") },
   { code: "ORB", label: "15m Opening range displacement backtest", hint: "ORB <GO>", run: () => { state.btSub = "orb"; setView("BT"); } },
   { code: "MC", label: "PineScript v6 Monte Carlo simulation", hint: "MC <GO>", run: () => { state.btSub = "mc"; setView("BT"); } },
-  { code: "FNO", label: "Bullish Put hedge scanner", hint: "FNO <GO>", run: () => { state.btSub = "fno"; setView("BT"); } },
+  { code: "FNO", label: "Bullish Put hedge scanner", hint: "FNO <GO>", run: () => openFnoPreset("5000") },
+  { code: "PUT5K", label: "5D bullish + Put lot ≤ ₹5,000", hint: "PUT5K <GO>", run: () => openFnoPreset("5000") },
+  { code: "PUT4K", label: "5D bullish + Put lot ≤ ₹4,000", hint: "PUT4K <GO>", run: () => openFnoPreset("4000") },
+  { code: "PUT", label: "Cheap put strategy · split ₹5K / ₹4K", hint: "PUT <GO>", run: () => openFnoPreset("both") },
   { code: "FA", label: "Fundamentals snapshot", hint: "RELIANCE FA <GO>", run: (a) => { if (a) selectSymbol(a); else setView("FA"); } },
   { code: "TOP", label: "Top market headlines", hint: "TOP <GO>", run: () => setView("TOP") },
   { code: "POS", label: "Open positions", hint: "POS <GO>", run: () => { setRail("pos"); setView("POSV"); } },
@@ -4154,6 +4458,8 @@ function showHelp() {
     ["SUPP <GO>", "SMC Bullish Order Blocks & Daily Support Scanner"],
     ["BT / MC <GO>", "PineScript v6 VWAP x EMA Monte Carlo simulation"],
     ["ORB <GO>", "15m Opening range displacement backtest"],
+    ["PUT5K / PUT4K <GO>", "5D bullish stocks with put lot cost ≤ ₹5,000 / ₹4,000"],
+    ["PUT <GO>", "Cheap put strategy · both ₹5K and ₹4K buckets"],
     ["BLOCK <GO>", "NSE official bulk & block deals with client lists"],
     ["VAULT <GO>", "Open runtime INDmoney API key vault modal"],
     ["RELIANCE GP <GO>", "Price chart for any ticker"],
@@ -4333,6 +4639,15 @@ $("#orb-symbol")?.addEventListener("keydown", (e) => { if (e.key === "Enter") ru
 $("#mc-run-btn")?.addEventListener("click", runMonteCarlo);
 $("#mc-symbol")?.addEventListener("keydown", (e) => { if (e.key === "Enter") runMonteCarlo(); });
 $("#fno-run-btn")?.addEventListener("click", runFnoScan);
+$$("[data-put-budget]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    state.putBudget = btn.dataset.putBudget;
+    applyPutBudgetUI();
+    if (state.fnoData) renderFnoResults();
+    else runFnoScan();
+  });
+});
+applyPutBudgetUI();
 $("#classic-run-btn")?.addEventListener("click", runClassicalBacktest);
 $("#classic-symbol")?.addEventListener("keydown", (e) => { if (e.key === "Enter") runClassicalBacktest(); });
 
@@ -4357,6 +4672,7 @@ $$("#top-section-tabs .subtab").forEach(tab => {
     $("#top-sec-actions")?.classList.toggle("hide", state.topSec !== "actions");
     $("#top-sec-calendar")?.classList.toggle("hide", state.topSec !== "calendar");
     $("#top-sec-filings")?.classList.toggle("hide", state.topSec !== "filings");
+    $("#top-sec-earnings")?.classList.toggle("hide", state.topSec !== "earnings");
     loadTopNews(false);
   });
 });
@@ -4406,6 +4722,27 @@ $$("[data-filing-filter]").forEach(btn => {
   });
 });
 $("#filings-search-input")?.addEventListener("input", renderMarketFilings);
+$("#filings-view-all-earnings")?.addEventListener("click", () => {
+  $$("#top-section-tabs .subtab").forEach(t => t.classList.toggle("active", t.dataset.topSec === "earnings"));
+  state.topSec = "earnings";
+  $("#top-sec-news")?.classList.add("hide");
+  $("#top-sec-actions")?.classList.add("hide");
+  $("#top-sec-calendar")?.classList.add("hide");
+  $("#top-sec-filings")?.classList.add("hide");
+  $("#top-sec-earnings")?.classList.remove("hide");
+  loadTopNews(false);
+});
+
+/* ---------- earnings alerts filters wire-up ---------- */
+$$("[data-earn-filter]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    $$("[data-earn-filter]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.earningsFilter = btn.dataset.earnFilter;
+    renderEarningsAlerts();
+  });
+});
+$("#earnings-search-input")?.addEventListener("input", renderEarningsAlerts);
 
 /* auto-resume saved session */
 (async function init() {
