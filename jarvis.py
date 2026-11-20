@@ -232,7 +232,9 @@ class Jarvis:
         # "close stock dashboard" also contains "stock" and "dashboard" and would
         # otherwise be swallowed by the stock branch and reopen the dashboard.
         if "close" in query or "shut" in query or "kill" in query or "stop" in query:
-            wants_bot = "indmoney" in query or "intraday" in query or "equity bot" in query or "9092" in query
+            wants_bot = ("indmoney" in query or "intraday" in query or "equity bot" in query
+                         or "vwap" in query or "ema bot" in query or "smart profit trail" in query
+                         or "9092" in query)
             if wants_bot:
                 speak("Shutting down the INDmoney intraday bot, sir.")
                 self._free_port(9092)
@@ -253,7 +255,8 @@ class Jarvis:
                 return
 
         # Handle hardcoded voice shortcuts first for speed
-        if "indmoney" in query or "intraday" in query or "equity bot" in query:
+        if ("indmoney" in query or "intraday" in query or "equity bot" in query
+                or "vwap" in query or "ema bot" in query or "smart profit trail" in query):
             if self._dashboard_ready(9092):
                 speak("INDmoney intraday bot is already running, sir.")
                 webbrowser.open_new_tab("http://localhost:9092")
@@ -701,6 +704,19 @@ class Jarvis:
 
 def main():
     print("Starting Jarvis...")
+    # Institutional bulk/block deals → Telegram alerts. Runs as a daemon
+    # thread so `bash run.sh` starts it alongside Jarvis automatically.
+    # Set FRIDAY_NO_TELEGRAM=1 (or run.sh --no-telegram) to disable.
+    if not os.environ.get("FRIDAY_NO_TELEGRAM"):
+        try:
+            from institution_telegram_bot import start_watcher
+            if start_watcher():
+                print("Telegram institution watcher started — new institution "
+                      "BUY/SELL deals will be messaged")
+            else:
+                print("Telegram watcher not configured (telegram_config.json) — skipping")
+        except Exception as e:
+            print(f"Telegram watcher failed to start: {e}")
     bot = Jarvis()
     cmd_queue = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".cmd_queue")
     try:

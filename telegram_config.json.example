@@ -1,0 +1,13 @@
+{
+    "_comment": "Copy this file to telegram_config.json and fill in the values. telegram_config.json is gitignored.",
+    "_how_to": [
+        "1. Open Telegram, message @BotFather, run /newbot, and copy the bot token.",
+        "2. Send any message to your new bot (so it can message you back).",
+        "3. Get your chat id from https://api.telegram.org/bot<TOKEN>/getUpdates (look for chat.id), or message @userinfobot.",
+        "4. Paste token + chat id below, then run: python institution_telegram_bot.py --test"
+    ],
+    "bot_token": "123456789:AAExampleTokenFromBotFather",
+    "chat_id": "123456789",
+    "poll_interval_min": 30,
+    "max_deal_age_days": 10
+}

@@ -319,7 +319,8 @@
         border-color: var(--accent);
         color: var(--text);
       }
-      .preset-stocks .chip.active-inst-chip {
+      .preset-stocks .chip.active-inst-chip,
+      .preset-stocks .chip.active-gex-index {
         background: var(--accent);
         color: #fff;
         border-color: var(--accent);
@@ -441,6 +442,98 @@
         .search-box input {
           min-width: auto;
         }
+      /* Strategy Tab Styles */
+      .strategy-hero {
+        background: linear-gradient(135deg, rgba(41, 98, 255, 0.12) 0%, rgba(8, 153, 129, 0.08) 100%);
+        border: 1px solid rgba(41, 98, 255, 0.3);
+        border-radius: 6px;
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+      .strategy-hero h2 {
+        font-size: 1.25rem;
+        margin-bottom: 6px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .strategy-hero p {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 14px;
+      }
+      .pill-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .pill-badge.green {
+        background: rgba(8, 153, 129, 0.2);
+        color: var(--green);
+        border: 1px solid rgba(8, 153, 129, 0.4);
+      }
+      .pill-badge.blue {
+        background: rgba(41, 98, 255, 0.2);
+        color: var(--accent);
+        border: 1px solid rgba(41, 98, 255, 0.4);
+      }
+      .pill-badge.yellow {
+        background: rgba(255, 179, 0, 0.2);
+        color: #ffb300;
+        border: 1px solid rgba(255, 179, 0, 0.4);
+      }
+      .strategy-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.86rem;
+      }
+      .strategy-table th {
+        background: rgba(255, 255, 255, 0.04);
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .strategy-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      .strategy-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .strat-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.75);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(3px);
+      }
+      .strat-modal-overlay.active {
+        display: flex;
+      }
+      .strat-modal-content {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        width: 90%;
+        max-width: 950px;
+        max-height: 85vh;
+        overflow-y: auto;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       }
     </style>
   </head>
@@ -458,9 +551,12 @@
         <div class="tab active" data-tab="quote">Quote</div>
         <div class="tab" data-tab="news">News</div>
         <div class="tab" data-tab="institutions">Institutions</div>
+        <div class="tab" data-tab="gex">GEX / Greeks</div>
         <div class="tab" data-tab="backtest">Backtest</div>
         <div class="tab" data-tab="compare">Compare</div>
         <div class="tab" data-tab="daily">Stock of Day</div>
+        <div class="tab" data-tab="support">🛡️ Daily Support</div>
+        <div class="tab" data-tab="strategy">Strategy</div>
         <div class="tab" data-tab="market">Market</div>
       </div>
 
@@ -639,9 +735,9 @@
             <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/597533/icici-group/" onclick="selectInstPreset(this)">ICICI Group</span>
             <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/597531/sbi-group/" onclick="selectInstPreset(this)">SBI Group</span>
             <span class="chip" data-inst-url="https://trendlyne.com/portfolio/superstar-shareholders/597532/latest/hdfc-group/" onclick="selectInstPreset(this)">HDFC Group</span>
-            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/53860/life-insurance-corporation-of-india/" onclick="selectInstPreset(this)">LIC of India</span>
-            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/53874/vanguard/" onclick="selectInstPreset(this)">Vanguard</span>
-            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/53896/blackrock/" onclick="selectInstPreset(this)">BlackRock</span>
+            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/53950/life-insurance-corporation-of-india/" onclick="selectInstPreset(this)">LIC of India</span>
+            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/54044/vanguard-fund" onclick="selectInstPreset(this)">Vanguard</span>
+            <span class="chip" data-inst-url="https://trendlyne.com/portfolio/bulk-block-deals/621951/dsp-blackrock-group" title="Trendlyne has no standalone BlackRock portfolio page — showing DSP-BlackRock Group" onclick="selectInstPreset(this)">DSP-BlackRock Group</span>
           </div>
           <div class="search-box" style="margin-bottom:0;">
             <input
@@ -659,6 +755,28 @@
         <div id="institutional-deals-result">
           <div class="loading">Loading institutional deals...</div>
         </div>
+      </div>
+
+      <div class="tab-content" id="tab-gex">
+        <div class="card" style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+              <h3 style="margin:0;font-size:1.1rem;color:#fff;">Gamma Exposure (GEX) — NIFTY 50 / SENSEX</h3>
+              <p style="margin:4px 0 0;font-size:0.8rem;color:var(--text-muted);">
+                Live INDstocks (INDmoney) option chain · Greeks (delta, gamma, theta, vega) and IV are pre-calculated by the API for every strike.
+              </p>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <div class="preset-stocks" style="margin:0;display:flex;gap:8px;">
+                <span class="chip active-gex-index" data-gex-index="NIFTY" onclick="selectGexIndex(this)">NIFTY 50</span>
+                <span class="chip" data-gex-index="SENSEX" onclick="selectGexIndex(this)">SENSEX</span>
+              </div>
+              <select id="gex-expiry" onchange="loadGex()" style="padding:8px 10px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:0.8rem;"></select>
+              <button class="btn btn-primary" onclick="loadGex()">Refresh GEX</button>
+            </div>
+          </div>
+        </div>
+        <div id="gex-result"><div class="loading">Loading GEX levels and option Greeks…</div></div>
       </div>
 
       <div class="tab-content" id="tab-backtest">
@@ -919,11 +1037,319 @@
         </div>
       </div>
 
+      <!-- Strategy Tab -->
+      <div class="tab-content" id="tab-strategy">
+        <!-- Hero Section -->
+        <div class="strategy-hero">
+          <h2>
+            <span>📈</span> 5-Day Bullish Momentum + Cheap Put Strategy (F&O)
+            <span class="pill-badge green" style="font-size:0.75rem; margin-left:auto;">Live INDstocks Screener</span>
+          </h2>
+          <p>
+            Screens all 218 F&O-enabled Indian stocks for <strong>5 consecutive bullish trading days</strong>, then scans live option chains for cheap opposite-side <strong>Put options (Premium &lt; ₹20 and 1-Lot Capital ≤ ₹5,000)</strong>. Designed for low-risk hedging, asymmetric downside protection, or contrarian mean-reversion with strictly capped capital outlay.
+          </p>
+          <div class="grid-4" id="strategy-stats-grid">
+            <div class="metric">
+              <div class="label">Total F&O Universe</div>
+              <div class="value" id="strat-stat-universe">218 Stocks</div>
+            </div>
+            <div class="metric">
+              <div class="label">5-Day Bullish Stocks</div>
+              <div class="value positive" id="strat-stat-bullish">--</div>
+            </div>
+            <div class="metric">
+              <div class="label">Qualifying Put Setups</div>
+              <div class="value" style="color:var(--accent)" id="strat-stat-qualifying">--</div>
+            </div>
+            <div class="metric">
+              <div class="label">Max 1-Lot Budget</div>
+              <div class="value" id="strat-stat-budget">≤ ₹5,000</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategy Controls & Filter Card -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <h3 style="margin:0;">Scanner Filters & Live Execution</h3>
+            <div style="font-size:0.8rem; color:var(--text-muted);" id="strat-last-updated">Last scan: --</div>
+          </div>
+          <div class="search-box" style="margin-bottom:10px;">
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">BULLISH STREAK (DAYS)</label>
+              <input type="number" id="strat-param-days" value="5" min="2" max="15" class="small" style="width:100px;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">BULLISH CRITERION</label>
+              <select id="strat-param-mode">
+                <option value="higher_closes" selected>Higher Closes (Close &gt; Prev Close)</option>
+                <option value="green_candles">Green Candles (Close &gt; Open)</option>
+                <option value="either">Either (Higher Close OR Green)</option>
+                <option value="both">Strict (Higher Close AND Green)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">MAX PUT PREMIUM (₹)</label>
+              <input type="number" id="strat-param-premium" value="20" min="1" max="100" class="small" style="width:110px;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:4px;">MAX 1-LOT CAPITAL (₹)</label>
+              <input type="number" id="strat-param-cost" value="5000" min="500" max="50000" step="500" style="width:130px;">
+            </div>
+            <div style="align-self:flex-end;">
+              <button class="btn btn-primary" id="strat-run-btn" onclick="triggerStrategyScan()">⚡ Run Live Scan</button>
+            </div>
+            <div style="margin-left:auto; align-self:flex-end;">
+              <input type="text" id="strat-table-search" placeholder="🔍 Search stock or strike..." style="min-width:220px;" oninput="filterStrategyTable()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategy Results Table Card -->
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+            <h3 style="margin:0;">Screened Stocks & Nearest Qualifying Put Contracts</h3>
+            <span id="strat-table-count" class="pill-badge blue">Showing -- stocks</span>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="strategy-table" id="strategy-main-table">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Spot LTP</th>
+                  <th>5D Gain</th>
+                  <th>Lot Size</th>
+                  <th>Recommended Put</th>
+                  <th>Put Premium</th>
+                  <th>1-Lot Capital</th>
+                  <th>OTM Dist %</th>
+                  <th>Put OI</th>
+                  <th>Eligible Strikes</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="strategy-table-body">
+                <tr><td colspan="11" class="loading">Loading strategy data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Strategy Rules & Thesis Info Box -->
+        <div class="card" style="margin-top:16px;">
+          <h3>📘 Strategy Logic & Execution Rules</h3>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; font-size:0.86rem; color:var(--text-muted); line-height:1.5;">
+            <div>
+              <strong style="color:var(--text);">1. Momentum Overextension</strong>
+              <p style="margin-top:4px;">
+                Stocks moving up for 5 consecutive sessions experience strong bullish momentum and frequently become overbought on low intraday timeframes.
+              </p>
+            </div>
+            <div>
+              <strong style="color:var(--text);">2. Put Option Price Crush</strong>
+              <p style="margin-top:4px;">
+                Continuous bullish days cause dramatic call premium inflation and severe put premium deflation. Out-of-the-money puts become exceptionally cheap (under ₹20 per share).
+              </p>
+            </div>
+            <div>
+              <strong style="color:var(--text);">3. Asymmetric Risk/Reward (&le; ₹5,000)</strong>
+              <p style="margin-top:4px;">
+                Max loss is strictly limited to 1 lot capital investment (under ₹5,000). If mean reversion triggers or a pullback occurs, cheap puts can deliver 150%–300%+ returns with minimal initial risk.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal for viewing all eligible strikes of a stock -->
+        <div class="strat-modal-overlay" id="strat-modal">
+          <div class="strat-modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+              <h3 id="strat-modal-title" style="margin:0;">Option Chain Details</h3>
+              <button class="btn" onclick="closePutChainModal()" style="background:transparent; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="strat-modal-summary" style="margin-bottom:16px;"></div>
+            <div style="overflow-x:auto;">
+              <table class="strategy-table" id="strat-modal-table">
+                <thead>
+                  <tr>
+                    <th>Strike</th>
+                    <th>Put Premium</th>
+                    <th>1-Lot Cost</th>
+                    <th>OTM %</th>
+                    <th>Delta</th>
+                    <th>Theta</th>
+                    <th>IV</th>
+                    <th>OI</th>
+                    <th>Volume</th>
+                    <th>Breakeven</th>
+                  </tr>
+                </thead>
+                <tbody id="strat-modal-tbody"></tbody>
+              </table>
+            </div>
+            <div style="text-align:right; margin-top:16px;">
+              <button class="btn btn-primary" onclick="closePutChainModal()">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="tab-content" id="tab-market">
         <div class="card" id="market-indices"></div>
         <div class="card" id="market-headlines" style="margin-top: 12px">
           <h3>Market Headlines</h3>
           <div id="market-news-list"><div class="loading">Loading</div></div>
+        </div>
+      </div>
+
+      <!-- Daily Support Tab -->
+      <div class="tab-content" id="tab-support">
+        <!-- Hero Banner -->
+        <div class="strategy-hero" style="margin-bottom:16px;">
+          <h2>
+            <span>🛡️</span> Daily Support Level Hunter (INDmoney Chart Engine)
+          </h2>
+          <p>
+            Screens high-quality stocks in healthy broader trends that have just pulled back and landed right onto key daily support levels.
+            Features multi-touch horizontal structural pivots, 50 &amp; 200-day institutional SMAs, SMC Bullish Order Blocks, and Breakout Retests with defined stop-loss and asymmetric risk:reward.
+          </p>
+        </div>
+
+        <!-- INDmoney API Integration Bar -->
+        <div class="api-key-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 280px;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: #38bdf8; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              INDmoney API Key:
+            </span>
+            <input
+              type="password"
+              id="support-indmoney-api-key"
+              placeholder="INDstocks / INDmoney access token for live daily candlestick feeds..."
+              style="flex: 1; padding: 6px 12px; font-size: 0.82rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; color: #f1f5f9; outline: none;"
+            />
+            <button
+              type="button"
+              id="toggle-support-ind-key"
+              class="btn btn-secondary"
+              style="padding: 6px 12px; font-size: 0.78rem; white-space: nowrap; height: auto;"
+            >Show</button>
+            <button
+              type="button"
+              id="apply-support-ind-key"
+              class="btn btn-primary"
+              style="padding: 6px 14px; font-size: 0.78rem; white-space: nowrap; height: auto;"
+            >⚡ Apply &amp; Fast Rescan</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="support-api-status-badge" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; font-weight: 600; background: rgba(148, 163, 184, 0.15); color: #94a3b8;">
+              ○ Checking Token...
+            </span>
+          </div>
+        </div>
+
+        <!-- Controls Toolbar -->
+        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 16px;">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:0.82rem; font-weight:600; color:var(--text-muted);">Universe:</span>
+              <select id="support-universe-select" style="padding:6px 10px; border-radius:4px; background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:0.82rem;">
+                <option value="nifty50" selected>NIFTY 50 (Bluechips)</option>
+                <option value="nifty100">NIFTY 100 (Large &amp; Midcaps)</option>
+                <option value="fno">F&amp;O Universe (218 Stocks)</option>
+                <option value="swing">Swing Growth Leaders</option>
+              </select>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:0.82rem; font-weight:600; color:var(--text-muted);">Proximity:</span>
+              <select id="support-dist-select" style="padding:6px 10px; border-radius:4px; background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:0.82rem;">
+                <option value="1.0">Tight (≤ 1.0%)</option>
+                <option value="1.8" selected>Standard (≤ 1.8%)</option>
+                <option value="2.5">Relaxed (≤ 2.5%)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Support Type Filter Pills -->
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;" id="support-filter-pills">
+            <button class="btn btn-primary support-filter-btn active" data-filter="all" style="padding:5px 12px; font-size:0.78rem; border-radius:16px;">
+              All Supports
+            </button>
+            <button class="btn btn-secondary support-filter-btn" data-filter="confluence" style="padding:5px 12px; font-size:0.78rem; border-radius:16px; color:#ff9800;">
+              🔥 Golden Confluence
+            </button>
+            <button class="btn btn-secondary support-filter-btn" data-filter="sma" style="padding:5px 12px; font-size:0.78rem; border-radius:16px;">
+              50 &amp; 200 SMA
+            </button>
+            <button class="btn btn-secondary support-filter-btn" data-filter="horizontal" style="padding:5px 12px; font-size:0.78rem; border-radius:16px;">
+              Horizontal Pivots
+            </button>
+            <button class="btn btn-secondary support-filter-btn" data-filter="order_block" style="padding:5px 12px; font-size:0.78rem; border-radius:16px;">
+              SMC Order Blocks
+            </button>
+            <button class="btn btn-secondary support-filter-btn" data-filter="hammer" style="padding:5px 12px; font-size:0.78rem; border-radius:16px; color:#10b981;">
+              🔨 Hammer Reversals
+            </button>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="btn btn-secondary" id="support-refresh-btn" style="padding:6px 14px; font-size:0.82rem;">↻ Rescan</button>
+          </div>
+        </div>
+
+        <!-- Single Ticker Search Bar -->
+        <div class="search-box" style="margin-bottom:14px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+          <input
+            type="text"
+            id="support-ticker-input"
+            placeholder="Analyze any stock daily chart (e.g. HCLTECH, TITAN, RELIANCE, TCS)..."
+            style="flex:1; min-width:240px; font-size:0.85rem;"
+            onkeydown="if(event.key==='Enter')analyzeDailySupportTicker()"
+          />
+          <button class="btn btn-primary" id="support-analyze-btn" onclick="analyzeDailySupportTicker()" style="padding:8px 16px; font-size:0.85rem;">
+            Analyze Daily Chart
+          </button>
+          <button class="btn btn-secondary" id="support-clear-btn" onclick="clearDailySupportTicker()" style="padding:8px 12px; font-size:0.85rem; display:none;">
+            Show All Screener
+          </button>
+        </div>
+
+        <!-- Metric Counter Bar -->
+        <div id="support-counters" class="grid-4" style="margin-bottom:16px; display:none;">
+          <div class="metric">
+            <div class="label">Total Scanned</div>
+            <div class="value" id="cnt-scanned">—</div>
+          </div>
+          <div class="metric">
+            <div class="label">On Daily Support</div>
+            <div class="value positive" id="cnt-matches">—</div>
+          </div>
+          <div class="metric">
+            <div class="label">Golden Confluences</div>
+            <div class="value" style="color:#ff9800;" id="cnt-confluence">—</div>
+          </div>
+          <div class="metric">
+            <div class="label">Hammer Rejections</div>
+            <div class="value" style="color:#38bdf8;" id="cnt-hammers">—</div>
+          </div>
+        </div>
+
+        <!-- Progress Notification Bar -->
+        <div id="support-progress-bar" style="display:none; margin-bottom:14px; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:10px 14px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.82rem;">
+            <span id="support-progress-text" style="color:var(--text); font-weight:500;">Scanning universe via INDmoney API...</span>
+            <span id="support-progress-count" style="color:var(--text-muted);">0 / 0</span>
+          </div>
+          <div style="background:var(--bg); border-radius:4px; height:6px; overflow:hidden;">
+            <div id="support-progress-fill" style="background:var(--accent); height:100%; width:0%; transition:width 0.2s;"></div>
+          </div>
+        </div>
+
+        <!-- Result Container -->
+        <div id="support-result">
+          <div class="loading">Loading Daily Support Scanner...</div>
         </div>
       </div>
     </div>
@@ -1009,6 +1435,8 @@
         backtest: document.getElementById("tab-backtest"),
         compare: document.getElementById("tab-compare"),
         daily: document.getElementById("tab-daily"),
+        support: document.getElementById("tab-support"),
+        strategy: document.getElementById("tab-strategy"),
         market: document.getElementById("tab-market"),
       };
 
@@ -1023,9 +1451,19 @@
             const activeSub = document.querySelector(".sub-tab.active");
             if (activeSub) activeSub.click();
           }
+          if (tab.dataset.tab === "support") {
+            if (!window._supportScanData) {
+              loadDailySupportScan();
+            }
+          }
           if (tab.dataset.tab === "institutions") {
             if (!window._instData) {
               fetchInstitutionalDeals();
+            }
+          }
+          if (tab.dataset.tab === "strategy") {
+            if (!window._strategyDataLoaded) {
+              loadStrategyData();
             }
           }
         });
@@ -1067,6 +1505,20 @@
         if (tabId === "institutions") {
           if (!window._instData) {
             fetchInstitutionalDeals();
+          }
+        }
+        if (tabId === "support") {
+          if (ticker) {
+            const inp = document.getElementById("support-ticker-input");
+            if (inp) inp.value = ticker;
+            analyzeDailySupportTicker();
+          } else if (!window._supportScanData) {
+            loadDailySupportScan();
+          }
+        }
+        if (tabId === "strategy") {
+          if (!window._strategyDataLoaded) {
+            loadStrategyData();
           }
         }
       }
@@ -1181,11 +1633,17 @@
       const toggleSwingIndBtn = document.getElementById("toggle-swing-ind-key");
       const applySwingIndBtn = document.getElementById("apply-swing-ind-key");
 
+      const supportIndKeyInput = document.getElementById("support-indmoney-api-key");
+      const supportIndBadge = document.getElementById("support-api-status-badge");
+      const toggleSupportIndBtn = document.getElementById("toggle-support-ind-key");
+      const applySupportIndBtn = document.getElementById("apply-support-ind-key");
+
       function getIndmoneyKey() {
+        const k0 = supportIndKeyInput?.value?.trim() || "";
         const k1 = swingIndKeyInput?.value?.trim() || "";
         const k2 = indKeyInput?.value?.trim() || "";
         const stored = localStorage.getItem("indmoney_api_key") || "";
-        return (k1 || k2 || stored).trim();
+        return (k0 || k1 || k2 || stored).trim();
       }
 
       function syncIndKeys(key) {
@@ -1193,6 +1651,7 @@
         localStorage.setItem("indmoney_api_key", val);
         if (indKeyInput && indKeyInput.value !== val) indKeyInput.value = val;
         if (swingIndKeyInput && swingIndKeyInput.value !== val) swingIndKeyInput.value = val;
+        if (supportIndKeyInput && supportIndKeyInput.value !== val) supportIndKeyInput.value = val;
         updateIndBadges(val);
       }
 
@@ -1222,10 +1681,46 @@
             swingIndBadge.style.border = "1px solid rgba(148, 163, 184, 0.25)";
           }
         }
+        if (supportIndBadge) {
+          if (hasKey) {
+            supportIndBadge.textContent = "⚡ Fast Mode: INDmoney API Active";
+            supportIndBadge.style.background = "rgba(34, 197, 94, 0.2)";
+            supportIndBadge.style.color = "#4ade80";
+            supportIndBadge.style.border = "1px solid rgba(34, 197, 94, 0.35)";
+          } else {
+            supportIndBadge.textContent = "○ Yahoo Finance Route (No Token)";
+            supportIndBadge.style.background = "rgba(148, 163, 184, 0.15)";
+            supportIndBadge.style.color = "#94a3b8";
+            supportIndBadge.style.border = "1px solid rgba(148, 163, 184, 0.25)";
+          }
+        }
       }
 
       const initialKey = localStorage.getItem("indmoney_api_key") || "";
       syncIndKeys(initialKey);
+
+      if (toggleSupportIndBtn && supportIndKeyInput) {
+        toggleSupportIndBtn.addEventListener("click", () => {
+          if (supportIndKeyInput.type === "password") {
+            supportIndKeyInput.type = "text";
+            toggleSupportIndBtn.textContent = "Hide";
+          } else {
+            supportIndKeyInput.type = "password";
+            toggleSupportIndBtn.textContent = "Show";
+          }
+        });
+      }
+
+      if (applySupportIndBtn && supportIndKeyInput) {
+        applySupportIndBtn.addEventListener("click", () => {
+          syncIndKeys(supportIndKeyInput.value);
+          loadDailySupportScan(true);
+        });
+      }
+
+      if (supportIndKeyInput) {
+        supportIndKeyInput.addEventListener("input", (e) => syncIndKeys(e.target.value));
+      }
 
       if (indKeyInput) {
         indKeyInput.addEventListener("input", (e) => syncIndKeys(e.target.value));
@@ -3456,6 +3951,731 @@
         }
       }
 
+      // ==========================================
+      // Strategy Tab: 5-Day Bullish + Cheap Puts
+      // ==========================================
+      window._strategyData = null;
+      window._strategyDataLoaded = false;
+
+      async function loadStrategyData(forceRefresh = false) {
+        const tableBody = document.getElementById("strategy-table-body");
+        const btn = document.getElementById("strat-run-btn");
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = forceRefresh ? "⏳ Running live scan..." : "⏳ Loading...";
+        }
+        if (forceRefresh) {
+          tableBody.innerHTML = '<tr><td colspan="11" class="loading">Scanning 218 F&O stocks across historical daily candles and live option chains... Please wait ~15-20s.</td></tr>';
+        }
+
+        try {
+          const days = document.getElementById("strat-param-days").value || 5;
+          const mode = document.getElementById("strat-param-mode").value || "higher_closes";
+          const maxPrem = document.getElementById("strat-param-premium").value || 20;
+          const maxCost = document.getElementById("strat-param-cost").value || 5000;
+
+          const url = `/api/fno-strategy?days=${days}&mode=${mode}&max_premium=${maxPrem}&max_lot_cost=${maxCost}${forceRefresh ? "&refresh=1" : ""}`;
+          const res = await apiFetch(url);
+
+          if (res.error) {
+            tableBody.innerHTML = `<tr><td colspan="11" class="error">Scan error: ${res.error}</td></tr>`;
+            return;
+          }
+
+          window._strategyData = res;
+          window._strategyDataLoaded = true;
+
+          // Update stats counters
+          const crit = res.criteria || {};
+          document.getElementById("strat-stat-universe").textContent = `${res.total_fno_stocks_scanned || 218} Stocks`;
+          document.getElementById("strat-stat-bullish").textContent = `${res.total_bullish_stocks_found || 0} Stocks`;
+          document.getElementById("strat-stat-qualifying").textContent = `${res.qualifying_stocks_count || 0} Setups`;
+          document.getElementById("strat-stat-budget").textContent = `≤ ₹${(crit.max_lot_investment_inr || 5000).toLocaleString()}`;
+          
+          if (res.screen_timestamp) {
+            const dt = new Date(res.screen_timestamp);
+            document.getElementById("strat-last-updated").textContent = `Last scan: ${dt.toLocaleTimeString()} (${dt.toLocaleDateString()})`;
+          }
+
+          renderStrategyTable(res.results || []);
+        } catch (e) {
+          tableBody.innerHTML = `<tr><td colspan="11" class="error">Failed to load strategy data: ${e.message}</td></tr>`;
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = "⚡ Run Live Scan";
+          }
+        }
+      }
+
+      function renderStrategyTable(rows) {
+        const tableBody = document.getElementById("strategy-table-body");
+        const countSpan = document.getElementById("strat-table-count");
+        if (!rows || rows.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);">No qualifying stocks found matching the criteria.</td></tr>';
+          if (countSpan) countSpan.textContent = "Showing 0 stocks";
+          return;
+        }
+
+        if (countSpan) countSpan.textContent = `Showing ${rows.length} qualifying stocks`;
+
+        let html = "";
+        rows.forEach((r, idx) => {
+          const sym = r.symbol;
+          const comp = r.company_name || sym;
+          const spot = `₹${parseFloat(r.spot_ltp || 0).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 2})}`;
+          const gain = parseFloat(r.bullish_gain_pct || 0);
+          const gainBadge = `<span class="deal-pill buy">+${gain.toFixed(2)}%</span>`;
+          const lot = r.lot_size;
+          const peStrike = `${r.best_put_strike} PE`;
+          const pePrem = `₹${parseFloat(r.best_put_premium || 0).toFixed(2)}`;
+          const lotCost = `₹${parseFloat(r.best_put_lot_cost || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+          const otmDist = `${parseFloat(r.best_put_otm_pct || 0).toFixed(1)}%`;
+          const oi = (r.best_put_oi || 0).toLocaleString();
+          const eligibleCount = r.total_eligible_put_strikes || (r.all_eligible_puts || []).length;
+
+          html += `<tr>
+            <td>
+              <div style="font-weight:700; color:var(--accent); font-size:0.95rem;">${sym}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${comp}</div>
+            </td>
+            <td style="font-weight:600;">${spot}</td>
+            <td>${gainBadge} <span style="font-size:0.72rem; color:var(--text-muted); display:block;">5d higher closes</span></td>
+            <td><strong>${lot}</strong> shares</td>
+            <td><strong style="color:#ffb300;">${peStrike}</strong> <span style="font-size:0.72rem; color:var(--text-muted); display:block;">exp: ${r.expiry || ''}</span></td>
+            <td><span class="pill-badge yellow">${pePrem}</span></td>
+            <td><strong style="color:var(--green);">${lotCost}</strong></td>
+            <td><span style="color:var(--text-muted);">${otmDist}</span></td>
+            <td><span style="font-size:0.8rem;">${oi}</span></td>
+            <td><span class="pill-badge blue">${eligibleCount} strikes</span></td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="showPutChainModal(${idx})">Option Chain</button>
+                <button class="btn" style="padding:4px 8px; font-size:0.75rem; background:var(--bg); color:var(--text); border:1px solid var(--border);" onclick="switchTab('quote', '${sym}')">Quote</button>
+              </div>
+            </td>
+          </tr>`;
+        });
+
+        tableBody.innerHTML = html;
+      }
+
+      function filterStrategyTable() {
+        const query = (document.getElementById("strat-table-search").value || "").trim().toUpperCase();
+        if (!window._strategyData || !window._strategyData.results) return;
+
+        const filtered = window._strategyData.results.filter(r => {
+          return (
+            r.symbol.toUpperCase().includes(query) ||
+            (r.company_name && r.company_name.toUpperCase().includes(query)) ||
+            String(r.best_put_strike).includes(query)
+          );
+        });
+        renderStrategyTable(filtered);
+      }
+
+      function triggerStrategyScan() {
+        loadStrategyData(true);
+      }
+
+      function showPutChainModal(resultIdx) {
+        if (!window._strategyData || !window._strategyData.results) return;
+        const r = window._strategyData.results[resultIdx];
+        if (!r) return;
+
+        document.getElementById("strat-modal-title").innerHTML = `
+          <span>${r.symbol}</span> — Option Chain Analysis
+          <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal; margin-left:12px;">Expiry: ${r.expiry || ''} | Lot: ${r.lot_size}</span>
+        `;
+
+        const atmInfoHtml = `
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; background:var(--bg); padding:12px; border-radius:6px; border:1px solid var(--border); font-size:0.85rem;">
+            <div><span style="color:var(--text-muted);">Spot LTP:</span> <strong>₹${parseFloat(r.spot_ltp || 0).toLocaleString()}</strong></div>
+            <div><span style="color:var(--text-muted);">5-Day Bullish Gain:</span> <strong style="color:var(--green);">+${parseFloat(r.bullish_gain_pct || 0).toFixed(2)}%</strong></div>
+            <div><span style="color:var(--text-muted);">ATM Strike:</span> <strong>${r.atm_strike || '-'} PE</strong></div>
+            <div><span style="color:var(--text-muted);">ATM Put Price:</span> <strong>₹${r.atm_put_price != null ? r.atm_put_price : '-'}</strong> (1 Lot: ₹${r.atm_lot_cost ? r.atm_lot_cost.toLocaleString() : '-'})</div>
+            <div><span style="color:var(--text-muted);">Best Put Strike:</span> <strong style="color:#ffb300;">${r.best_put_strike} PE</strong></div>
+            <div><span style="color:var(--text-muted);">1-Lot Investment:</span> <strong style="color:var(--green);">₹${parseFloat(r.best_put_lot_cost || 0).toLocaleString()}</strong> (Budget &le; ₹5,000)</div>
+          </div>
+        `;
+        document.getElementById("strat-modal-summary").innerHTML = atmInfoHtml;
+
+        const tbody = document.getElementById("strat-modal-tbody");
+        const strikes = r.all_eligible_puts || [];
+        if (strikes.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:var(--text-muted);">No strike details available.</td></tr>';
+        } else {
+          let rowsHtml = "";
+          strikes.forEach(s => {
+            const isBest = Math.abs(s.strike - r.best_put_strike) < 1e-4;
+            const rowBg = isBest ? 'style="background:rgba(41, 98, 255, 0.12); font-weight:600;"' : '';
+            rowsHtml += `<tr ${rowBg}>
+              <td><strong>${s.strike} PE</strong> ${isBest ? '<span class="pill-badge blue" style="font-size:0.68rem; margin-left:4px;">BEST</span>' : ''}</td>
+              <td><span class="pill-badge yellow">₹${parseFloat(s.put_price).toFixed(2)}</span></td>
+              <td><strong style="color:var(--green);">₹${parseFloat(s.lot_cost).toLocaleString()}</strong></td>
+              <td>${s.distance_from_spot_pct}%</td>
+              <td>${s.delta != null ? s.delta : '-'}</td>
+              <td>${s.theta != null ? s.theta : '-'}</td>
+              <td>${s.iv != null ? s.iv + '%' : '-'}</td>
+              <td>${(s.oi || 0).toLocaleString()}</td>
+              <td>${(s.volume || 0).toLocaleString()}</td>
+              <td>₹${s.breakeven_price || '-'}</td>
+            </tr>`;
+          });
+          tbody.innerHTML = rowsHtml;
+        }
+
+        document.getElementById("strat-modal").classList.add("active");
+      }
+
+      function closePutChainModal() {
+        document.getElementById("strat-modal").classList.remove("active");
+      }
+
+      // =========================================================================
+      // DAILY SUPPORT SCANNER CLIENT-SIDE LOGIC (INDmoney API Chart Engine)
+      // =========================================================================
+      let _supportScanData = null;
+      let _currentSupportFilter = "all";
+      let _supportPollTimer = null;
+
+      // Filter pill clicks
+      document.querySelectorAll("#support-filter-pills .support-filter-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("#support-filter-pills .support-filter-btn").forEach((b) => b.classList.remove("active", "btn-primary"));
+          document.querySelectorAll("#support-filter-pills .support-filter-btn").forEach((b) => b.classList.add("btn-secondary"));
+          btn.classList.remove("btn-secondary");
+          btn.classList.add("active", "btn-primary");
+          _currentSupportFilter = btn.dataset.filter;
+          renderDailySupportResults();
+        });
+      });
+
+      // Universe & Proximity dropdown changes
+      const supportUniverseSelect = document.getElementById("support-universe-select");
+      if (supportUniverseSelect) {
+        supportUniverseSelect.addEventListener("change", () => loadDailySupportScan(true));
+      }
+      const supportDistSelect = document.getElementById("support-dist-select");
+      if (supportDistSelect) {
+        supportDistSelect.addEventListener("change", () => loadDailySupportScan(true));
+      }
+
+      // Refresh button
+      const supportRefreshBtn = document.getElementById("support-refresh-btn");
+      if (supportRefreshBtn) {
+        supportRefreshBtn.addEventListener("click", () => loadDailySupportScan(true));
+      }
+
+      async function loadDailySupportScan(refresh = false) {
+        if (_supportPollTimer) {
+          clearTimeout(_supportPollTimer);
+          _supportPollTimer = null;
+        }
+
+        const universe = supportUniverseSelect?.value || "nifty50";
+        const maxDist = supportDistSelect?.value || "1.8";
+        const key = getIndmoneyKey();
+        const resEl = document.getElementById("support-result");
+        const progBar = document.getElementById("support-progress-bar");
+        const progFill = document.getElementById("support-progress-fill");
+        const progText = document.getElementById("support-progress-text");
+        const progCount = document.getElementById("support-progress-count");
+        const counters = document.getElementById("support-counters");
+
+        if (refresh && (!_supportScanData || !_supportScanData.picks || _supportScanData.picks.length === 0)) {
+          if (resEl) resEl.innerHTML = '<div class="loading">Initializing Daily Support Scanner across universe...</div>';
+        }
+
+        try {
+          const url = `/api/daily-support?universe=${encodeURIComponent(universe)}&max_dist=${encodeURIComponent(maxDist)}&refresh=${refresh ? "1" : "0"}&api_key=${encodeURIComponent(key)}`;
+          const data = await apiFetch(url);
+
+          if (data.scanning) {
+            if (progBar) progBar.style.display = "block";
+            const sc = data.scanned || 0;
+            const tot = data.total || 50;
+            const pct = Math.min(100, Math.round((sc / (tot || 1)) * 100));
+            if (progFill) progFill.style.width = pct + "%";
+            if (progCount) progCount.textContent = `${sc} / ${tot} stocks`;
+            if (progText) progText.textContent = `Scanning ${universe.toUpperCase()} via ${data.api_key_active ? "INDmoney API ⚡" : "Yahoo Finance"} (${pct}% complete)...`;
+
+            if (data.picks && data.picks.length > 0) {
+              _supportScanData = data;
+              renderDailySupportResults();
+            }
+
+            _supportPollTimer = setTimeout(() => loadDailySupportScan(false), 1200);
+            return;
+          }
+
+          if (progBar) progBar.style.display = "none";
+          _supportScanData = data;
+
+          if (counters) {
+            counters.style.display = "grid";
+            const cntScanned = document.getElementById("cnt-scanned");
+            const cntMatches = document.getElementById("cnt-matches");
+            const cntConf = document.getElementById("cnt-confluence");
+            const cntHammers = document.getElementById("cnt-hammers");
+            if (cntScanned) cntScanned.textContent = data.total || data.total_scanned || (data.picks ? data.picks.length : 0);
+            if (cntMatches) cntMatches.textContent = data.picks ? data.picks.length : 0;
+            if (cntConf) cntConf.textContent = data.confluence_picks ? data.confluence_picks.length : 0;
+            if (cntHammers) cntHammers.textContent = data.hammer_picks ? data.hammer_picks.length : 0;
+          }
+
+          renderDailySupportResults();
+        } catch (err) {
+          if (progBar) progBar.style.display = "none";
+          if (resEl) {
+            resEl.innerHTML = `<div class="error" style="padding:14px; background:rgba(242,54,69,0.1); border:1px solid rgba(242,54,69,0.3); border-radius:6px; color:#f87171;">
+              <strong>Scanner Error:</strong> ${err.message || err}
+            </div>`;
+          }
+        }
+      }
+
+      function renderDailySupportResults() {
+        const resEl = document.getElementById("support-result");
+        if (!resEl) return;
+
+        if (!_supportScanData || !_supportScanData.picks) {
+          resEl.innerHTML = '<div class="loading">No scan results loaded yet. Click ↻ Rescan.</div>';
+          return;
+        }
+
+        let picks = _supportScanData.picks || [];
+
+        // Apply filter pill
+        if (_currentSupportFilter === "confluence") {
+          picks = picks.filter((p) => p.has_confluence);
+        } else if (_currentSupportFilter === "sma") {
+          picks = picks.filter((p) => p.primary_support && p.primary_support.type && p.primary_support.type.includes("SMA"));
+        } else if (_currentSupportFilter === "horizontal") {
+          picks = picks.filter((p) => p.primary_support && p.primary_support.type && p.primary_support.type.includes("HORIZONTAL"));
+        } else if (_currentSupportFilter === "order_block") {
+          picks = picks.filter((p) => p.primary_support && p.primary_support.type && p.primary_support.type.includes("ORDER_BLOCK"));
+        } else if (_currentSupportFilter === "hammer") {
+          picks = picks.filter((p) => p.candle_reaction === "HAMMER_WICK_REJECTION");
+        }
+
+        if (picks.length === 0) {
+          resEl.innerHTML = `
+            <div class="card" style="text-align:center; padding:32px 16px; color:var(--text-muted);">
+              <div style="font-size:2rem; margin-bottom:8px;">🔍</div>
+              <div style="font-size:1rem; font-weight:600; color:var(--text); margin-bottom:6px;">No stocks matching filter "${_currentSupportFilter}"</div>
+              <div style="font-size:0.85rem;">Try relaxing proximity filter or select "All Supports" to see all candidate setups.</div>
+            </div>`;
+          return;
+        }
+
+        let html = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); gap:14px;">`;
+
+        picks.forEach((p) => {
+          const isUp = p.change_pct >= 0;
+          const chgCol = isUp ? "var(--green)" : "var(--red)";
+          const chgSign = isUp ? "+" : "";
+          const distVal = p.primary_support.dist_pct;
+          const distSign = distVal > 0 ? "+" : "";
+          const distCol = Math.abs(distVal) <= 0.6 ? "#10b981" : "#38bdf8";
+
+          // Confluence banner
+          let confHtml = "";
+          if (p.has_confluence) {
+            confHtml = `
+              <div style="background:rgba(255,152,0,0.12); border:1px solid rgba(255,152,0,0.35); border-radius:6px; padding:6px 10px; margin-bottom:10px; font-size:0.78rem; color:#ffb74d; display:flex; align-items:center; gap:6px;">
+                <span style="font-size:0.95rem;">🔥</span>
+                <span><strong>${p.confluence_notes}</strong></span>
+              </div>`;
+          }
+
+          // Candle reaction badge
+          let reactBadge = `
+            <span style="font-size:0.75rem; padding:3px 8px; border-radius:4px; font-weight:600; background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);">
+              ${p.candle_reaction_label}
+            </span>`;
+          if (p.candle_reaction === "HAMMER_WICK_REJECTION") {
+            reactBadge = `
+              <span style="font-size:0.75rem; padding:3px 8px; border-radius:4px; font-weight:600; background:rgba(16,185,129,0.2); color:#10b981; border:1px solid rgba(16,185,129,0.4);">
+                🔨 Bullish Hammer (${p.lower_wick_pct}% lower wick absorption)
+              </span>`;
+          }
+
+          // Other supports pills
+          let otherSupportsHtml = "";
+          if (p.all_supports && p.all_supports.length > 1) {
+            const others = p.all_supports
+              .filter((s) => s.type !== p.primary_support.type && Math.abs(s.dist_pct) <= 4.0)
+              .slice(0, 3);
+            if (others.length > 0) {
+              otherSupportsHtml = `
+                <div style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--border); font-size:0.75rem;">
+                  <span style="color:var(--text-muted); font-weight:500;">Other daily supports:</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:4px;">
+                    ${others
+                      .map(
+                        (s) =>
+                          `<span style="background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:2px 6px; border-radius:3px; color:var(--text-muted);">
+                            ${s.label}: ₹${s.price.toFixed(1)} (${s.dist_pct > 0 ? "+" : ""}${s.dist_pct.toFixed(1)}%)
+                          </span>`
+                      )
+                      .join("")}
+                  </div>
+                </div>`;
+            }
+          }
+
+          html += `
+            <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between; border-left:3px solid ${p.has_confluence ? "#ff9800" : "var(--accent)"};">
+              <div>
+                <!-- Header Row -->
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                  <div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <strong style="font-size:1.15rem; color:#fff; cursor:pointer;" onclick="switchTab('quote', '${p.symbol}')">${p.symbol}</strong>
+                      <span style="font-size:0.72rem; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.08); color:var(--text-muted);">${p.quality_rating}</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                      Pullback: <span style="color:#f87171;">${p.pullback_3d_pct}% (3d)</span> · Dip from peak: <span style="color:#f87171;">-${p.pullback_from_peak}%</span>
+                    </div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:1.15rem; font-weight:700;">₹${p.ltp.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                    <div style="font-size:0.8rem; font-weight:600; color:${chgCol};">${chgSign}${p.change_pct}% today</div>
+                  </div>
+                </div>
+
+                ${confHtml}
+
+                <!-- Primary Support Box -->
+                <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:6px; padding:10px 12px; margin-bottom:10px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span style="font-size:0.75rem; font-weight:600; text-transform:uppercase; color:#10b981; letter-spacing:0.5px;">
+                      🛡️ Landed on Daily Support
+                    </span>
+                    <span style="font-size:0.78rem; font-weight:700; color:${distCol};">
+                      ${distSign}${p.primary_support.dist_pct.toFixed(2)}% away
+                    </span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                    <strong style="font-size:0.95rem; color:#f1f5f9;">${p.primary_support.label}</strong>
+                    <span style="font-size:1rem; font-weight:700; color:#10b981;">₹${p.primary_support.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div style="margin-top:6px;">
+                    ${reactBadge}
+                  </div>
+                </div>
+
+                <!-- Trade Setup Metrics Grid -->
+                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px; margin-bottom:10px; text-align:center;">
+                  <div>
+                    <div style="font-size:0.68rem; color:var(--text-muted); text-transform:uppercase;">Entry</div>
+                    <div style="font-size:0.85rem; font-weight:600; color:#fff; margin-top:2px;">₹${p.suggested_entry.toFixed(1)}</div>
+                  </div>
+                  <div>
+                    <div style="font-size:0.68rem; color:var(--text-muted); text-transform:uppercase;">Stop Loss</div>
+                    <div style="font-size:0.85rem; font-weight:600; color:#f87171; margin-top:2px;">₹${p.stop_loss.toFixed(1)}</div>
+                    <div style="font-size:0.65rem; color:#f87171;">-${p.stop_loss_pct}%</div>
+                  </div>
+                  <div>
+                    <div style="font-size:0.68rem; color:var(--text-muted); text-transform:uppercase;">Target 1</div>
+                    <div style="font-size:0.85rem; font-weight:600; color:#38bdf8; margin-top:2px;">₹${p.target_1.toFixed(1)}</div>
+                    <div style="font-size:0.65rem; color:#38bdf8;">+${p.target_1_pct}%</div>
+                  </div>
+                  <div>
+                    <div style="font-size:0.68rem; color:var(--text-muted); text-transform:uppercase;">R : R Ratio</div>
+                    <div style="font-size:0.85rem; font-weight:700; color:#10b981; margin-top:2px;">1 : ${p.risk_reward_ratio}</div>
+                    <div style="font-size:0.65rem; color:var(--text-muted);">Asymmetric</div>
+                  </div>
+                </div>
+
+                ${otherSupportsHtml}
+              </div>
+
+              <!-- Card Action Bar & Chart Expansion -->
+              <div style="margin-top:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                  <button
+                    class="btn btn-secondary"
+                    id="btn-chart-toggle-${p.symbol}"
+                    onclick="toggleSupportCardChart('${p.symbol}')"
+                    style="flex:1; padding:6px 10px; font-size:0.78rem; display:flex; align-items:center; justify-content:center; gap:6px;"
+                  >
+                    📈 View Daily Chart
+                  </button>
+                  <button
+                    class="btn btn-secondary"
+                    onclick="switchTab('quote', '${p.symbol}')"
+                    style="padding:6px 12px; font-size:0.78rem;"
+                    title="View Quote"
+                  >Quote</button>
+                  <button
+                    class="btn btn-secondary"
+                    onclick="switchTab('news', '${p.symbol}')"
+                    style="padding:6px 12px; font-size:0.78rem;"
+                    title="View News"
+                  >News</button>
+                </div>
+
+                <!-- Expandable Chart Container -->
+                <div
+                  id="support-chart-box-${p.symbol}"
+                  style="display:none; margin-top:12px; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px;"
+                >
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.75rem;">
+                    <span style="font-weight:600; color:#38bdf8;">Daily Chart with Support &amp; Targets (Last 90 Bars)</span>
+                    <span id="chart-source-${p.symbol}" style="color:var(--text-muted); font-size:0.7rem;">INDmoney API</span>
+                  </div>
+                  <div style="position:relative; width:100%; height:250px;">
+                    <canvas id="support-chart-canvas-${p.symbol}"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        });
+
+        html += `</div>`;
+        resEl.innerHTML = html;
+      }
+
+      // Toggle and render interactive Candlestick Chart with Support Level
+      async function toggleSupportCardChart(symbol) {
+        const box = document.getElementById(`support-chart-box-${symbol}`);
+        const btn = document.getElementById(`btn-chart-toggle-${symbol}`);
+        if (!box) return;
+
+        if (box.style.display === "block") {
+          box.style.display = "none";
+          if (btn) btn.innerHTML = "📈 View Daily Chart";
+          return;
+        }
+
+        box.style.display = "block";
+        if (btn) btn.innerHTML = "📉 Hide Daily Chart";
+
+        const canvasId = `support-chart-canvas-${symbol}`;
+        const canvas = document.getElementById(canvasId);
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "#787b86";
+          ctx.font = "12px sans-serif";
+          ctx.fillText("Loading daily candles from INDmoney API...", 20, 40);
+        }
+
+        try {
+          const key = getIndmoneyKey();
+          const url = `/api/daily-support/chart?ticker=${encodeURIComponent(symbol)}&bars=90&api_key=${encodeURIComponent(key)}`;
+          const res = await apiFetch(url);
+
+          const srcEl = document.getElementById(`chart-source-${symbol}`);
+          if (srcEl && res.source) {
+            srcEl.textContent = res.source;
+          }
+
+          if (res.candles && res.candles.length >= 2) {
+            drawSupportCandlestickChart(canvasId, res.candles, res.analysis);
+          } else {
+            if (canvas) {
+              const ctx = canvas.getContext("2d");
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.fillStyle = "#f87171";
+              ctx.fillText(res.error || "Could not load candles for chart.", 20, 40);
+            }
+          }
+        } catch (ex) {
+          if (canvas) {
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#f87171";
+            ctx.fillText("Chart error: " + ex.message, 20, 40);
+          }
+        }
+      }
+
+      // Standalone HTML5 Canvas Daily Candlestick Chart Renderer
+      function drawSupportCandlestickChart(canvasId, candles, analysis) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || !candles || candles.length < 2) return;
+        const ctx = canvas.getContext("2d");
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const W = (canvas.width = rect.width || 650);
+        const H = (canvas.height = 250);
+        const pad = { t: 25, r: 65, b: 25, l: 15 };
+        const cw = W - pad.l - pad.r;
+        const ch = H - pad.t - pad.b;
+
+        let minP = Math.min(...candles.map((c) => c.low));
+        let maxP = Math.max(...candles.map((c) => c.high));
+
+        if (analysis) {
+          if (analysis.primary_support && analysis.primary_support.price) {
+            minP = Math.min(minP, analysis.primary_support.price);
+            maxP = Math.max(maxP, analysis.primary_support.price);
+          }
+          if (analysis.stop_loss) minP = Math.min(minP, analysis.stop_loss);
+          if (analysis.target_1) maxP = Math.max(maxP, analysis.target_1);
+        }
+
+        const pBuffer = (maxP - minP) * 0.05 || 1;
+        minP -= pBuffer;
+        maxP += pBuffer;
+        const pRange = maxP - minP || 1;
+
+        ctx.clearRect(0, 0, W, H);
+
+        // Grid lines & price labels
+        ctx.strokeStyle = "#242832";
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+          const y = pad.t + (ch * i) / 4;
+          ctx.beginPath();
+          ctx.moveTo(pad.l, y);
+          ctx.lineTo(W - pad.r, y);
+          ctx.stroke();
+
+          ctx.fillStyle = "#787b86";
+          ctx.font = "10px sans-serif";
+          ctx.textAlign = "left";
+          const pVal = maxP - (i * pRange) / 4;
+          ctx.fillText("₹" + pVal.toFixed(0), W - pad.r + 6, y + 3);
+        }
+
+        // Draw Candlesticks
+        const numBars = candles.length;
+        const barW = Math.max(2, Math.min(8, (cw / numBars) * 0.7));
+
+        candles.forEach((c, idx) => {
+          const x = pad.l + (idx + 0.5) * (cw / numBars);
+          const yOpen = pad.t + ch - ((c.open - minP) / pRange) * ch;
+          const yClose = pad.t + ch - ((c.close - minP) / pRange) * ch;
+          const yHigh = pad.t + ch - ((c.high - minP) / pRange) * ch;
+          const yLow = pad.t + ch - ((c.low - minP) / pRange) * ch;
+
+          const isUp = c.close >= c.open;
+          const col = isUp ? "#089981" : "#f23645";
+
+          // Wick
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(x, yHigh);
+          ctx.lineTo(x, yLow);
+          ctx.stroke();
+
+          // Body
+          ctx.fillStyle = col;
+          const bodyTop = Math.min(yOpen, yClose);
+          const bodyH = Math.max(2, Math.abs(yClose - yOpen));
+          ctx.fillRect(x - barW / 2, bodyTop, barW, bodyH);
+        });
+
+        // Horizontal line drawing helper
+        function drawHLine(price, color, label, isDashed = true) {
+          if (!price || price < minP || price > maxP) return;
+          const y = pad.t + ch - ((price - minP) / pRange) * ch;
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.8;
+          if (isDashed) ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          ctx.moveTo(pad.l, y);
+          ctx.lineTo(W - pad.r, y);
+          ctx.stroke();
+
+          // Right axis pill
+          ctx.fillStyle = color;
+          ctx.fillRect(W - pad.r + 2, y - 8, 60, 16);
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 9px sans-serif";
+          ctx.textAlign = "left";
+          ctx.fillText("₹" + price.toFixed(0), W - pad.r + 5, y + 4);
+
+          // Left label
+          ctx.font = "bold 10px sans-serif";
+          ctx.fillStyle = color;
+          ctx.textAlign = "left";
+          ctx.fillText(label, pad.l + 6, y - 4);
+          ctx.restore();
+        }
+
+        if (analysis) {
+          if (analysis.primary_support && analysis.primary_support.price) {
+            drawHLine(
+              analysis.primary_support.price,
+              "#10b981",
+              `SUPPORT: ${analysis.primary_support.label} (₹${analysis.primary_support.price.toFixed(1)})`
+            );
+          }
+          if (analysis.stop_loss) {
+            drawHLine(analysis.stop_loss, "#f23645", `STOP LOSS (-${analysis.stop_loss_pct}%)`);
+          }
+          if (analysis.target_1) {
+            drawHLine(analysis.target_1, "#38bdf8", `TARGET 1 (+${analysis.target_1_pct}%)`);
+          }
+        }
+      }
+
+      // Single ticker lookup
+      async function analyzeDailySupportTicker() {
+        const inp = document.getElementById("support-ticker-input");
+        const resEl = document.getElementById("support-result");
+        const clearBtn = document.getElementById("support-clear-btn");
+        if (!inp || !resEl) return;
+
+        const val = inp.value.trim().toUpperCase().replace(".NS", "").replace(".BO", "");
+        if (!val) return;
+
+        if (resEl) {
+          resEl.innerHTML = `<div class="loading">Fetching daily chart and calculating support levels for ${val} via INDmoney API...</div>`;
+        }
+        if (clearBtn) clearBtn.style.display = "inline-block";
+
+        try {
+          const key = getIndmoneyKey();
+          const maxDist = supportDistSelect?.value || "2.5";
+          const url = `/api/daily-support?ticker=${encodeURIComponent(val)}&max_dist=${encodeURIComponent(maxDist)}&api_key=${encodeURIComponent(key)}`;
+          const data = await apiFetch(url);
+
+          if (data.pick) {
+            _supportScanData = { picks: [data.pick] };
+            renderDailySupportResults();
+            setTimeout(() => toggleSupportCardChart(data.pick.symbol), 150);
+          } else {
+            resEl.innerHTML = `
+              <div class="card" style="text-align:center; padding:28px 16px; color:#f87171;">
+                <strong>${data.error || `Could not find support levels for ${val}.`}</strong>
+              </div>`;
+          }
+        } catch (ex) {
+          resEl.innerHTML = `<div class="error">Error analyzing ${val}: ${ex.message || ex}</div>`;
+        }
+      }
+
+      function clearDailySupportTicker() {
+        const inp = document.getElementById("support-ticker-input");
+        const clearBtn = document.getElementById("support-clear-btn");
+        if (inp) inp.value = "";
+        if (clearBtn) clearBtn.style.display = "none";
+        loadDailySupportScan(false);
+      }
+
+      document
+        .querySelector('.tab[data-tab="support"]')
+        .addEventListener("click", () => {
+          if (!_supportScanData) {
+            loadDailySupportScan();
+          }
+        });
+
+      document
+        .querySelector('.tab[data-tab="strategy"]')
+        .addEventListener("click", () => {
+          if (!window._strategyDataLoaded) {
+            loadStrategyData();
+          }
+        });
+
       document
         .querySelector('.tab[data-tab="news"]')
         .addEventListener("click", () => {
@@ -3465,6 +4685,168 @@
       document
         .querySelector('.tab[data-tab="market"]')
         .addEventListener("click", loadMarket);
+
+      // ── GEX / Option Greeks tab ──────────────────────────────────────────
+      let gexIndex = "NIFTY";
+      let gexExpiry = null;
+
+      function gexNum(n, digits = 2) {
+        if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
+        return Number(n).toLocaleString("en-IN", {
+          minimumFractionDigits: digits,
+          maximumFractionDigits: digits,
+        });
+      }
+
+      function gexEsc(s) {
+        return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+        })[c]);
+      }
+
+      function gexMetric(label, value, cls = "") {
+        return `<div class="metric"><div class="label">${gexEsc(label)}</div><div class="value ${cls}">${value}</div></div>`;
+      }
+
+      function selectGexIndex(chip) {
+        gexIndex = chip.dataset.gexIndex;
+        gexExpiry = null;
+        document.querySelectorAll("[data-gex-index]").forEach((c) =>
+          c.classList.remove("active-gex-index"));
+        chip.classList.add("active-gex-index");
+        loadGex();
+      }
+
+      async function loadGex() {
+        const box = document.getElementById("gex-result");
+        box.innerHTML = '<div class="loading">Loading GEX levels and option Greeks…</div>';
+        const p = new URLSearchParams({ index: gexIndex, strike_count: "15" });
+        if (gexExpiry) p.set("expiry", gexExpiry);
+        try {
+          const d = await apiFetch(API + "/api/gex?" + p.toString());
+          if (d.error) throw new Error(d.error);
+          window._gexData = d;
+          gexExpiry = d.expiry;
+          const sel = document.getElementById("gex-expiry");
+          let opts = (d.expiries || []).filter((e) => e);
+          if (!opts.includes(d.expiry)) opts.unshift(d.expiry);
+          sel.innerHTML = opts
+            .map((e) => `<option value="${gexEsc(e)}"${e === d.expiry ? " selected" : ""}>Expiry ${gexEsc(e)}</option>`)
+            .join("");
+          box.innerHTML = renderGex(d);
+        } catch (e) {
+          const msg = String(e.message || e);
+          const hint = /token|403|401|expired|revoke/i.test(msg)
+            ? " — refresh INDMONEY_API_TOKEN in .env, then restart the dashboard."
+            : "";
+          box.innerHTML = `<div class="error">GEX data unavailable: ${gexEsc(msg)}${gexEsc(hint)}</div>`;
+        }
+      }
+
+      function renderGex(d) {
+        const toneColor = { buyers: "var(--red)", sellers: "var(--green)", neutral: "var(--yellow)" }[d.control_tone] || "var(--accent)";
+        const step = d.rows.length > 1 ? d.rows[1].strike - d.rows[0].strike : 1;
+        const maxAbs = Math.max(...d.rows.map((r) => Math.abs(r.net_gex_cr)), 1);
+        const totalOI = d.total_ce_oi + d.total_pe_oi;
+        const callPct = totalOI ? (d.total_ce_oi / totalOI) * 100 : 50;
+        const gexCls = d.gex_cr >= 0 ? "positive" : "negative";
+        const staleBanner = d.stale
+          ? `<div style="background:rgba(255,193,7,0.12);border:1px solid rgba(255,193,7,0.4);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:0.8rem;color:var(--yellow);">⚠ Showing last good cached snapshot — live refresh failed: ${gexEsc(d.stale_reason || "INDmoney token expired")}. Refresh INDMONEY_API_TOKEN to restore live Greeks.</div>`
+          : "";
+
+        const rowsHtml = d.rows.map((r) => {
+          const atm = Math.abs(r.strike - d.underlying_ltp) < step / 2;
+          const marks = [];
+          if (atm) marks.push("ATM");
+          if (r.strike === d.max_pain) marks.push("Max pain");
+          if (r.strike === d.strongest_gamma_strike) marks.push("Peak gamma");
+          const barW = Math.max(2, (Math.abs(r.net_gex_cr) / maxAbs) * 100);
+          const barColor = r.net_gex_cr >= 0 ? "var(--green)" : "var(--red)";
+          const n = (v, dg = 2) => gexNum(v, dg);
+          return `<tr style="${atm ? "background:rgba(41,98,255,0.12);" : ""}">
+            <td style="white-space:nowrap;"><strong>${n(r.strike, 0)}</strong>${marks.length ? `<div style="font-size:0.65rem;color:var(--text-muted);">${marks.join(", ")}</div>` : ""}</td>
+            <td>${n(r.ce.oi, 0)}</td><td>${n(r.ce.delta)}</td><td>${n(r.ce.gamma, 4)}</td><td>${n(r.ce.theta)}</td><td>${n(r.ce.vega)}</td><td>${n(r.ce.iv)}%</td>
+            <td>${n(r.pe.oi, 0)}</td><td>${n(r.pe.delta)}</td><td>${n(r.pe.gamma, 4)}</td><td>${n(r.pe.theta)}</td><td>${n(r.pe.vega)}</td><td>${n(r.pe.iv)}%</td>
+            <td style="color:${r.net_gex_cr >= 0 ? "var(--green)" : "var(--red)"};font-weight:600;white-space:nowrap;">${n(r.net_gex_cr)}
+              <div style="height:4px;background:var(--border);border-radius:2px;margin-top:3px;"><div style="height:4px;width:${barW}%;background:${barColor};border-radius:2px;"></div></div>
+            </td>
+            <td>${n(r.net_delta, 0)}</td>
+          </tr>`;
+        }).join("");
+
+        return `
+          <div class="card" style="border-left:4px solid ${toneColor};">
+            ${staleBanner}
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <div>
+                <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Who is in control</div>
+                <div style="font-size:1.5rem;font-weight:700;color:${toneColor};margin-top:2px;">${gexEsc(d.control)}</div>
+              </div>
+              <div style="font-size:0.8rem;color:var(--text-muted);">${gexEsc(d.name)} · ${gexEsc(d.expiry)} · lot ${gexEsc(d.lot_size)}</div>
+            </div>
+            <p style="margin-top:10px;font-size:0.85rem;line-height:1.5;color:var(--text);">${gexEsc(d.control_reason)}</p>
+            <p style="margin-top:6px;font-size:0.8rem;color:var(--text-muted);">${gexEsc(d.spot_vs_flip)}</p>
+          </div>
+
+          <div class="grid-4" style="margin-bottom:12px;">
+            ${gexMetric("Underlying LTP", gexNum(d.underlying_ltp))}
+            ${gexMetric("Net dealer GEX (₹ cr)", gexNum(d.gex_cr), gexCls)}
+            ${gexMetric("Call GEX (₹ cr)", gexNum(d.call_gex_cr), "negative")}
+            ${gexMetric("Put GEX (₹ cr)", gexNum(d.put_gex_cr), "positive")}
+            ${gexMetric("Gamma flip / zero level", gexNum(d.gamma_flip))}
+            ${gexMetric("Max pain", gexNum(d.max_pain, 0))}
+            ${gexMetric("PCR (open interest)", gexNum(d.pcr_oi, 3))}
+            ${gexMetric("PCR (volume)", gexNum(d.pcr_volume, 3))}
+            ${gexMetric("Avg IV", gexNum(d.avg_iv) + "%")}
+            ${gexMetric("Peak gamma strike", gexNum(d.strongest_gamma_strike, 0))}
+          </div>
+
+          <div class="card">
+            <h3>Open-interest positioning <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400;">(fresh OI change: CE ${gexNum(d.ce_oi_change, 0)} · PE ${gexNum(d.pe_oi_change, 0)})</span></h3>
+            <div style="display:flex;height:14px;border-radius:4px;overflow:hidden;background:var(--border);">
+              <div style="width:${callPct}%;background:var(--red);" title="Call OI"></div>
+              <div style="width:${100 - callPct}%;background:var(--green);" title="Put OI"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-top:6px;">
+              <span style="color:var(--red);">Calls ${gexNum(d.total_ce_oi, 0)} (${gexNum(callPct, 1)}%)</span>
+              <span style="color:var(--green);">Puts ${gexNum(d.total_pe_oi, 0)} (${gexNum(100 - callPct, 1)}%)</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Strike-by-strike Greeks &amp; gamma exposure</h3>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:0.75rem;white-space:nowrap;">
+                <thead>
+                  <tr style="color:var(--text-muted);border-bottom:1px solid var(--border);text-align:right;">
+                    <th style="text-align:left;">Strike</th>
+                    <th colspan="6" style="color:var(--red);border-left:1px solid var(--border);">CALL (CE)</th>
+                    <th colspan="6" style="color:var(--green);border-left:1px solid var(--border);">PUT (PE)</th>
+                    <th colspan="2" style="border-left:1px solid var(--border);">Dealer hedging</th>
+                  </tr>
+                  <tr style="color:var(--text-muted);border-bottom:1px solid var(--border);text-align:right;font-size:0.7rem;">
+                    <th style="text-align:left;">₹</th>
+                    <th>OI</th><th>Δ delta</th><th>Γ gamma</th><th>Θ theta</th><th>Vega</th><th>IV</th>
+                    <th style="border-left:1px solid var(--border);">OI</th><th>Δ delta</th><th>Γ gamma</th><th>Θ theta</th><th>Vega</th><th>IV</th>
+                    <th style="border-left:1px solid var(--border);">Net GEX ₹cr</th><th>Net Δ</th>
+                  </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </div>
+            <p style="margin-top:12px;font-size:0.72rem;color:var(--text-muted);line-height:1.5;">
+              ${gexEsc(d.source)}. GEX = (−CE OI × CE gamma + PE OI × PE gamma) × lot × spot × 0.01, shown in ₹ crore.
+              Positive GEX = dealers long gamma (volatility suppressed, sellers/writers in control); negative GEX = dealers short gamma (buyers in control, trends amplify).
+              Gamma flip is estimated by interpolating where cumulative OI-weighted gamma crosses zero within the fetched strikes. Educational estimate, not investment advice.
+            </p>
+          </div>`;
+      }
+
+      document
+        .querySelector('.tab[data-tab="gex"]')
+        .addEventListener("click", () => {
+          if (!window._gexData) loadGex();
+        });
       document.getElementById("quote-btn").click();
       // Load bullish news when tab opens (handler registered above)
     </script>

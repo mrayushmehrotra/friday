@@ -1,0 +1,13 @@
+{
+  "screen_timestamp": "2026-11-19T13:12:18.004620",
+  "criteria": {
+    "consecutive_bullish_days": 5,
+    "bullish_mode": "higher_closes",
+    "max_put_premium_inr": 20.0,
+    "max_lot_investment_inr": 5000.0
+  },
+  "total_fno_stocks_scanned": 218,
+  "total_bullish_stocks_found": 0,
+  "qualifying_stocks_count": 0,
+  "results": []
+}

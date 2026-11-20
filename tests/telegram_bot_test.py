@@ -31,7 +31,14 @@ def _deal(**overrides):
     return base
 
 
-def _inst_data(institution="Government of Singapore", deals=None, error=None):
+def _name_for_url(url):
+    for label, u, _kw in bot.INSTITUTIONS:
+        if u == url:
+            return label
+    return ""
+
+
+def _inst_data(institution="", deals=None, error=None):
     if error:
         return {"error": error}
     return {"institution": institution, "deals": deals or []}
@@ -88,18 +95,20 @@ class TestPollOnce(unittest.TestCase):
         self.sent = []
         self._orig_send = bot.send_telegram_message
         bot.send_telegram_message = lambda text, **kw: (self.sent.append(text), True)[1]
+        bot._MISMATCH_WARNED.clear()
+        self.feed = []  # all-deals feed rows
 
     def tearDown(self):
         bot.STATE_PATH = self._orig_state_path
         telegram_notify.load_config = self._orig_config
         bot.send_telegram_message = self._orig_send
 
-    def _scrape_factory(self, deals_by_url):
+    def _scrape_factory(self, deals_by_label):
         def fake_scrape(url):
-            for name, u in bot.INSTITUTIONS:
-                if u == url:
-                    return _inst_data(deals=deals_by_url.get(name, []))
-            return {"error": "unknown url"}
+            if url == bot.ALL_DEALS_URL:
+                return _inst_data(institution="Latest Deals", deals=list(self.feed))
+            label = _name_for_url(url)
+            return _inst_data(institution=label, deals=deals_by_label.get(label, []))
         return fake_scrape
 
     def test_first_poll_marks_seen_without_alert(self):
@@ -142,6 +151,32 @@ class TestPollOnce(unittest.TestCase):
             deals["Government of Singapore"].append(_deal(symbol="INFY", qty=50.0))
             sent = bot.poll_once()
         self.assertEqual(sent, 1)
+
+    def test_repointed_url_is_skipped_with_warning(self):
+        def fake_scrape(url):
+            if url == bot.ALL_DEALS_URL:
+                return _inst_data(institution="Latest Deals", deals=[])
+            return _inst_data(institution="Unrelated Entity", deals=[_deal()])
+        with mock.patch.object(bot, "_scrape_trendlyne_deals", fake_scrape):
+            sent = bot.poll_once()
+            bot.poll_once()
+        self.assertEqual(sent, 0)
+        # one warning message per mismatched institution, only on first poll
+        self.assertEqual(len(self.sent), len(bot.INSTITUTIONS))
+        self.assertIn("config issue", self.sent[0])
+
+    def test_blackrock_client_watch_alerts(self):
+        self.feed = [_deal(client="BLACKROCK INTL LTD", symbol="XYZ")]
+        with mock.patch.object(bot, "_scrape_trendlyne_deals", self._scrape_factory({})):
+            sent = bot.poll_once()  # init — marked seen
+        self.assertEqual(sent, 0)
+        self.feed.append(_deal(client="BLACKROCK GLOBAL FUNDS", symbol="ABC", buySell="SELL"))
+        with mock.patch.object(bot, "_scrape_trendlyne_deals", self._scrape_factory({})):
+            sent = bot.poll_once()
+        self.assertEqual(sent, 1)
+        self.assertIn("BlackRock", self.sent[0])
+        self.assertIn("ABC", self.sent[0])
+        self.assertIn("SELL", self.sent[0])
 
 
 if __name__ == "__main__":

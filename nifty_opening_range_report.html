@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>15m Opening Range Displacement Strategy - Backtest Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0; padding: 24px; background: #0f172a; color: #f8fafc;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 24px; border-radius: 12px; margin-bottom: 24px;
+            border: 1px solid #334155;
+        }
+        h1 { margin: 0 0 8px 0; color: #38bdf8; font-size: 26px; }
+        .meta { color: #94a3b8; font-size: 14px; margin-bottom: 16px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card {
+            background: #1e293b; padding: 18px; border-radius: 10px; border: 1px solid #334155;
+        }
+        .card .title { font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; }
+        .card .val { font-size: 24px; font-weight: bold; color: #f8fafc; }
+        .val.pos { color: #10b981; }
+        .val.neg { color: #ef4444; }
+        .chart-box {
+            background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 24px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { background: #0f172a; color: #94a3b8; font-weight: 600; }
+        tr:hover { background: #243247; }
+        .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge.long { background: #065f46; color: #34d399; }
+        .badge.short { background: #7f1d1d; color: #f87171; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 15-Minute Opening Range Displacement Backtest</h1>
+        <div class="meta">
+            <strong>Timeframe:</strong> 5-minute candles |
+            <strong>Data Source:</strong> INDmoney LIVE API |
+            <strong>Lookback:</strong> 60 Days |
+            <strong>Direction:</strong> BOTH |
+            <strong>Displacement Mode:</strong> standard |
+            <strong>Entry Cutoff:</strong> 14:30 IST |
+            <strong>Risk/Reward:</strong> 1:2 RR (SL at candle low for long)
+        </div>
+    </div>
+
+    <div class="cards">
+        <div class="card">
+            <div class="title">Total Trades</div>
+            <div class="val">40</div>
+        </div>
+        <div class="card">
+            <div class="title">Win Rate</div>
+            <div class="val pos">47.5%</div>
+        </div>
+        <div class="card">
+            <div class="title">Total Return (R-Multiples)</div>
+            <div class="val pos">+18.29 R</div>
+        </div>
+        <div class="card">
+            <div class="title">Total PnL (@ ₹1k Risk)</div>
+            <div class="val pos">₹+18,284</div>
+        </div>
+    </div>
+
+    <div class="chart-box">
+        <h3 style="margin-top:0;color:#38bdf8">Cumulative R-Multiple Curve</h3>
+        <canvas id="equityChart" height="90"></canvas>
+    </div>
+
+    <div class="chart-box">
+        <h3 style="margin-top:0;color:#38bdf8">Per-Stock Performance Breakdown</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Trades</th>
+                    <th>Wins</th>
+                    <th>Losses</th>
+                    <th>Win Rate</th>
+                    <th>Total R</th>
+                    <th>Profit Factor</th>
+                    <th>Max DD (R)</th>
+                    <th>PnL (₹)</th>
+                    <th>Return %</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+        <tr>
+            <td><strong>NIFTY</strong></td>
+            <td>40</td>
+            <td>19</td>
+            <td>21</td>
+            <td>47.5%</td>
+            <td style="color:#10b981;font-weight:600">+18.29R</td>
+            <td>1.94</td>
+            <td>5.00R</td>
+            <td style="color:#10b981;font-weight:600">₹+18,284</td>
+            <td style="color:#10b981">+18.3%</td>
+        </tr>
+        
+            </tbody>
+        </table>
+    </div>
+
+    <div class="chart-box">
+        <h3 style="margin-top:0;color:#38bdf8">Trade History Log (All Trades)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Symbol</th>
+                    <th>Side</th>
+                    <th>OR High</th>
+                    <th>OR Low</th>
+                    <th>Entry</th>
+                    <th>SL</th>
+                    <th>Target</th>
+                    <th>Exit</th>
+                    <th>Outcome</th>
+                    <th>R</th>
+                    <th>PnL (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+        <tr>
+            <td>2026-09-21</td>
+            <td>11:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹23402.95</td>
+            <td>₹23314.80</td>
+            <td>₹23405.05</td>
+            <td style="color:#ef4444">₹23398.15</td>
+            <td style="color:#10b981">₹23418.85</td>
+            <td>11:35 (₹23398.15)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-09-22</td>
+            <td>10:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹23489.00</td>
+            <td>₹23425.80</td>
+            <td>₹23422.25</td>
+            <td style="color:#ef4444">₹23439.75</td>
+            <td style="color:#10b981">₹23387.25</td>
+            <td>10:40 (₹23387.25)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-09-23</td>
+            <td>10:45</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹23413.90</td>
+            <td>₹23351.75</td>
+            <td>₹23416.70</td>
+            <td style="color:#ef4444">₹23411.10</td>
+            <td style="color:#10b981">₹23427.90</td>
+            <td>11:05 (₹23427.90)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-09-24</td>
+            <td>11:50</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹23281.95</td>
+            <td>₹23205.45</td>
+            <td>₹23204.50</td>
+            <td style="color:#ef4444">₹23210.50</td>
+            <td style="color:#10b981">₹23192.50</td>
+            <td>11:55 (₹23192.50)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-09-25</td>
+            <td>14:00</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹23116.65</td>
+            <td>₹23030.00</td>
+            <td>₹23152.30</td>
+            <td style="color:#ef4444">₹23063.10</td>
+            <td style="color:#10b981">₹23330.70</td>
+            <td>15:15 (₹23128.10)</td>
+            <td><span style="color:#f59e0b;font-weight:600">SQUAREOFF</span></td>
+            <td style="font-weight:600;color:#f59e0b">-0.27R</td>
+            <td style="color:#f59e0b">₹-271</td>
+        </tr>
+        
+        <tr>
+            <td>2026-09-28</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹23080.25</td>
+            <td>₹22905.25</td>
+            <td>₹22893.25</td>
+            <td style="color:#ef4444">₹22912.10</td>
+            <td style="color:#10b981">₹22855.55</td>
+            <td>09:40 (₹22855.55)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-09-29</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹22753.20</td>
+            <td>₹22624.20</td>
+            <td>₹22619.75</td>
+            <td style="color:#ef4444">₹22638.10</td>
+            <td style="color:#10b981">₹22583.05</td>
+            <td>09:35 (₹22583.05)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-09-30</td>
+            <td>10:05</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22736.65</td>
+            <td>₹22659.80</td>
+            <td>₹22739.00</td>
+            <td style="color:#ef4444">₹22729.30</td>
+            <td style="color:#10b981">₹22758.40</td>
+            <td>10:15 (₹22758.40)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-01</td>
+            <td>10:00</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22590.05</td>
+            <td>₹22508.05</td>
+            <td>₹22599.55</td>
+            <td style="color:#ef4444">₹22567.60</td>
+            <td style="color:#10b981">₹22663.45</td>
+            <td>10:10 (₹22567.60)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-05</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22571.30</td>
+            <td>₹22506.35</td>
+            <td>₹22589.20</td>
+            <td style="color:#ef4444">₹22568.40</td>
+            <td style="color:#10b981">₹22630.80</td>
+            <td>09:35 (₹22568.40)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-06</td>
+            <td>09:45</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22628.10</td>
+            <td>₹22561.60</td>
+            <td>₹22633.45</td>
+            <td style="color:#ef4444">₹22611.75</td>
+            <td style="color:#10b981">₹22676.85</td>
+            <td>10:40 (₹22676.85)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-07</td>
+            <td>09:35</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹22692.95</td>
+            <td>₹22600.45</td>
+            <td>₹22587.60</td>
+            <td style="color:#ef4444">₹22616.25</td>
+            <td style="color:#10b981">₹22530.30</td>
+            <td>09:40 (₹22616.25)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-08</td>
+            <td>09:40</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹22599.05</td>
+            <td>₹22475.75</td>
+            <td>₹22472.45</td>
+            <td style="color:#ef4444">₹22500.95</td>
+            <td style="color:#10b981">₹22415.45</td>
+            <td>11:20 (₹22415.45)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-09</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22383.45</td>
+            <td>₹22294.75</td>
+            <td>₹22393.80</td>
+            <td style="color:#ef4444">₹22362.50</td>
+            <td style="color:#10b981">₹22456.40</td>
+            <td>09:50 (₹22456.40)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-12</td>
+            <td>09:50</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹22651.10</td>
+            <td>₹22512.00</td>
+            <td>₹22475.90</td>
+            <td style="color:#ef4444">₹22523.90</td>
+            <td style="color:#10b981">₹22379.90</td>
+            <td>09:55 (₹22523.90)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-13</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22478.20</td>
+            <td>₹22288.45</td>
+            <td>₹22492.20</td>
+            <td style="color:#ef4444">₹22461.15</td>
+            <td style="color:#10b981">₹22554.30</td>
+            <td>09:45 (₹22554.30)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-14</td>
+            <td>13:00</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹22752.30</td>
+            <td>₹22663.80</td>
+            <td>₹22611.70</td>
+            <td style="color:#ef4444">₹22669.10</td>
+            <td style="color:#10b981">₹22496.90</td>
+            <td>15:15 (₹22625.15)</td>
+            <td><span style="color:#f59e0b;font-weight:600">SQUAREOFF</span></td>
+            <td style="font-weight:600;color:#f59e0b">-0.23R</td>
+            <td style="color:#f59e0b">₹-234</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-15</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22752.10</td>
+            <td>₹22637.40</td>
+            <td>₹22757.30</td>
+            <td style="color:#ef4444">₹22738.75</td>
+            <td style="color:#10b981">₹22794.40</td>
+            <td>09:45 (₹22794.40)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-16</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹23076.55</td>
+            <td>₹22942.15</td>
+            <td>₹22932.40</td>
+            <td style="color:#ef4444">₹22961.05</td>
+            <td style="color:#10b981">₹22875.10</td>
+            <td>09:40 (₹22961.05)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-19</td>
+            <td>12:00</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹23175.25</td>
+            <td>₹22970.50</td>
+            <td>₹22954.20</td>
+            <td style="color:#ef4444">₹22992.40</td>
+            <td style="color:#10b981">₹22877.80</td>
+            <td>13:20 (₹22877.80)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-21</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹23086.95</td>
+            <td>₹22976.15</td>
+            <td>₹23115.65</td>
+            <td style="color:#ef4444">₹23069.20</td>
+            <td style="color:#10b981">₹23208.55</td>
+            <td>09:45 (₹23069.20)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-22</td>
+            <td>10:20</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22697.55</td>
+            <td>₹22557.95</td>
+            <td>₹22726.10</td>
+            <td style="color:#ef4444">₹22658.15</td>
+            <td style="color:#10b981">₹22862.00</td>
+            <td>11:45 (₹22658.15)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-23</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹22787.25</td>
+            <td>₹22699.70</td>
+            <td>₹22681.95</td>
+            <td style="color:#ef4444">₹22733.00</td>
+            <td style="color:#10b981">₹22579.85</td>
+            <td>10:00 (₹22579.85)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-26</td>
+            <td>09:50</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22524.40</td>
+            <td>₹22387.35</td>
+            <td>₹22550.40</td>
+            <td style="color:#ef4444">₹22457.30</td>
+            <td style="color:#10b981">₹22736.60</td>
+            <td>15:15 (₹22717.05)</td>
+            <td><span style="color:#f59e0b;font-weight:600">SQUAREOFF</span></td>
+            <td style="font-weight:600;color:#f59e0b">+1.79R</td>
+            <td style="color:#f59e0b">₹+1,790</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-27</td>
+            <td>09:40</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22746.40</td>
+            <td>₹22653.20</td>
+            <td>₹22758.65</td>
+            <td style="color:#ef4444">₹22732.45</td>
+            <td style="color:#10b981">₹22811.05</td>
+            <td>09:45 (₹22732.45)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-28</td>
+            <td>10:15</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹22691.50</td>
+            <td>₹22551.90</td>
+            <td>₹22517.70</td>
+            <td style="color:#ef4444">₹22574.25</td>
+            <td style="color:#10b981">₹22404.60</td>
+            <td>10:55 (₹22574.25)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-29</td>
+            <td>09:35</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22745.75</td>
+            <td>₹22656.75</td>
+            <td>₹22758.25</td>
+            <td style="color:#ef4444">₹22727.45</td>
+            <td style="color:#10b981">₹22819.85</td>
+            <td>09:40 (₹22727.45)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-10-30</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹22980.35</td>
+            <td>₹22919.85</td>
+            <td>₹22990.25</td>
+            <td style="color:#ef4444">₹22955.90</td>
+            <td style="color:#10b981">₹23058.95</td>
+            <td>09:45 (₹22955.90)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-02</td>
+            <td>09:35</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹23292.55</td>
+            <td>₹23211.80</td>
+            <td>₹23298.15</td>
+            <td style="color:#ef4444">₹23277.50</td>
+            <td style="color:#10b981">₹23339.45</td>
+            <td>10:30 (₹23339.45)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-03</td>
+            <td>09:45</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹23628.30</td>
+            <td>₹23482.80</td>
+            <td>₹23635.90</td>
+            <td style="color:#ef4444">₹23609.20</td>
+            <td style="color:#10b981">₹23689.30</td>
+            <td>11:50 (₹23689.30)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-05</td>
+            <td>09:45</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹24391.95</td>
+            <td>₹24296.30</td>
+            <td>₹24413.10</td>
+            <td style="color:#ef4444">₹24386.65</td>
+            <td style="color:#10b981">₹24466.00</td>
+            <td>10:00 (₹24386.65)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-06</td>
+            <td>09:30</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹24539.20</td>
+            <td>₹24388.05</td>
+            <td>₹24546.20</td>
+            <td style="color:#ef4444">₹24500.50</td>
+            <td style="color:#10b981">₹24637.60</td>
+            <td>09:45 (₹24637.60)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-09</td>
+            <td>10:40</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹25084.05</td>
+            <td>₹24897.85</td>
+            <td>₹24845.75</td>
+            <td style="color:#ef4444">₹24902.90</td>
+            <td style="color:#10b981">₹24731.45</td>
+            <td>10:55 (₹24902.90)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-11</td>
+            <td>09:40</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹25399.10</td>
+            <td>₹25263.80</td>
+            <td>₹25412.95</td>
+            <td style="color:#ef4444">₹25392.25</td>
+            <td style="color:#10b981">₹25454.35</td>
+            <td>09:50 (₹25392.25)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-12</td>
+            <td>09:35</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹25342.00</td>
+            <td>₹25142.95</td>
+            <td>₹25348.30</td>
+            <td style="color:#ef4444">₹25326.20</td>
+            <td style="color:#10b981">₹25392.50</td>
+            <td>09:45 (₹25326.20)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-13</td>
+            <td>10:05</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹25209.85</td>
+            <td>₹25077.55</td>
+            <td>₹25210.90</td>
+            <td style="color:#ef4444">₹25202.25</td>
+            <td style="color:#10b981">₹25228.20</td>
+            <td>10:10 (₹25202.25)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-16</td>
+            <td>09:45</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹25310.70</td>
+            <td>₹25195.35</td>
+            <td>₹25314.60</td>
+            <td style="color:#ef4444">₹25297.20</td>
+            <td style="color:#10b981">₹25349.40</td>
+            <td>10:00 (₹25297.20)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-17</td>
+            <td>09:45</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹25358.05</td>
+            <td>₹25267.30</td>
+            <td>₹25359.80</td>
+            <td style="color:#ef4444">₹25345.90</td>
+            <td style="color:#10b981">₹25387.60</td>
+            <td>10:15 (₹25387.60)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-18</td>
+            <td>09:35</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge short">SHORT</span></td>
+            <td>₹25390.80</td>
+            <td>₹25281.80</td>
+            <td>₹25266.50</td>
+            <td style="color:#ef4444">₹25314.35</td>
+            <td style="color:#10b981">₹25170.80</td>
+            <td>10:00 (₹25314.35)</td>
+            <td><span style="color:#ef4444;font-weight:600">SL</span></td>
+            <td style="font-weight:600;color:#ef4444">-1.00R</td>
+            <td style="color:#ef4444">₹-1,000</td>
+        </tr>
+        
+        <tr>
+            <td>2026-11-19</td>
+            <td>09:45</td>
+            <td><strong>NIFTY</strong></td>
+            <td><span class="badge long">LONG</span></td>
+            <td>₹25255.60</td>
+            <td>₹25115.90</td>
+            <td>₹25257.40</td>
+            <td style="color:#ef4444">₹25224.95</td>
+            <td style="color:#10b981">₹25322.30</td>
+            <td>10:50 (₹25322.30)</td>
+            <td><span style="color:#10b981;font-weight:600">TARGET</span></td>
+            <td style="font-weight:600;color:#10b981">+2.00R</td>
+            <td style="color:#10b981">₹+2,000</td>
+        </tr>
+        
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('equityChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['2026-09-21 11:30 (NIFTY)', '2026-09-22 10:30 (NIFTY)', '2026-09-23 10:45 (NIFTY)', '2026-09-24 11:50 (NIFTY)', '2026-09-25 14:00 (NIFTY)', '2026-09-28 09:30 (NIFTY)', '2026-09-29 09:30 (NIFTY)', '2026-09-30 10:05 (NIFTY)', '2026-10-01 10:00 (NIFTY)', '2026-10-05 09:30 (NIFTY)', '2026-10-06 09:45 (NIFTY)', '2026-10-07 09:35 (NIFTY)', '2026-10-08 09:40 (NIFTY)', '2026-10-09 09:30 (NIFTY)', '2026-10-12 09:50 (NIFTY)', '2026-10-13 09:30 (NIFTY)', '2026-10-14 13:00 (NIFTY)', '2026-10-15 09:30 (NIFTY)', '2026-10-16 09:30 (NIFTY)', '2026-10-19 12:00 (NIFTY)', '2026-10-21 09:30 (NIFTY)', '2026-10-22 10:20 (NIFTY)', '2026-10-23 09:30 (NIFTY)', '2026-10-26 09:50 (NIFTY)', '2026-10-27 09:40 (NIFTY)', '2026-10-28 10:15 (NIFTY)', '2026-10-29 09:35 (NIFTY)', '2026-10-30 09:30 (NIFTY)', '2026-11-02 09:35 (NIFTY)', '2026-11-03 09:45 (NIFTY)', '2026-11-05 09:45 (NIFTY)', '2026-11-06 09:30 (NIFTY)', '2026-11-09 10:40 (NIFTY)', '2026-11-11 09:40 (NIFTY)', '2026-11-12 09:35 (NIFTY)', '2026-11-13 10:05 (NIFTY)', '2026-11-16 09:45 (NIFTY)', '2026-11-17 09:45 (NIFTY)', '2026-11-18 09:35 (NIFTY)', '2026-11-19 09:45 (NIFTY)'],
+                datasets: [{
+                    label: 'Cumulative R',
+                    data: [-1.0, 1.0, 3.0, 5.0, 4.73, 6.73, 8.73, 10.73, 9.73, 8.73, 10.73, 9.73, 11.73, 13.73, 12.73, 14.73, 14.5, 16.5, 15.5, 17.5, 16.5, 15.5, 17.5, 19.29, 18.29, 17.29, 16.29, 15.29, 17.29, 19.29, 18.29, 20.29, 19.29, 18.29, 17.29, 16.29, 15.29, 17.29, 16.29, 18.29],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { display: false },
+                    y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+</body>
+</html>

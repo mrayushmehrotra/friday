@@ -60,7 +60,16 @@ except ImportError:
     analyze_vcp_stock = None
     fetch_stock_candles = None
     scan_amd_stock = None
-    scan_universe_vcp = None
+try:
+    from daily_support_scanner import (
+        analyze_daily_support,
+        get_cached_or_scan_support,
+        get_chart_series,
+    )
+except ImportError:
+    analyze_daily_support = None
+    get_cached_or_scan_support = None
+    get_chart_series = None
 
 import requests as _requests
 
@@ -960,6 +969,16 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._handle_market_overview()
         elif path == "/api/institutional-deals":
             self._handle_institutional_deals(params)
+        elif path == "/api/fno-strategy":
+            self._handle_fno_strategy(params)
+        elif path == "/api/fno-stocks":
+            self._handle_fno_stocks()
+        elif path == "/api/gex":
+            self._handle_gex(params)
+        elif path == "/api/daily-support":
+            self._handle_daily_support(params)
+        elif path == "/api/daily-support/chart":
+            self._handle_daily_support_chart(params)
         elif path == "/":
             self._serve_file("stock_dashboard.html")
         else:
@@ -1310,6 +1329,128 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 self._send_json(data, 502)
             else:
                 self._send_json(data)
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
+
+    def _handle_fno_strategy(self, params):
+        json_path = os.path.join(HERE, "assets", "bullish_stocks_with_cheap_puts.json")
+        refresh = self._get_param(params, "refresh", "0").lower() in ("1", "true", "yes")
+        days = int(self._get_param(params, "days", "5") or 5)
+        max_premium = float(self._get_param(params, "max_premium", "20.0") or 20.0)
+        max_lot_cost = float(self._get_param(params, "max_lot_cost", "5000.0") or 5000.0)
+        mode = self._get_param(params, "mode", "higher_closes")
+
+        # Return cached JSON if default parameters and no refresh requested
+        if (
+            not refresh
+            and os.path.exists(json_path)
+            and days == 5
+            and abs(max_premium - 20.0) < 1e-4
+            and abs(max_lot_cost - 5000.0) < 1e-4
+            and mode == "higher_closes"
+        ):
+            try:
+                with open(json_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                self._send_json(data)
+                return
+            except Exception:
+                pass
+
+        try:
+            from bullish_put_filter import BullishPutFilter
+            scanner = BullishPutFilter(
+                consecutive_days=days,
+                max_put_premium=max_premium,
+                max_lot_investment=max_lot_cost,
+                bullish_mode=mode,
+            )
+            data = scanner.run_screen()
+            scanner.save_results(data)
+            self._send_json(data)
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
+
+    def _handle_fno_stocks(self):
+        json_path = os.path.join(HERE, "assets", "stocks_with_options.json")
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                self._send_json(json.load(f))
+        else:
+            self._send_json({"error": "stocks_with_options.json not found"}, 404)
+
+    def _handle_gex(self, params):
+        """Gamma exposure / option Greeks for NIFTY 50 and SENSEX."""
+        index_key = (params.get("index") or ["NIFTY"])[0].upper()
+        expiry = (params.get("expiry") or [None])[0]
+        try:
+            strike_count = int((params.get("strike_count") or [15])[0])
+        except (TypeError, ValueError):
+            strike_count = 15
+        try:
+            import gex
+            self._send_json(gex.get_gex(index_key, expiry, strike_count))
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
+
+    def _handle_daily_support(self, params):
+        if analyze_daily_support is None:
+            self._send_json({"error": "Daily support scanner module not loaded"}, 500)
+            return
+
+        ticker = self._get_param(params, "ticker", "").strip()
+        api_key = self._get_param(params, "api_key", "").strip() or None
+        max_dist = self._get_float(params, "max_dist", 2.0)
+
+        try:
+            if ticker:
+                match = analyze_daily_support(ticker, api_key=api_key, max_support_dist_pct=max_dist)
+                if match:
+                    self._send_json({"single": True, "ticker": ticker, "pick": asdict(match)})
+                else:
+                    self._send_json({"single": True, "ticker": ticker, "error": f"No data or support analysis available for {ticker}"})
+                return
+
+            universe = self._get_param(params, "universe", "nifty50").strip()
+            refresh = self._get_param(params, "refresh", "") in ("1", "true", "yes", "on")
+            support_type = self._get_param(params, "support_type", "all").strip().lower()
+
+            data = get_cached_or_scan_support(universe=universe, refresh=refresh, api_key=api_key, max_dist=max_dist)
+
+            # Optional filter by support_type
+            if support_type != "all" and data.get("picks"):
+                picks = data["picks"]
+                if support_type == "confluence":
+                    data["picks"] = [p for p in picks if p.get("has_confluence")]
+                elif support_type == "sma":
+                    data["picks"] = [p for p in picks if "SMA" in p.get("primary_support", {}).get("type", "")]
+                elif support_type == "horizontal":
+                    data["picks"] = [p for p in picks if "HORIZONTAL" in p.get("primary_support", {}).get("type", "")]
+                elif support_type == "order_block":
+                    data["picks"] = [p for p in picks if "ORDER_BLOCK" in p.get("primary_support", {}).get("type", "")]
+                elif support_type == "hammer":
+                    data["picks"] = [p for p in picks if p.get("candle_reaction") == "HAMMER_WICK_REJECTION"]
+
+            self._send_json(data)
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
+
+    def _handle_daily_support_chart(self, params):
+        if get_chart_series is None:
+            self._send_json({"error": "Daily support chart module not loaded"}, 500)
+            return
+
+        ticker = self._get_param(params, "ticker", "").strip()
+        api_key = self._get_param(params, "api_key", "").strip() or None
+        bars = int(self._get_param(params, "bars", "90") or 90)
+
+        if not ticker:
+            self._send_json({"error": "Missing ticker parameter"}, 400)
+            return
+
+        try:
+            chart_data = get_chart_series(ticker, api_key=api_key, bars=bars)
+            self._send_json(chart_data)
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
 

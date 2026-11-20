@@ -1,0 +1,232 @@
+{
+  "generated_at": "2026-11-10T09:17:10.354606",
+  "total_indices_with_options": 8,
+  "indices": [
+    {
+      "symbol": "BANKEX",
+      "name": "BANKEX",
+      "security_id": "40000033",
+      "scrip_code": "BSE_40000033",
+      "lot_size": 30,
+      "freeze_qty": 900,
+      "options_enabled": true,
+      "has_call": true,
+      "has_put": true,
+      "total_contracts": 1222,
+      "ce_contracts": 611,
+      "pe_contracts": 611,
+      "expiries_count": 3,
+      "upcoming_expiries": [
+        "2026-11-26",
+        "2026-12-31",
+        "2027-01-28"
+      ],
+      "nearest_expiry": "2026-11-26",
+      "strike_count": 206,
+      "min_strike": 53700.0,
+      "max_strike": 74200.0,
+      "exchanges": [
+        "BSE"
+      ]
+    },
+    {
+      "symbol": "BANKNIFTY",
+      "name": "BANK NIFTY",
+      "security_id": "40000003",
+      "scrip_code": "NSE_40000003",
+      "lot_size": 30,
+      "freeze_qty": 901,
+      "options_enabled": true,
+      "has_call": true,
+      "has_put": true,
+      "total_contracts": 2328,
+      "ce_contracts": 1164,
+      "pe_contracts": 1164,
+      "expiries_count": 3,
+      "upcoming_expiries": [
+        "2026-11-23",
+        "2026-12-29",
+        "2027-01-25"
+      ],
+      "nearest_expiry": "2026-11-23",
+      "strike_count": 388,
+      "min_strike": 31500.0,
+      "max_strike": 82000.0,
+      "exchanges": [
+        "NSE"
+      ]
+    },
+    {
+      "symbol": "FINNIFTY",
+      "name": "Nifty Financial",
+      "security_id": "40000100",
+      "scrip_code": "NSE_40000100",
+      "lot_size": 60,
+      "freeze_qty": 1801,
+      "options_enabled": true,
+      "has_call": true,
+      "has_put": true,
+      "total_contracts": 1248,
+      "ce_contracts": 624,
+      "pe_contracts": 624,
+      "expiries_count": 3,
+      "upcoming_expiries": [
+        "2026-11-23",
+        "2026-12-29",
+        "2027-01-25"
+      ],
+      "nearest_expiry": "2026-11-23",
+      "strike_count": 296,
+      "min_strike": 15500.0,
+      "max_strike": 36500.0,
+      "exchanges": [
+        "NSE"
+      ]
+    },
+    {
+      "symbol": "FOCIT",
+      "name": "BSE Focused IT",
+      "security_id": "40000129",
+      "scrip_code": "BSE_40000129",
+      "lot_size": 45,
+      "freeze_qty": 1350,
+      "options_enabled": true,
+      "has_call": true,
+      "has_put": true,
+      "total_contracts": 1104,
+      "ce_contracts": 552,
+      "pe_contracts": 552,
+      "expiries_count": 3,
+      "upcoming_expiries": [
+        "2026-11-26",
+        "2026-12-31",
+        "2027-01-28"
+      ],
+      "nearest_expiry": "2026-11-26",
+      "strike_count": 200,
+      "min_strike": 26400.0,
+      "max_strike": 46300.0,
+      "exchanges": [
+        "BSE"
+      ]
+    },
+    {
+      "symbol": "MIDCPNIFTY",
+      "name": "Nifty Midcap Sel",
+      "security_id": "40000093",
+      "scrip_code": "NSE_40000093",
+      "lot_size": 120,
+      "freeze_qty": 2801,
+      "options_enabled": true,
+      "has_call": true,
+      "has_put": true,
+      "total_contracts": 1674,
+      "ce_contracts": 837,
+      "pe_contracts": 837,
+      "expiries_count": 3,
+      "upcoming_expiries": [
+        "2026-11-23",
+        "2026-12-29",
+        "2027-01-25"
+      ],
+      "nearest_expiry": "2026-11-23",
+      "strike_count": 307,
+      "min_strike": 8500.0,
+      "max_strike": 19500.0,
+      "exchanges": [
+        "NSE"
+      ]
+    },
+    {
+      "symbol": "NIFTY",
+      "name": "NIFTY 50",
+      "security_id": "40000001",
+      "scrip_code": "NSE_40000001",
+      "lot_size": 65,
+      "freeze_qty": 1801,
+      "options_enabled": true,
+      "has_call": true,
+      "has_put": true,
+      "total_contracts": 3569,
+      "ce_contracts": 1784,
+      "pe_contracts": 1785,
+      "expiries_count": 7,
+      "upcoming_expiries": [
+        "2026-11-17",
+        "2026-11-23",
+        "2026-12-01",
+        "2026-12-08",
+        "2026-12-15",
+        "2026-12-29",
+        "2027-01-25"
+      ],
+      "nearest_expiry": "2026-11-17",
+      "strike_count": 294,
+      "min_strike": 1500.0,
+      "max_strike": 48000.0,
+      "exchanges": [
+        "NSE"
+      ]
+    },
+    {
+      "symbol": "NIFTYNXT50",
+      "name": "Nifty Next 50",
+      "security_id": "40000040",
+      "scrip_code": "NSE_40000040",
+      "lot_size": 25,
+      "freeze_qty": 601,
+      "options_enabled": true,
+      "has_call": true,
+      "has_put": true,
+      "total_contracts": 2306,
+      "ce_contracts": 1153,
+      "pe_contracts": 1153,
+      "expiries_count": 3,
+      "upcoming_expiries": [
+        "2026-11-23",
+        "2026-12-29",
+        "2027-01-25"
+      ],
+      "nearest_expiry": "2026-11-23",
+      "strike_count": 400,
+      "min_strike": 36000.0,
+      "max_strike": 104500.0,
+      "exchanges": [
+        "NSE"
+      ]
+    },
+    {
+      "symbol": "SENSEX",
+      "name": "SENSEX",
+      "security_id": "40000006",
+      "scrip_code": "BSE_40000006",
+      "lot_size": 25,
+      "freeze_qty": 1000,
+      "options_enabled": true,
+      "has_call": true,
+      "has_put": true,
+      "total_contracts": 3930,
+      "ce_contracts": 1965,
+      "pe_contracts": 1965,
+      "expiries_count": 9,
+      "upcoming_expiries": [
+        "2026-11-12",
+        "2026-11-19",
+        "2026-11-26",
+        "2026-12-03",
+        "2026-12-10",
+        "2026-12-17",
+        "2026-12-24",
+        "2026-12-31",
+        "2027-01-28"
+      ],
+      "nearest_expiry": "2026-11-12",
+      "strike_count": 236,
+      "min_strike": 64600.0,
+      "max_strike": 88100.0,
+      "exchanges": [
+        "BSE"
+      ]
+    }
+  ]
+}

@@ -409,8 +409,8 @@
       <div class="brand">
         <div class="logo-badge">⚡</div>
         <div class="brand-title">
-          <h1>INDmoney Morning Momentum Ignition Bot</h1>
-          <div class="sub">Baseline Reclaim & Consolidation Breakout Engine · Trailing Profit Lock · Single Trade (₹3k)</div>
+          <h1>INDmoney 1m EMA & VWAP Crossover Bot</h1>
+          <div class="sub">1-Minute Candles · Confirming Candle SL · 1:2 Min Target · Single Trade (₹3,000 MIS)</div>
         </div>
       </div>
 
@@ -504,24 +504,24 @@
       <div class="panel-header">
         <div class="panel-title">
           <span>🎯 Active Intraday Position</span>
-          <span style="font-size:0.75rem; color:var(--text-muted);">(Strictly 1 Trade at a Time · ₹3k Capital)</span>
+          <span style="font-size:0.75rem; color:var(--text-muted);">(Strictly 1 Trade at a Time · ₹3,000 MIS Capital · 1:2 Target)</span>
         </div>
         <div id="active-action-container"></div>
       </div>
       <div class="panel-body">
         <div id="active-trade-content">
           <div style="text-align:center; padding:30px 20px; color:var(--text-muted); font-size:0.9rem;">
-            Awaiting abnormal ATR breakout on your watchlist. No active position currently open.
+            Awaiting 1-minute EMA & VWAP crossover signal on your watchlist. No active position currently open.
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Continuous Watchlist & ATR Scanner -->
+    <!-- Continuous Watchlist & EMA-VWAP Scanner -->
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title">
-          <span>📡 Continuously Scanned Stocks</span>
+          <span>📡 1-Minute EMA & VWAP Continuous Scanner</span>
           <span id="badge-count" style="font-size:0.75rem; color:var(--accent-primary); font-family:var(--font-mono)">(0 stocks)</span>
         </div>
         <div style="display:flex; gap:10px;">
@@ -547,12 +547,18 @@
         </div>
         <!-- Watchlist Input Bar -->
         <div class="watchlist-form">
-          <input type="text" id="input-symbol" placeholder="Enter stock symbol(s) to scan continuously (e.g. TRENT, RELIANCE, TATAMOTORS)" autofocus />
+          <input type="text" id="input-symbol" placeholder="Enter stock symbol(s) to scan continuously (e.g. RELIANCE, TCS, COALINDIA)" autofocus />
           <button class="btn btn-primary" id="btn-add-stock">+ Add Stock</button>
         </div>
 
-        <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:14px; line-height: 1.6;">
-          <strong>Strategy Anatomy:</strong> Monitors 5-minute candles for <strong>Baseline Reclaim & Consolidation Breakout</strong> (9:25–10:30 AM ignition). Requires holding above Baseline (Prev Close / Day Open), breaking morning base high, with <strong>Volume Surge & ATR Expansion</strong>. Includes <strong>Dynamic Trailing Stop</strong> to lock peak profits on vertical ascents.
+        <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:14px; line-height: 1.6; background:rgba(0, 212, 255, 0.05); padding:10px 14px; border-radius:6px; border:1px solid rgba(0, 212, 255, 0.15);">
+          <strong style="color:var(--accent-primary);">Strategy Anatomy (VWAP x EMA Cross | Smart Profit Trail):</strong>
+          <div style="margin-top:4px;">
+            • <strong>🔻 Bearish Cross (Short / SELL):</strong> When 9 EMA crosses BELOW session VWAP, the confirming 1m candle's <strong>HIGH is the Stop Loss</strong>. Target is <strong>minimum 1:2 R:R downward</strong>.<br />
+            • <strong>🟢 Bullish Cross (Long / BUY):</strong> When 9 EMA crosses ABOVE session VWAP, the confirming 1m candle's <strong>LOW is the Stop Loss</strong>. Target is <strong>minimum 1:2 R:R upward</strong>.<br />
+            • <strong>Smart Profit Trail:</strong> After the R-multiple trigger, SL locks to breakeven and ratchets by EMA / ATR / candle low-high; 50% is booked at 1:2 and the runner trails freely.<br />
+            • <strong>Risk & Position:</strong> Fixed ₹3,000 capital, 5x MIS leverage (₹15k exposure), single active position, 3:15 PM EOD auto square-off.
+          </div>
         </div>
 
         <!-- Watchlist Scanner Table -->
@@ -562,19 +568,78 @@
               <tr>
                 <th>Stock</th>
                 <th>Price (LTP)</th>
-                <th>Baseline (Prev Close)</th>
-                <th>Morning Base Range</th>
-                <th>Volume Surge</th>
-                <th>ATR Expansion</th>
-                <th>Setup Status</th>
+                <th>9 EMA</th>
+                <th>Session VWAP</th>
+                <th>Spread</th>
+                <th>Confirming SL</th>
+                <th>1:2 Target</th>
+                <th>Cross Status</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="tbody-watchlist">
-              <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Your watchlist is currently empty. Add stocks above to start scanning.</td></tr>
+              <tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:30px;">Your watchlist is currently empty. Add stocks above to start scanning.</td></tr>
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- VWAP x EMA Smart Profit Trail Auto Bot -->
+    <div class="panel" id="panel-smart-trail" style="border-color:rgba(16,185,129,0.45);">
+      <div class="panel-header" style="background:rgba(16,185,129,0.07);">
+        <div class="panel-title" style="color:var(--success);">🤖 VWAP × EMA Auto Bot — Smart Profit Trail</div>
+        <span id="badge-trail-mode" style="font-size:0.75rem; color:var(--success); font-family:var(--font-mono);">EMA Trail</span>
+      </div>
+      <div class="panel-body">
+        <div style="font-size:0.82rem; color:var(--text-muted); line-height:1.6; margin-bottom:14px;">
+          Python mirror of the TradingView strategy below: EMA/VWAP cross entries, <strong>R-multiple trailing trigger</strong>,
+          <strong>breakeven lock</strong>, <strong>50% partial at target</strong> and a trailing runner.
+          The exact PineScript is included at the bottom — copy it straight into TradingView.
+        </div>
+        <div id="smart-trail-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:14px;">
+          <label style="font-size:0.75rem;color:var(--text-muted);">Trailing Method
+            <select id="st-trail-mode" style="width:100%;margin-top:4px;background:#0a0e27;color:#fff;border:1px solid var(--border);border-radius:5px;padding:8px;font-family:var(--font-mono);font-size:0.8rem;">
+              <option>EMA Trail</option><option>ATR Trail</option><option>Candle Low/High</option><option>None (Fixed RR)</option>
+            </select>
+          </label>
+          <label style="font-size:0.75rem;color:var(--text-muted);">EMA Length
+            <input id="st-ema" type="number" min="1" style="width:100%;margin-top:4px;background:#0a0e27;color:#fff;border:1px solid var(--border);border-radius:5px;padding:8px;font-family:var(--font-mono);font-size:0.8rem;">
+          </label>
+          <label style="font-size:0.75rem;color:var(--text-muted);">Target R:R
+            <input id="st-rr" type="number" min="0.5" step="0.25" style="width:100%;margin-top:4px;background:#0a0e27;color:#fff;border:1px solid var(--border);border-radius:5px;padding:8px;font-family:var(--font-mono);font-size:0.8rem;">
+          </label>
+          <label style="font-size:0.75rem;color:var(--text-muted);">Trail starts at (R)
+            <input id="st-start-r" type="number" min="0" step="0.25" style="width:100%;margin-top:4px;background:#0a0e27;color:#fff;border:1px solid var(--border);border-radius:5px;padding:8px;font-family:var(--font-mono);font-size:0.8rem;">
+          </label>
+          <label style="font-size:0.75rem;color:var(--text-muted);">ATR Length
+            <input id="st-atr-len" type="number" min="1" style="width:100%;margin-top:4px;background:#0a0e27;color:#fff;border:1px solid var(--border);border-radius:5px;padding:8px;font-family:var(--font-mono);font-size:0.8rem;">
+          </label>
+          <label style="font-size:0.75rem;color:var(--text-muted);">ATR Multiplier
+            <input id="st-atr-mult" type="number" min="0.5" step="0.25" style="width:100%;margin-top:4px;background:#0a0e27;color:#fff;border:1px solid var(--border);border-radius:5px;padding:8px;font-family:var(--font-mono);font-size:0.8rem;">
+          </label>
+          <label style="font-size:0.75rem;color:var(--text-muted);">Session (HHMM-HHMM)
+            <input id="st-session" type="text" style="width:100%;margin-top:4px;background:#0a0e27;color:#fff;border:1px solid var(--border);border-radius:5px;padding:8px;font-family:var(--font-mono);font-size:0.8rem;">
+          </label>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;font-size:0.8rem;color:var(--text-secondary);">
+          <label><input id="st-partial" type="checkbox"> Book 50% at target</label>
+          <label><input id="st-be" type="checkbox"> Move SL to breakeven</label>
+          <label><input id="st-use-session" type="checkbox"> Limit to session</label>
+          <label><input id="st-eod" type="checkbox"> Close at session end</label>
+          <label><input id="st-one" type="checkbox"> One trade at a time</label>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <button class="btn btn-primary" id="st-save">💾 Save Strategy Settings</button>
+          <button class="btn" id="st-copy">📋 Copy PineScript</button>
+          <button class="btn" id="st-download">⬇️ Download .pine</button>
+          <button class="btn" id="st-partial-exit">✂️ Manual 50% Partial</button>
+        </div>
+        <div id="st-feedback" style="font-size:0.78rem;min-height:18px;color:var(--text-muted);"></div>
+        <details style="margin-top:12px;border:1px solid var(--border);border-radius:6px;padding:10px 12px;background:rgba(10,14,39,0.6);">
+          <summary style="cursor:pointer;color:var(--accent-primary);font-size:0.85rem;font-weight:600;">📄 TradingView PineScript (click to expand — copy button above)</summary>
+          <textarea id="pine-code" readonly spellcheck="false" style="width:100%;height:420px;margin-top:10px;background:#070b1c;color:#d6e6ff;border:1px solid var(--border);border-radius:5px;padding:12px;font-family:var(--font-mono);font-size:0.76rem;line-height:1.45;white-space:pre;resize:vertical;">Loading PineScript…</textarea>
+        </details>
       </div>
     </div>
 
@@ -614,7 +679,7 @@
       </div>
       <div class="panel-body" style="padding:12px;">
         <div class="console-box" id="console-stream">
-          <div class="console-entry">[SYSTEM] Intraday ATR Breakout Bot initialized. Add stocks to start continuous scan.</div>
+          <div class="console-entry">[SYSTEM] 1-Minute EMA & VWAP Crossover Bot initialized. Add stocks to start continuous scan.</div>
         </div>
       </div>
     </div>
@@ -649,36 +714,34 @@
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
         <div class="form-group">
-          <label>Volume Surge Multiplier</label>
-          <input type="number" id="cfg-vol" step="0.1" value="1.3" />
-          <small style="color:var(--text-muted); font-size:0.7rem;">Breakout bar volume vs 10-bar avg (default: 1.3x).</small>
+          <label>Fast EMA Period</label>
+          <input type="number" id="cfg-ema" step="1" value="9" />
+          <small style="color:var(--text-muted); font-size:0.7rem;">Fast EMA period on 1m chart (default: 9).</small>
         </div>
 
         <div class="form-group">
-          <label>ATR Expansion Multiplier</label>
-          <input type="number" id="cfg-mult" step="0.1" value="1.3" />
-          <small style="color:var(--text-muted); font-size:0.7rem;">Candle range vs ATR(14) (default: 1.3x).</small>
+          <label>Target Risk : Reward (R:R)</label>
+          <input type="number" id="cfg-rr" step="0.1" value="2.0" />
+          <small style="color:var(--text-muted); font-size:0.7rem;">Minimum R:R target (default: 2.0 = 1:2 trade).</small>
         </div>
       </div>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
         <div class="form-group">
-          <label>Trailing SL Activation (%)</label>
-          <input type="number" id="cfg-trail-act" step="0.1" value="1.5" />
-          <small style="color:var(--text-muted); font-size:0.7rem;">Activate TSL when profit reaches this % (default: +1.5%).</small>
+          <label>Trade Direction</label>
+          <select id="cfg-dir">
+            <option value="both">Both (Long & Short)</option>
+            <option value="short_only">Short Only (SELL on EMA < VWAP)</option>
+            <option value="long_only">Long Only (BUY on EMA > VWAP)</option>
+          </select>
+          <small style="color:var(--text-muted); font-size:0.7rem;">Select allowed crossover directions.</small>
         </div>
 
         <div class="form-group">
-          <label>Trailing Buffer Distance (%)</label>
-          <input type="number" id="cfg-trail-buf" step="0.1" value="0.8" />
-          <small style="color:var(--text-muted); font-size:0.7rem;">Trail peak price with this buffer (default: 0.8%).</small>
+          <label>Breakeven Lock Gain (%)</label>
+          <input type="number" id="cfg-trail-be" step="0.1" value="1.0" />
+          <small style="color:var(--text-muted); font-size:0.7rem;">Move SL to entry when profit hits this % (default: 1.0%).</small>
         </div>
-      </div>
-
-      <div class="form-group">
-        <label>Target Risk : Reward (R:R)</label>
-        <input type="number" id="cfg-rr" step="0.1" value="2.0" />
-        <small style="color:var(--text-muted); font-size:0.7rem;">Profit target multiplier based on risk (default: 2.0x).</small>
       </div>
 
       <div class="form-group">
@@ -710,11 +773,10 @@
     document.getElementById("modal-save").addEventListener("click", async () => {
       const mode = document.getElementById("cfg-mode").value;
       const token = document.getElementById("cfg-token").value.trim();
-      const mult = parseFloat(document.getElementById("cfg-mult").value) || 1.3;
-      const vol = parseFloat(document.getElementById("cfg-vol").value) || 1.3;
-      const trailAct = parseFloat(document.getElementById("cfg-trail-act").value) || 1.5;
-      const trailBuf = parseFloat(document.getElementById("cfg-trail-buf").value) || 0.8;
+      const emaPeriod = parseInt(document.getElementById("cfg-ema").value, 10) || 9;
       const rr = parseFloat(document.getElementById("cfg-rr").value) || 2.0;
+      const tradeDir = document.getElementById("cfg-dir").value;
+      const trailBe = parseFloat(document.getElementById("cfg-trail-be").value) || 1.0;
 
       await fetch(API + "/api/config", {
         method: "POST",
@@ -722,11 +784,10 @@
         body: JSON.stringify({
           mode,
           token,
-          atr_multiplier: mult,
-          volume_multiplier: vol,
-          trail_activation_pct: trailAct,
-          trail_distance_pct: trailBuf,
+          ema_period: emaPeriod,
           target_rr: rr,
+          trade_direction: tradeDir,
+          trail_breakeven_pct: trailBe,
           trade_capital: 3000.0
         })
       });
@@ -1020,7 +1081,7 @@
         const tbody = document.getElementById("tbody-watchlist");
 
         if (items.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px;">Your watchlist is currently empty. Add stocks above to start continuous momentum scanning.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:30px;">Your watchlist is currently empty. Add stocks above to start continuous 1m EMA-VWAP scanning.</td></tr>';
           return;
         }
 
@@ -1030,49 +1091,33 @@
             return `
               <tr>
                 <td><strong style="font-family:var(--font-mono); color:var(--accent-primary)">${sym}</strong></td>
-                <td colspan="6" style="color:var(--text-muted)">Fetching live intraday candles...</td>
+                <td colspan="7" style="color:var(--text-muted)">Fetching live 1m intraday candles...</td>
                 <td><button class="btn btn-outline" onclick="removeStock('${sym}')" style="padding:2px 8px; font-size:0.75rem;">×</button></td>
               </tr>
             `;
           }
 
-          const atrRatio = s.atr_ratio || 0.0;
-          const volRatio = s.vol_ratio || 1.0;
-          const isBreakout = s.is_breakout;
-          const baseDist = s.baseline_dist_pct !== undefined ? s.baseline_dist_pct : 0.0;
-          const distSign = baseDist >= 0 ? "+" : "";
+          const spread = s.spread || 0.0;
+          const spreadSign = spread >= 0 ? "+" : "";
+          const spreadColor = spread >= 0 ? "var(--success)" : "var(--danger)";
 
-          // Volume Surge badge
-          let volBadge = `<span style="font-family:var(--font-mono); font-weight:600; color:var(--text-muted)">${volRatio}x</span>`;
-          if (volRatio >= 1.5) {
-            volBadge = `<span class="tag-breakout">🔥 ${volRatio}x SURGE</span>`;
-          } else if (volRatio >= 1.2) {
-            volBadge = `<span class="tag-gap">${volRatio}x Expanding</span>`;
+          let statusBadge = `<span style="color:var(--text-muted); font-size:0.78rem;">${s.status || 'Monitoring'}</span>`;
+          if (s.cross_type === "BEARISH_CROSS") {
+            statusBadge = `<strong style="color:var(--danger); font-family:var(--font-mono); font-size:0.8rem; background:rgba(239,68,68,0.15); padding:3px 8px; border-radius:4px; border:1px solid var(--danger);">🔻 BEARISH CROSS (${s.confirm_candle_time || ''})</strong>`;
+          } else if (s.cross_type === "BULLISH_CROSS") {
+            statusBadge = `<strong style="color:var(--success); font-family:var(--font-mono); font-size:0.8rem; background:rgba(16,185,129,0.15); padding:3px 8px; border-radius:4px; border:1px solid var(--success);">🟢 BULLISH CROSS (${s.confirm_candle_time || ''})</strong>`;
           }
 
-          // ATR Expansion badge
-          let atrBadge = `<span style="font-family:var(--font-mono); color:var(--text-muted)">${atrRatio}x</span>`;
-          if (atrRatio >= 1.4) {
-            atrBadge = `<span class="tag-breakout">⚡ ${atrRatio}x ATR</span>`;
+          let slBadge = "--";
+          if (s.suggested_sl) {
+            const slType = s.suggested_side === "SELL" ? "High (SL)" : "Low (SL)";
+            slBadge = `<span style="font-family:var(--font-mono); font-weight:700; color:var(--danger);">₹${fmt(s.suggested_sl)}</span> <small style="font-size:0.68rem; color:var(--text-muted);">(${slType})</small>`;
           }
 
-          // Status & Signal
-          let statusBadge = '<span style="color:var(--text-muted)">Monitoring</span>';
-          if (isBreakout) {
-            statusBadge = '<strong style="color:var(--success); font-family:var(--font-mono); font-size:0.8rem; background:rgba(16,185,129,0.15); padding:3px 8px; border-radius:4px; border:1px solid var(--success);">🚀 IGNITION BREAKOUT</strong>';
-          } else if (s.status === "TESTING_RESISTANCE") {
-            statusBadge = '<span style="color:var(--accent-primary); font-weight:600;">⚡ At Base Resistance</span>';
-          } else if (s.status === "COILING_ABOVE_BASE") {
-            statusBadge = '<span style="color:#38bdf8;">● Coiling Above Base</span>';
-          } else if (s.status === "BELOW_BASELINE") {
-            statusBadge = '<span style="color:var(--text-muted);">Below Baseline</span>';
-          } else if (s.status && (s.status.includes("GAP") || s.status.includes("IGNORED"))) {
-            statusBadge = `<span class="tag-gap">⊘ ${s.status}</span>`;
+          let tgtBadge = "--";
+          if (s.suggested_target && s.suggested_target > 0) {
+            tgtBadge = `<span style="font-family:var(--font-mono); font-weight:700; color:var(--success);">₹${fmt(s.suggested_target)}</span> <small style="font-size:0.68rem; color:var(--accent-primary);">(1:${s.target_rr || 2.0})</small>`;
           }
-
-          const baseRangeStr = (s.consolidation_low && s.consolidation_high)
-            ? `₹${fmt(s.consolidation_low)} - ₹${fmt(s.consolidation_high)}`
-            : "--";
 
           const isTop5 = (window._top5BuyingStocks || []).includes(sym);
           const top5Tag = isTop5 ? '<span style="background:rgba(0,212,255,0.15); color:var(--accent-primary); border:1px solid rgba(0,212,255,0.4); font-size:0.68rem; padding:1px 6px; border-radius:3px; margin-left:6px; font-weight:700;">TOP 5 BUY</span>' : '';
@@ -1081,13 +1126,11 @@
             <tr>
               <td><strong style="font-family:var(--font-mono); color:#fff; font-size:0.95rem;">${sym}</strong>${top5Tag}</td>
               <td style="font-family:var(--font-mono); font-weight:700;">₹${fmt(s.current_price)}</td>
-              <td style="font-family:var(--font-mono);">
-                ₹${fmt(s.baseline)}
-                <span style="font-size:0.72rem; color:${baseDist >= 0 ? 'var(--success)' : 'var(--danger)'}; margin-left:4px;">(${distSign}${baseDist}%)</span>
-              </td>
-              <td style="font-family:var(--font-mono); color:var(--text-secondary); font-size:0.8rem;">${baseRangeStr}</td>
-              <td>${volBadge}</td>
-              <td>${atrBadge}</td>
+              <td style="font-family:var(--font-mono); color:#38bdf8;">₹${fmt(s.ema)}</td>
+              <td style="font-family:var(--font-mono); color:#fbbf24;">₹${fmt(s.vwap)}</td>
+              <td style="font-family:var(--font-mono); color:${spreadColor}; font-weight:600;">${spreadSign}₹${fmt(spread)}</td>
+              <td>${slBadge}</td>
+              <td>${tgtBadge}</td>
               <td>${statusBadge}</td>
               <td>
                 <button class="btn btn-outline" onclick="removeStock('${sym}')" style="padding:4px 10px; font-size:0.75rem; color:var(--danger)">Remove</button>
@@ -1114,7 +1157,7 @@
         if (active.length === 0) {
           activeContainer.innerHTML = `
             <div style="text-align:center; padding:24px 20px; color:var(--text-muted); font-size:0.9rem;">
-              Awaiting morning baseline reclaim & momentum ignition breakout on your watchlist. No active trade open (Strictly 1 trade limit).
+              Awaiting 1-minute EMA & VWAP crossover signal on your watchlist. No active trade open (Strictly 1 trade limit).
             </div>
           `;
           actionContainer.innerHTML = "";
@@ -1125,10 +1168,12 @@
           const pnlCls = fpnl >= 0 ? "pos" : "neg";
           const sign = fpnl >= 0 ? "+" : "";
 
-          let statusTag = '<span style="background:var(--success); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; margin-left:8px;">BULLISH BUY</span>';
-          if (t.is_trailing) {
-            statusTag += ' <span style="background:rgba(0,212,255,0.2); border:1px solid var(--accent-primary); color:var(--accent-primary); padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; margin-left:6px;">⚡ TSL ACTIVE</span>';
-          } else if (t.is_breakeven) {
+          const isShort = t.side === "SELL";
+          let statusTag = isShort
+            ? '<span style="background:var(--danger); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; margin-left:8px;">🔴 SHORT (SELL)</span>'
+            : '<span style="background:var(--success); color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; margin-left:8px;">🟢 LONG (BUY)</span>';
+
+          if (t.is_breakeven) {
             statusTag += ' <span style="background:rgba(245,158,11,0.2); border:1px solid var(--warning); color:var(--warning); padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700; margin-left:6px;">🔒 BREAKEVEN LOCKED</span>';
           }
 
@@ -1136,26 +1181,28 @@
             <button class="btn btn-danger" onclick="squareOffActiveTrade()" style="padding:6px 14px; font-size:0.8rem;">⚠ Square Off Trade</button>
           `;
 
+          const slLabel = isShort ? "Confirming Candle High (SL)" : "Confirming Candle Low (SL)";
+
           activeContainer.innerHTML = `
             <div class="active-trade-box">
               <div class="active-trade-header">
                 <div>
                   <span class="trade-sym">${t.symbol}</span>
                   ${statusTag}
-                  <span style="color:var(--text-muted); font-size:0.78rem; margin-left:8px;">Ignition at ${t.entry_time}</span>
+                  <span style="color:var(--text-muted); font-size:0.78rem; margin-left:8px;">1m Cross at ${t.entry_time}</span>
                 </div>
                 <div style="text-align:right;">
                   <div class="${pnlCls}" style="font-size:1.4rem; font-weight:800; font-family:var(--font-mono);">${sign}₹${fmt(fpnl)} (${sign}${fpnlPct}%)</div>
-                  <div style="font-size:0.75rem; color:var(--text-muted);">Floating P&L · ₹${fmt(t.capital)} Margin</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Floating P&L · ₹${fmt(t.capital)} Margin (5x MIS)</div>
                 </div>
               </div>
               <div class="trade-grid">
                 <div class="item"><div class="label">Quantity</div><div class="val">${t.qty} shares</div></div>
                 <div class="item"><div class="label">Entry Price</div><div class="val">₹${fmt(t.entry_price)}</div></div>
                 <div class="item"><div class="label">Current LTP</div><div class="val" style="color:var(--accent-primary)">₹${fmt(t.current_price)}</div></div>
-                <div class="item"><div class="label">Peak High</div><div class="val" style="color:#38bdf8;">₹${fmt(t.highest_price || t.current_price)}</div></div>
-                <div class="item"><div class="label">Stop / Trailing SL</div><div class="val" style="color:var(--danger)">₹${fmt(t.stop_loss)} <small style="font-size:0.68rem; color:var(--text-muted); font-weight:normal;">(Max -₹150)</small></div></div>
-                <div class="item"><div class="label">Target Price</div><div class="val" style="color:var(--success)">₹${fmt(t.target_price)}</div></div>
+                <div class="item"><div class="label">${isShort ? 'Lowest Low' : 'Peak High'}</div><div class="val" style="color:#38bdf8;">₹${fmt(isShort ? (t.lowest_price || t.current_price) : (t.highest_price || t.current_price))}</div></div>
+                <div class="item"><div class="label">${slLabel}</div><div class="val" style="color:var(--danger)">₹${fmt(t.stop_loss)}</div></div>
+                <div class="item"><div class="label">1:2 Target Price</div><div class="val" style="color:var(--success)">₹${fmt(t.target_price)}</div></div>
               </div>
             </div>
           `;
@@ -1173,11 +1220,15 @@
             const pnl = c.pnl || 0.0;
             const pnlCls = pnl >= 0 ? "pos" : "neg";
             const sign = pnl >= 0 ? "+" : "";
+            const isShort = c.side === "SELL";
+            const sideBadge = isShort
+              ? '<span style="color:var(--danger); font-weight:700;">SHORT</span>'
+              : '<span style="color:var(--success); font-weight:700;">BUY</span>';
             return `
               <tr>
                 <td style="font-family:var(--font-mono); color:var(--text-muted)">${c.exit_time || c.entry_time}</td>
                 <td><strong style="font-family:var(--font-mono); color:#fff;">${c.symbol}</strong></td>
-                <td><span style="color:var(--success); font-weight:700;">BUY</span></td>
+                <td>${sideBadge}</td>
                 <td style="font-family:var(--font-mono)">${c.qty}</td>
                 <td style="font-family:var(--font-mono)">₹${fmt(c.entry_price)}</td>
                 <td style="font-family:var(--font-mono)">₹${fmt(c.exit_price)}</td>
@@ -1219,6 +1270,13 @@
         const remMins = mins % 60;
         document.getElementById("val-sq-timer").textContent = `${h}h ${remMins}m`;
 
+        if (!modal.classList.contains("open")) {
+          if (s.ema_period && document.getElementById("cfg-ema")) document.getElementById("cfg-ema").value = s.ema_period;
+          if (s.target_rr && document.getElementById("cfg-rr")) document.getElementById("cfg-rr").value = s.target_rr;
+          if (s.trade_direction && document.getElementById("cfg-dir")) document.getElementById("cfg-dir").value = s.trade_direction;
+          if (s.mode && document.getElementById("cfg-mode")) document.getElementById("cfg-mode").value = s.mode;
+        }
+
         updateBotStatus(s.is_running);
       } catch (e) {
         console.error("Status error:", e);
@@ -1240,6 +1298,115 @@
       }
     }
 
+    // ── VWAP × EMA Smart Profit Trail: settings + copyable PineScript ──
+    const $st = (id) => document.getElementById(id);
+
+    async function loadPineScript() {
+      try {
+        const r = await fetch(API + "/api/pinescript");
+        const d = await r.json();
+        if (d.pinescript) $st("pine-code").value = d.pinescript;
+      } catch (e) {
+        $st("pine-code").value = "Unable to load PineScript from the bot server.";
+      }
+    }
+
+    async function loadSmartTrailConfig() {
+      try {
+        const r = await fetch(API + "/api/status");
+        const d = await r.json();
+        $st("st-trail-mode").value = d.trail_mode || "EMA Trail";
+        $st("st-ema").value = d.ema_period ?? 9;
+        $st("st-rr").value = d.target_rr ?? 2;
+        $st("st-start-r").value = d.trail_start_r ?? 1;
+        $st("st-atr-len").value = d.atr_len ?? 14;
+        $st("st-atr-mult").value = d.atr_mult ?? 2;
+        $st("st-session").value = d.trade_session || "0915-1500";
+        $st("st-partial").checked = !!d.use_partial;
+        $st("st-be").checked = !!d.use_be;
+        $st("st-use-session").checked = !!d.use_session;
+        $st("st-eod").checked = d.close_eod !== false;
+        $st("st-one").checked = d.one_at_a_time !== false;
+        $st("badge-trail-mode").textContent = d.trail_mode || "EMA Trail";
+      } catch (e) { /* status polling handles errors */ }
+    }
+
+    async function saveSmartTrailConfig() {
+      const fb = $st("st-feedback");
+      fb.textContent = "Saving strategy settings…";
+      try {
+        const payload = {
+          trail_mode: $st("st-trail-mode").value,
+          ema_period: parseInt($st("st-ema").value, 10) || 9,
+          target_rr: parseFloat($st("st-rr").value) || 2,
+          trail_start_r: parseFloat($st("st-start-r").value) || 0,
+          atr_len: parseInt($st("st-atr-len").value, 10) || 14,
+          atr_mult: parseFloat($st("st-atr-mult").value) || 2,
+          trade_session: $st("st-session").value.trim() || "0915-1500",
+          use_partial: $st("st-partial").checked,
+          use_be: $st("st-be").checked,
+          use_session: $st("st-use-session").checked,
+          close_eod: $st("st-eod").checked,
+          one_at_a_time: $st("st-one").checked
+        };
+        const r = await fetch(API + "/api/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const d = await r.json();
+        fb.innerHTML = d.status === "success"
+          ? '<span style="color:var(--success)">✓ Strategy settings saved and applied live.</span>'
+          : `<span style="color:var(--danger)">✗ ${d.message || "Save failed"}</span>`;
+        refreshStatus();
+      } catch (e) {
+        fb.innerHTML = `<span style="color:var(--danger)">✗ ${e.message}</span>`;
+      }
+    }
+
+    async function copyPineScript() {
+      const ta = $st("pine-code");
+      if (!ta.value || ta.value.startsWith("Loading")) await loadPineScript();
+      try {
+        await navigator.clipboard.writeText(ta.value);
+      } catch (e) {
+        ta.select();
+        document.execCommand("copy");
+        window.getSelection().removeAllRanges();
+      }
+      $st("st-feedback").innerHTML = '<span style="color:var(--success)">✓ PineScript copied — paste it into TradingView Pine Editor.</span>';
+    }
+
+    function downloadPineScript() {
+      const ta = $st("pine-code");
+      const blob = new Blob([ta.value], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "vwap_ema_strategy.pine";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    async function manualPartialExit() {
+      try {
+        const r = await fetch(API + "/api/partial_exit", { method: "POST" });
+        const d = await r.json();
+        $st("st-feedback").innerHTML = d.status === "success"
+          ? `<span style="color:var(--success)">✓ Booked 50% (₹${fmt(d.pnl)}). Runner qty: ${d.remaining_qty}.</span>`
+          : `<span style="color:var(--warning)">⚠ ${d.message || "No trade available"}</span>`;
+        refreshTrades();
+      } catch (e) {
+        $st("st-feedback").innerHTML = `<span style="color:var(--danger)">✗ ${e.message}</span>`;
+      }
+    }
+
+    $st("st-save").addEventListener("click", saveSmartTrailConfig);
+    $st("st-copy").addEventListener("click", copyPineScript);
+    $st("st-download").addEventListener("click", downloadPineScript);
+    $st("st-partial-exit").addEventListener("click", manualPartialExit);
+    loadPineScript();
+    loadSmartTrailConfig();
+
     function refreshAll() {
       loadTopBuyingStocks();
       refreshStatus();
@@ -1247,6 +1414,7 @@
       refreshWatchlist();
       refreshTrades();
       refreshLogs();
+      loadSmartTrailConfig();
     }
 
     loadTopBuyingStocks();

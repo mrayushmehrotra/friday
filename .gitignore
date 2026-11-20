@@ -13,8 +13,11 @@ client_secret.json
 .cmd_queue
 .pnl_data.json
 .indmoney_bot_state.json
+assets/gex_last_good.json
 telegram_config.json
 telegram_seen_deals.json
 *.server.log
+assets/indstocks_fno_master.csv
 
 
+.cache_candles/

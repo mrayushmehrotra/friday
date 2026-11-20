@@ -1,0 +1,152 @@
+//@version=6
+strategy("VWAP x EMA Cross | Smart Profit Trail", overlay=true,
+         process_orders_on_close=true,
+         default_qty_type=strategy.fixed, default_qty_value=2, // Set to 2+ if using 50% partial exit
+         initial_capital=1000000)
+
+// ───────── Inputs ─────────
+emaLen     = input.int(9, "EMA length", minval=1, group="Strategy")
+rr         = input.float(2.0, "Target Risk : Reward", minval=0.5, step=0.25, group="Strategy")
+
+// Trailing & Management
+trailMode  = input.string("EMA Trail", "Trailing Method", 
+             options=["None (Fixed RR)", "EMA Trail", "ATR Trail", "Candle Low/High"], group="Profit Trailing")
+usePartial = input.bool(true, "Book 50% profit at Target RR & trail runner", group="Profit Trailing")
+trailStartR = input.float(1.0, "Activate trailing after (R multiple)", minval=0.0, step=0.25, group="Profit Trailing")
+useBE      = input.bool(true, "Move SL to Breakeven at trigger R", group="Profit Trailing")
+atrLen     = input.int(14, "ATR Length (for ATR Trail)", minval=1, group="Profit Trailing")
+atrMult    = input.float(2.0, "ATR Multiplier", minval=0.5, step=0.25, group="Profit Trailing")
+
+// Session & Filters
+useSess    = input.bool(false, "Limit trading to a session", group="Session")
+tradeSess  = input.session("0915-1500", "Trading session", group="Session")
+tz         = input.string("Asia/Kolkata", "Timezone", group="Session")
+closeEOD   = input.bool(true, "Close open trade when session ends", group="Session")
+oneAtATime = input.bool(true, "Only one trade at a time", group="Trade")
+showSL     = input.bool(true, "Show stop / target lines", group="Display")
+
+// ───────── Indicators ─────────
+ema    = ta.ema(close, emaLen)
+vwap   = ta.vwap(hlc3)
+atrVal = ta.atr(atrLen)
+
+// ───────── Cross detection ─────────
+longCross  = ta.crossover(ema, vwap)
+shortCross = ta.crossunder(ema, vwap)
+
+inSess  = not useSess or not na(time(timeframe.period, tradeSess, tz))
+flat    = strategy.position_size == 0
+canTake = inSess and (not oneAtATime or flat)
+
+// ───────── State Variables ─────────
+var float entryPx   = na
+var float stopPx    = na
+var float tpPx      = na
+var float riskPx    = na
+var float extremePx = na
+var bool  trailOn   = false
+var int   entryBar  = na
+
+// ───────── Entries ─────────
+if longCross and canTake
+    sl   = low[1]
+    risk = close - sl
+    if risk > 0
+        entryPx   := close
+        stopPx    := sl
+        riskPx    := risk
+        tpPx      := close + risk * rr
+        extremePx := high
+        trailOn   := false
+        entryBar  := bar_index
+        strategy.entry("Long", strategy.long)
+
+if shortCross and canTake
+    sl   = high[1]
+    risk = sl - close
+    if risk > 0
+        entryPx   := close
+        stopPx    := sl
+        riskPx    := risk
+        tpPx      := close - risk * rr
+        extremePx := low
+        trailOn   := false
+        entryBar  := bar_index
+        strategy.entry("Short", strategy.short)
+
+// ───────── Dynamic Profit Trailing Logic ─────────
+if strategy.position_size > 0 and bar_index > entryBar
+    extremePx := math.max(extremePx, high)
+    
+    // Check if price hit the R-multiple trigger to start trailing
+    if not trailOn and high >= entryPx + (riskPx * trailStartR)
+        trailOn := true
+        if useBE
+            stopPx := math.max(stopPx, entryPx)
+
+    // Ratchet stop-loss upward (never moves down)
+    if trailOn and trailMode != "None (Fixed RR)"
+        float candidateSL = stopPx
+        if trailMode == "EMA Trail"
+            candidateSL := ema
+        else if trailMode == "ATR Trail"
+            candidateSL := extremePx - (atrVal * atrMult)
+        else if trailMode == "Candle Low/High"
+            candidateSL := low[1]
+            
+        // Only update if candidateSL is below current price and higher than old SL
+        if candidateSL < close
+            stopPx := math.max(stopPx, candidateSL)
+
+if strategy.position_size < 0 and bar_index > entryBar
+    extremePx := math.min(extremePx, low)
+    
+    if not trailOn and low <= entryPx - (riskPx * trailStartR)
+        trailOn := true
+        if useBE
+            stopPx := math.min(stopPx, entryPx)
+
+    if trailOn and trailMode != "None (Fixed RR)"
+        float candidateSL = stopPx
+        if trailMode == "EMA Trail"
+            candidateSL := ema
+        else if trailMode == "ATR Trail"
+            candidateSL := extremePx + (atrVal * atrMult)
+        else if trailMode == "Candle Low/High"
+            candidateSL := high[1]
+            
+        if candidateSL > close
+            stopPx := math.min(stopPx, candidateSL)
+
+// ───────── Exit Execution ─────────
+if strategy.position_size > 0
+    if trailMode == "None (Fixed RR)"
+        strategy.exit("Long Exit", "Long", stop=stopPx, limit=tpPx)
+    else if usePartial
+        // Close 50% at 1:2 RR, let remaining 50% run on the trailing stop
+        strategy.exit("Long Partial", "Long", qty_percent=50, stop=stopPx, limit=tpPx)
+        strategy.exit("Long Runner",  "Long", stop=stopPx)
+    else
+        // 100% runner on trailing stop (no upper limit cap)
+        strategy.exit("Long Trail", "Long", stop=stopPx)
+
+if strategy.position_size < 0
+    if trailMode == "None (Fixed RR)"
+        strategy.exit("Short Exit", "Short", stop=stopPx, limit=tpPx)
+    else if usePartial
+        strategy.exit("Short Partial", "Short", qty_percent=50, stop=stopPx, limit=tpPx)
+        strategy.exit("Short Runner",  "Short", stop=stopPx)
+    else
+        strategy.exit("Short Trail", "Short", stop=stopPx)
+
+// ───────── End-of-Session Exit ─────────
+if closeEOD and useSess and not inSess and strategy.position_size != 0
+    strategy.close_all("EOD")
+
+// ───────── Plots ─────────
+plot(ema,  "EMA",  color.new(color.yellow, 0), 2)
+plot(vwap, "VWAP", color.new(color.blue, 0),   2)
+plot(showSL and strategy.position_size != 0 ? stopPx : na, "Trailing Stop", color.new(color.red, 0), 2, plot.style_linebr)
+plot(showSL and strategy.position_size != 0 and (trailMode == "None (Fixed RR)" or usePartial) ? tpPx : na, "Target", color.new(color.lime, 0), 2, plot.style_linebr)
+plotshape(longCross,  "Long",  shape.triangleup,   location.belowbar, color.green, size=size.small)
+plotshape(shortCross, "Short", shape.triangledown, location.abovebar, color.red,   size=size.small)

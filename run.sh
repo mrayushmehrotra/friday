@@ -3,10 +3,12 @@ set -euo pipefail
 
 # ───────────────────────────────────────────────────────
 # Jarvis launcher
-#   bash run.sh              → install deps, then start Jarvis
+#   bash run.sh              → install deps, then start Jarvis + Telegram deal watcher
 #   bash run.sh --no-install → skip the install step (fast restart)
 #   bash run.sh --check      → install deps and verify imports only
+#   bash run.sh --no-telegram → start Jarvis without the Telegram deal watcher
 # Any other args are forwarded to jarvis.py.
+# For the Telegram watcher alone: bash run-telegram.sh
 # ───────────────────────────────────────────────────────
 
 RED='\033[0;31m'
@@ -33,6 +35,7 @@ for arg in "$@"; do
     --no-install|--skip-install) DO_INSTALL=0 ;;
     --check)                    DO_RUN=0 ;;
     --audio-check)              DO_RUN=0; DO_INSTALL=0; AUDIO_CHECK=1 ;;
+    --no-telegram)              export FRIDAY_NO_TELEGRAM=1 ;;
     -h|--help)                  DO_RUN=0; DO_INSTALL=0; SHOW_HELP=1 ;;
     *)                          FORWARD_ARGS+=("$arg") ;;
   esac
@@ -47,13 +50,18 @@ Options:
   --no-install   Skip the dependency install step (fast restart)
   --check        Install dependencies and verify imports, then exit
   --audio-check  Diagnose the voice chain (TTS, microphone, STT) and exit
+  --no-telegram  Start Jarvis without the institution-deals Telegram watcher
   -h, --help     Show this help
 
 Environment:
   JARVIS_PYTHON            Python version for .venv (default: 3.13)
   JARVIS_LLM_ENDPOINT      Ollama base URL (default: http://localhost:11434)
   JARVIS_LLM_MODEL         Ollama model (default: qwen2.5:0.5b)
+  FRIDAY_NO_TELEGRAM       Set to 1 to disable the Telegram watcher
   GROQ_API_KEY, HF_TOKEN   Loaded from .env
+
+Separate watcher only:  bash run-telegram.sh
+Watcher status:         .venv/bin/python institution_telegram_bot.py --status
 EOF
   exit 0
 fi

@@ -10,6 +10,8 @@ How it works
 ------------
 - Each poll scrapes every institution page via stock_dashboard's
   `_scrape_trendlyne_deals` (same code path as the dashboard UI).
+- BlackRock has no standalone Trendlyne portfolio page, so its deals are
+  matched by client name in Trendlyne's all-deals feed instead.
 - Deals already seen are stored in ``telegram_seen_deals.json`` so
   restarts never re-alert history.
 - On the FIRST successful scrape per institution, all existing rows are
@@ -48,15 +50,28 @@ from telegram_notify import send_telegram_message
 from stock_dashboard import _scrape_trendlyne_deals
 
 # The 7 preset institutions shown in the dashboard's Institutions tab.
+# Format: (display label, Trendlyne URL, expected-name keywords)
+# Trendlyne portfolio IDs are normally stable, but they HAVE been silently
+# re-pointed to other entities before (the old LIC/Vanguard/BlackRock URLs
+# recently started serving unrelated portfolios), so the scraped page title
+# is verified against `keywords` before any alert is sent.
 INSTITUTIONS = [
-    ("Government of Singapore", "https://trendlyne.com/portfolio/bulk-block-deals/53902/government-of-singapore/"),
-    ("ICICI Group", "https://trendlyne.com/portfolio/bulk-block-deals/597533/icici-group/"),
-    ("SBI Group", "https://trendlyne.com/portfolio/bulk-block-deals/597531/sbi-group/"),
-    ("HDFC Group", "https://trendlyne.com/portfolio/superstar-shareholders/597532/latest/hdfc-group/"),
-    ("LIC of India", "https://trendlyne.com/portfolio/bulk-block-deals/53860/life-insurance-corporation-of-india/"),
-    ("Vanguard", "https://trendlyne.com/portfolio/bulk-block-deals/53874/vanguard/"),
-    ("BlackRock", "https://trendlyne.com/portfolio/bulk-block-deals/53896/blackrock/"),
+    ("Government of Singapore", "https://trendlyne.com/portfolio/bulk-block-deals/53902/government-of-singapore/", ("singapore",)),
+    ("ICICI Group", "https://trendlyne.com/portfolio/bulk-block-deals/597533/icici-group/", ("icici",)),
+    ("SBI Group", "https://trendlyne.com/portfolio/bulk-block-deals/597531/sbi-group/", ("sbi",)),
+    ("HDFC Group", "https://trendlyne.com/portfolio/bulk-block-deals/597532/hdfc-group/", ("hdfc",)),
+    ("LIC of India", "https://trendlyne.com/portfolio/bulk-block-deals/53950/life-insurance-corporation-of-india/", ("life insurance", "lic of india")),
+    ("Vanguard", "https://trendlyne.com/portfolio/bulk-block-deals/54044/vanguard-fund", ("vanguard",)),
 ]
+
+# Trendlyne currently has no standalone institution portfolio page for
+# BlackRock (the old URL now serves a different entity), so BlackRock deals
+# are caught by scanning the all-deals feed for matching client names
+# (e.g. "BLACKROCK INTL LTD", "BLACKROCK GLOBAL FUNDS").
+CLIENT_WATCHES = [
+    ("BlackRock", ("blackrock",)),
+]
+ALL_DEALS_URL = "https://trendlyne.com/portfolio/bulk-block-deals/all/all"
 
 STATE_PATH = os.path.join(HERE, "telegram_seen_deals.json")
 SEEN_PRUNE_DAYS = 120  # drop keys older than this to bound state file growth
@@ -150,8 +165,44 @@ def _deal_message(institution: str, deal: dict) -> str:
         lines.append(f"🏦 Client: {client}")
     if deal.get("date"):
         lines.append(f"📅 {html.escape(str(deal['date']))}")
-    lines.append(f"🔗 trendlyne.com · {symbol}")
+    lines.append('🔗 <a href="https://trendlyne.com/portfolio/bulk-block-deals/all/all">'
+                 'Trendlyne bulk/block deals</a>')
     return "\n".join(lines)
+
+
+_MISMATCH_WARNED = set()
+
+
+def _matches_keywords(scraped_name: str, keywords: tuple) -> bool:
+    low = (scraped_name or "").lower()
+    return any(k in low for k in keywords)
+
+
+def _warn_mismatch(label: str, scraped_name: str) -> None:
+    """Trendlyne re-pointed a preset URL to a different entity — warn once."""
+    _log(f"WARNING: {label} URL now resolves to '{scraped_name}' — "
+         "skipping alerts for it. Update INSTITUTIONS in institution_telegram_bot.py")
+    if label in _MISMATCH_WARNED:
+        return
+    _MISMATCH_WARNED.add(label)
+    send_telegram_message(
+        f"⚠️ <b>Institution watcher config issue</b>\n\n"
+        f"The Trendlyne page for <b>{html.escape(label)}</b> now shows "
+        f"<i>{html.escape(scraped_name)}</i>.\n"
+        f"Skipping it — its preset URL needs updating in "
+        f"<code>institution_telegram_bot.py</code>."
+    )
+
+
+def _collect_new_deals(label, deals, state, max_age, initialized, pending):
+    """Dedup-mark deals and append fresh unseen ones to `pending`."""
+    for d in deals:
+        key = _deal_key(label, d)
+        if key in state["keys"]:
+            continue
+        state["keys"][key] = time.time()
+        if initialized and _deal_is_fresh(d, max_age):
+            pending.append((label, d))
 
 
 def poll_once(max_age_days: Optional[int] = None, quiet: bool = False) -> int:
@@ -159,42 +210,64 @@ def poll_once(max_age_days: Optional[int] = None, quiet: bool = False) -> int:
     cfg = telegram_notify.load_config()
     max_age = max_age_days if max_age_days is not None else cfg["max_deal_age_days"]
     state = _load_state()
-    alerts_sent = 0
+    pending = []
 
-    for preset_name, url in INSTITUTIONS:
+    # 1. Institutions with a dedicated Trendlyne portfolio page.
+    for label, url, keywords in INSTITUTIONS:
         try:
             data = _scrape_trendlyne_deals(url)
         except Exception as e:
-            _log(f"scrape failed for {preset_name}: {e}")
+            _log(f"scrape failed for {label}: {e}")
             continue
 
         if not data or data.get("error"):
-            _log(f"scrape error for {preset_name}: {(data or {}).get('error', 'no data')}")
+            _log(f"scrape error for {label}: {(data or {}).get('error', 'no data')}")
             continue
 
-        institution = data.get("institution") or preset_name
+        scraped_name = data.get("institution") or ""
+        if scraped_name and not _matches_keywords(scraped_name, keywords):
+            _warn_mismatch(label, scraped_name)
+            continue
+
         deals = data.get("deals") or []
-        initialized = state["inits"].get(preset_name)
-
-        new_deals = []
-        for d in deals:
-            key = _deal_key(institution, d)
-            if key in state["keys"]:
-                continue
-            state["keys"][key] = time.time()
-            if initialized and _deal_is_fresh(d, max_age):
-                new_deals.append(d)
-
+        initialized = state["inits"].get(label)
+        _collect_new_deals(label, deals, state, max_age, initialized, pending)
         if not initialized:
-            state["inits"][preset_name] = True
-            _log(f"initialized {institution}: {len(deals)} existing deals marked as seen")
-        elif new_deals:
-            _log(f"{len(new_deals)} new deal(s) for {institution}")
-            for d in new_deals:
-                if send_telegram_message(_deal_message(institution, d)):
-                    alerts_sent += 1
-                time.sleep(SEND_SPACING_SEC)
+            state["inits"][label] = True
+            _log(f"initialized {label}: {len(deals)} existing deals marked as seen")
         _save_state(state)
+
+    # 2. Institutions without a page — match client names in the all-deals feed.
+    if CLIENT_WATCHES:
+        try:
+            feed = _scrape_trendlyne_deals(ALL_DEALS_URL)
+        except Exception as e:
+            feed = {"error": str(e)}
+        if not feed or feed.get("error"):
+            _log(f"all-deals feed error: {(feed or {}).get('error', 'no data')}")
+        else:
+            all_deals = feed.get("deals") or []
+            for label, needles in CLIENT_WATCHES:
+                matched = [
+                    d for d in all_deals
+                    if any(n in (d.get("client") or d.get("clientName") or "").lower()
+                           for n in needles)
+                ]
+                initialized = state["inits"].get(label)
+                _collect_new_deals(label, matched, state, max_age, initialized, pending)
+                if not initialized:
+                    state["inits"][label] = True
+                    _log(f"initialized {label}: {len(matched)} existing deal(s) marked as seen")
+            _save_state(state)
+
+    # 3. Send alerts.
+    alerts_sent = 0
+    for label, d in pending:
+        _log(f"new deal — {label}: {d.get('buySell')} {d.get('symbol')} "
+             f"({d.get('qty')} @ {d.get('watp')})")
+        if send_telegram_message(_deal_message(label, d)):
+            alerts_sent += 1
+        time.sleep(SEND_SPACING_SEC)
 
     if not quiet:
         _log(f"poll done — {alerts_sent} alert(s) sent")
@@ -211,13 +284,14 @@ def run_forever(interval_min: Optional[float] = None) -> None:
              "(set bot_token/chat_id in telegram_config.json)")
         return
 
+    watched = [n for n, _, _ in INSTITUTIONS] + [n for n, _ in CLIENT_WATCHES]
     send_telegram_message(
         "🤖 <b>Institution Deal Watcher started</b>\n\n"
         "Watching for new BUY/SELL bulk &amp; block deals from:\n"
-        + "\n".join("• " + html.escape(n) for n, _ in INSTITUTIONS)
+        + "\n".join("• " + html.escape(n) for n in watched)
         + f"\n\n⏱ Polling every {interval / 60:.0f} min"
     )
-    _log(f"watcher running — {len(INSTITUTIONS)} institutions, "
+    _log(f"watcher running — {len(watched)} institutions, "
          f"every {interval / 60:.0f} min")
 
     while True:
@@ -240,11 +314,25 @@ def main():
     parser = argparse.ArgumentParser(description="Institution deals → Telegram bot")
     parser.add_argument("--once", action="store_true", help="run a single poll cycle and exit")
     parser.add_argument("--test", action="store_true", help="send a test Telegram message and exit")
+    parser.add_argument("--status", action="store_true", help="show config/state summary and exit")
     parser.add_argument("--interval", type=float, default=None,
                         help="poll interval in minutes (overrides config)")
     parser.add_argument("--max-age-days", type=int, default=None,
                         help="only alert deals newer than this many days")
     args = parser.parse_args()
+
+    if args.status:
+        cfg = telegram_notify.load_config()
+        state = _load_state()
+        print(f"configured:        {telegram_notify.is_configured()}")
+        print(f"poll interval:     {cfg['poll_interval_min']:g} min")
+        print(f"max deal age:      {cfg['max_deal_age_days']} day(s)")
+        print(f"institutions:      {', '.join(n for n, _, _ in INSTITUTIONS)}")
+        print(f"client watches:    {', '.join(n for n, _ in CLIENT_WATCHES) or '-'}")
+        print(f"initialized:       {', '.join(sorted(state['inits'])) or '-'}")
+        print(f"seen deal keys:    {len(state['keys'])}")
+        print(f"state file:        {STATE_PATH}")
+        sys.exit(0)
 
     if args.test:
         ok = send_telegram_message("✅ <b>Test message</b> — institution deal watcher is configured correctly.")
@@ -257,7 +345,8 @@ def main():
         sys.exit(1)
 
     if args.once:
-        sys.exit(0 if poll_once(max_age_days=args.max_age_days) >= 0 else 1)
+        poll_once(max_age_days=args.max_age_days)
+        sys.exit(0)
 
     if args.interval is not None:
         run_forever(interval_min=args.interval)
